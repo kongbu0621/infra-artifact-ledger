@@ -2,6 +2,8 @@
 
 这是本仓库的采用元数据与开工状态记录，不是上游规则的公开副本。权威规则通过固定的私有 companion 路径读取。
 
+A2 设计提案由 [独立 A2 Gate](a2/GATE.md) 管理，当前 OPEN。下表仍只记录 A1 的既有授权，不因 A2 文档准备自动扩大。
+
 | 字段 | 当前值 |
 |---|---|
 | Gate rule source | `kongbu0621/engineering-sop` |

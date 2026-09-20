@@ -16,7 +16,7 @@
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative dependencies | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)、[ACCEPTANCE.md](ACCEPTANCE.md) |
 | Input implementation baseline | `bd5128e7cebc844d8fca622c791681f7c65184f8`；A1输入，不是A2文档基线 |
-| Documentation baseline A | 首个文档提交形成后，在后续独立bookkeeping提交填写完整SHA；当前未固定 |
+| Documentation baseline A | `9636b1b7b987986c57399e36b9765799c32e09b9`；三层文档、接口、验收矩阵的候选版本，由本次后续bookkeeping固定，尚未获Owner closure |
 | Proposed implementation scope | `A2-snapshot-nas-restore-v0.1`，S1–S5 |
 | Authorized implementation scope | **none for A2**；当前推进文档准备、审查和只读核对 |
 | Owner closure B / CLOSED commit C | 尚无；“推进A2”、设计PR合并和A1授权不自动成为closure |
@@ -25,3 +25,5 @@
 用户同意先准备A2设计PR，再按准确基线审查与关闭Gate。本提交不加production/test source、可执行探针、依赖、schema或运行配置，不做NAS写入、挂载调整、数据删除或恢复演练。
 
 顺序为R → A → Owner明确决定B → 独立CLOSED记录C → 实现D。A是包含三层文档、接口和验收矩阵的既有完整commit，不预写自身SHA；C只保存授权和必要bookkeeping，不混实现或实质设计修改。合并须保留历史；squash产生新基线时重新定位后再确认。
+
+本次基线固定仅修改上述A引用，不是CLOSED记录C；五份规范文档保持A的Git对象。后续实质修订须固定新的A并按新版本审查，不能自动沿用本候选基线。

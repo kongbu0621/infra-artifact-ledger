@@ -19,6 +19,6 @@
 
 后续路线：A1 本地可用 → A2 一致快照与真实存储恢复 → A3 两类真实消费者 → A4 独立第二实现验证替换。A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。
 
-拟议包名为 `infra-artifact-ledger`，Python import 为 `infra_artifact_ledger`，CLI 为 `artifact-ledger`。名称尚未注册、包尚未发布。初期验收平台为 Linux 和 Python 3.12；其他平台未经验证时不宣称支持。正式安装命令、版本兼容表及许可证随 A1 交付。
+拟议包名为 `infra-artifact-ledger`，Python import 为 `infra_artifact_ledger`，CLI 为 `artifact-ledger`。名称尚未注册、包尚未发布。最低运行基线拟为 Python 3.11，Linux/Python 3.11 是 A1 必验组合；Python 3.12 可作附加兼容验证，不能代替 3.11 验收。其他版本或平台未经验证时不宣称支持。正式安装命令、版本兼容表及许可证随 A1 交付。
 
 维护与贡献从 [AGENTS.md](AGENTS.md) 开始。仓库当前欢迎设计评审；首次实现须先完成记录在案的文档确认。

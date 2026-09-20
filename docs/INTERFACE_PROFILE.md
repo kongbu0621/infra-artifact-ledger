@@ -14,7 +14,7 @@
 | transport_version | `0.1.0`，只版本化本文定义的字节包 |
 | Python 包导入名 | `infra_artifact_ledger` |
 | CLI 名称 | `artifact-ledger` |
-| 实现候选 | Python 3.12 标准库；SQLite 本地文件；首先验收 Linux/Python 3.12，更新版本和其他平台支持须另行验证 |
+| 实现候选 | 最低 Python 3.11 标准库；SQLite 本地文件；Linux/Python 3.11 必验，3.12 可作附加验证，其他版本和平台支持须另行验证 |
 
 七类 owned ID 共用一个可移植身份空间：Artifact、ArtifactVersion、ContentRoot、Blob、Manifest、ProvenanceLink、ImportReceipt。不同类型也不能使用相同 ID；`namespace_ref` 不划出允许重复 ID 的局部空间。调用者生成并保存稳定 ID；重试保持原 ID 和幂等键。ID 前缀只帮助阅读，不用于判断实际对象类型。
 
@@ -98,8 +98,9 @@ MiB = 1,048,576 bytes。上限包含等于，超过即拒绝；不得截断、�
 | 资源 | A1 上限 |
 | --- | --- |
 | 单个 Blob 原始内容 | 64 MiB |
-| 一次 append 或 import 的原始 payload 总量 | 256 MiB |
-| 单份请求 JSON、metadata JSON、普通读取 JSON 响应 | 各 8 MiB UTF-8 bytes |
+| 一次 append 或 import 传入的原始 payload 总量 | 256 MiB |
+| append 待登记 Version 的完整内容闭包 | 不同 BlobRef 的 byte_length 累加最多 256 MiB；包含复用的既有 Blob |
+| 单份写请求、operation 查询、payload-map、metadata 或普通读取响应 JSON | 各 8 MiB UTF-8 bytes；package 和 descriptor 使用各自独立限额 |
 | 单个完整 transport package | 384 MiB serialized bytes |
 | 全包解码后的 payload 总量 | 256 MiB |
 | JSON 容器嵌套深度 | 16 层；根对象算第 1 层 |
@@ -111,6 +112,8 @@ JSON 输入拒绝重复 key、NaN、Infinity、非法 UTF-8、BOM、孤立 surro
 读取文件先施加 serialized 大小限额，解码和累计大小也检查上限；不能等到全部无限制载入后再验证。实现必须记录默认上限下的实测内存需求，不把 serialized 上限等同于内存峰值。实现不得把通用 metadata 能表达的更大数据或 erased 状态改写成支持状态。
 
 单个 Ledger 可以随合法写入增长。A1 导出只支持仍能装入一个上述 package 的完整 Ledger；超限返回 `RESOURCE_LIMIT`，不导出历史子集。分片、增量同步和选择性历史导出须后续另定合同。
+
+append 的传入 bytes 与待登记内容闭包分别计量。相同 BlobRef 被 Manifest 多次引用只在闭包总量中计一次；不同 BlobRef 即使内容相同仍分别计量。不能用“没有重传 bytes”绕开闭包上限。例如 5 个不同的既有 64 MiB Blob 组成一个新 Version 时应拒绝；4 个可达到 256 MiB，仍须通过其余校验。整个 Ledger 的历史累计量不因此限制为 256 MiB。
 
 ## 4. 拟议 Python 与 CLI 表面
 
@@ -130,6 +133,8 @@ JSON 输入拒绝重复 key、NaN、Infinity、非法 UTF-8、BOM、孤立 surro
 
 库写操作接收 UTF-8 JSON bytes，使严格解析和数字 token 规则一致；不提供可绕过校验的“信任调用者 dict”入口。payloads 是 BlobRef 到原始 bytes 的传输参数，不是 portable 记录字段。库只负责已有调用进程内的调用，不自动启动后台服务。
 
+request_utf8、package、descriptor 的库参数使用不可变 bytes；payloads 为 BlobRef 到不可变 bytes 的映射。进入调用时冻结映射项并按限额校验，后续写入必须消费同一份已验证 bytes；CLI 不能校验一次文件、再重新打开可能已变化的路径写入。未使用的参数省略，append 无需传入 bytes 时 payloads 为空映射。Ledger handle 提供 close 与关闭连接的上下文管理，不能让用户猜测连接释放方式。
+
 `get_record` 的 kind 允许 `artifact`、`version`、`content_root`、`blob`、`manifest`、`provenance_link`、`import_receipt`，按真实类型解析。history 的集合返回顺序采用对应 owned ID 的 ASCII 升序；每条记录内的数组保持原序。这个读取展示顺序不改变写入指纹。
 
 CLI 的普通成功 `data` 固定如下；不存在所请求对象时走错误 envelope，不以空对象伪装成功。
@@ -148,7 +153,7 @@ counts 的八个名称为 artifacts、versions、content_roots、blobs、manifes
 
 Python initialize/open 返回本地 Ledger handle，execute 返回 §6 写成功 envelope；get_record/get_history/get_operation/verify 返回上述 data 形状。read_blob 返回已经验证的原始 bytes；export_bundle 返回恰含 `package_utf8` 与 `descriptor_utf8` 的两份 bytes。领域失败统一抛出 LedgerError，携带 §6 的 code、message、commit_state、可选 details，由 CLI 映射成同一错误 envelope；不泄漏 SQLite 异常作为公共合同。
 
-普通 JSON 输出是一行 UTF-8 JSON，加结尾换行。CLI 不把日志混入 stdout；诊断送 stderr。read-blob 的 bytes 进入明确输出文件，stdout 仍只输出操作结果。输出文件先完整写入并校验后再发布；失败不留下被标为成功的输出。package 与 descriptor 两个文件不是一个文件系统原子操作：任何缺件、摘要不符或不完整组合都不能导入，CLI 只有两者完成后才报成功。
+普通 JSON 输出采用 §6 的对象键、字符串和整数编码规则，布尔值使用 JSON 的 true/false，一行紧凑 UTF-8 JSON 加结尾 LF。响应大小包含完整 envelope 与 LF；库的对应读取在返回 data 前也按这一 envelope 计量，使限额判断与 CLI 一致。CLI 不把日志混入 stdout；诊断送 stderr。read-blob 的 bytes 进入明确输出文件，stdout 仍只输出操作结果。输出文件先完整写入并校验后再发布；失败不留下被标为成功的输出。package 与 descriptor 两个文件不是一个文件系统原子操作：任何缺件、摘要不符或不完整组合都不能导入，CLI 只有两者完成后才报成功。
 
 get_operation 未找到不自动证明并发或尚在恢复的旧调用永不提交；只有在旧执行已停止、连接恢复并核对提交状态后，才可判定未提交。调用者始终保留原请求以按原 key 重试。
 
@@ -174,7 +179,7 @@ body 恰含 `version`、`content_roots`、`blobs`、`manifests`、`provenance_li
 
 bytes 通过 payloads 传入。每个新 available Blob 必须有一份 bytes，digest 和长度必须重算；复用现有 Blob 时可不重传，但仍验证持久 bytes。显式重传现有 Blob 时也验证该输入。payload 不得引用本次内容闭包之外的 Blob，重复 BlobRef 拒绝。一次写入不新增与本次 Version 无关的内容记录。
 
-CLI payload-map 是传输用 JSON 数组，每项恰含 `blob_ref` 与 `input_path`；input_path 只由 CLI 读取，不进入 metadata、指纹或导出包。CLI 对调用者指定的输入文件读取真实 bytes 后使用相同库入口，不把文件名当成身份。
+CLI payload-map 是传输用 JSON 数组，每项恰含 `blob_ref` 与字符串 `input_path`；它适用 strict JSON、8 MiB serialized 上限以及 §3 的深度/节点限制，必须在无限制分配或读取内容文件前检查。重复 BlobRef 拒绝。input_path 只由 CLI 读取，不进入 metadata、指纹或导出包；操作系统无法表示的路径返回 INVALID_INPUT，不静默截断。CLI 对调用者指定的输入文件读取真实 bytes 后使用相同库入口，不把文件名当成身份。
 
 ### 5.3 import_bundle
 
@@ -200,21 +205,23 @@ CLI/library 传输请求的 body 恰含 `import_receipt_id`，另提供 §7 的 
 
 import 重试须保存原 package 和 descriptor 以及原请求。重新导出当前 Ledger 得到的包可能包含新增 Receipt、版本或不同数组内容，不能充当原输入。
 
-SQLite 同一写事务负责 owned ID 占用、引用闭包、metadata、BLOB 和幂等结果。单写入者表示每一时刻最多一个写事务；多个进程争用同一 Ledger 时只允许序列化成功或明确 BUSY，不能各自产生不同 durable 结果。提交前的可恢复失败必须确认回滚；提交或回滚状态无法确认时只能报告未知。
+SQLite 同一写事务负责 owned ID 占用、引用闭包、metadata、BLOB 和幂等结果。单写入者表示每一时刻最多一个写事务；多个进程争用同一 Ledger 时只允许序列化成功或明确 BUSY，不能各自产生不同 durable 结果。提交前的可恢复失败必须确认回滚；提交或回滚状态无法确认时只能报告未知。COMMIT 锁冲突不能直接当作事务未发生；本 SQLite backend 在确认完整回滚后才返回 BUSY/not_committed，回滚不能确认则返回 DURABILITY_UNKNOWN。
 
 | status/code | CLI exit | 结果语义 |
 | --- | --- | --- |
-| `COMMITTED` | 0 | 三类写操作提交已确认；返回 result_ref、operation_kind、原 recorded_at；可带 replayed 布尔值，但不是历史事件 |
+| `COMMITTED` | 0 | 三类写操作提交已确认；返回 result_ref、operation_kind、原 recorded_at；必须带 replayed 布尔值，但不是历史事件 |
 | `OK` | 0 | 读取、校验、init 或导出成功，不伪装成第四种写 operation_kind |
 | `INVALID_INPUT`、`UNSUPPORTED_VERSION`、`UNSUPPORTED_PROFILE`、`RESOURCE_LIMIT` | 2 | 已确认本次未修改 Ledger；返回具体错误位置或限额名称 |
 | `NOT_FOUND` | 3 | 所需准确对象或成功操作未找到 |
 | `IDENTITY_CONFLICT`、`IDEMPOTENCY_CONFLICT` | 4 | 已确认本次未修改 Ledger；不得自动 rename 或换 key 重发 |
 | `INTEGRITY_FAILURE` | 5 | 摘要、长度、引用闭包或已存内容失败；不得报告内容完整可读 |
-| `BUSY` | 6 | 未取得写事务，已确认本次未提交；原请求可稍后重试 |
+| `BUSY` | 6 | 锁冲突且已确认本次未提交：未取得写事务，或完整回滚已确认；原请求可稍后重试 |
 | `DURABILITY_UNKNOWN` | 7 | 无法确认提交状态；必须保留原幂等身份核对 |
-| `IO_ERROR`、`INTERNAL_ERROR` | 1 | 只有能够确认本次未提交时才可使用；否则使用 DURABILITY_UNKNOWN |
+| `IO_ERROR`、`INTERNAL_ERROR` | 1 | 状态已知时报告对应错误：未提交为 not_committed，提交后处理失败为 committed，读取/辅助输出为 not_applicable；只有状态确实无法确认时使用 DURABILITY_UNKNOWN |
 
 JSON 错误响应恰含 `status: "ERROR"`、`code`、`message`、`commit_state`，以及可选 `details` 对象；code 使用上表分类。commit_state 为 `not_committed`、`unknown`、`committed` 或对于纯读取的 `not_applicable`。已确认原请求提交、但重放时发现其持久 bytes 损坏，应返回 `INTEGRITY_FAILURE`、`commit_state: "committed"`，在 details 保留原 result_ref；不能宣称旧操作已回滚。`not_committed` 只描述本次被拒绝的输入未产生提交，不否认相同 key 以前可能绑定的另一成功请求。进程被终止可能没有 JSON 或上述退出码，调用方不得将这种传输失败等同于未提交。
+
+COMMIT 已确认成功后，若响应准备或资源清理失败且仍能构造错误响应，使用 IO_ERROR/INTERNAL_ERROR 与 commit_state=committed；details 必须保存 result_ref、idempotency_scope_ref、operation_kind、idempotency_key、原 recorded_at。不能把已知成功改报 unknown 或 not_committed，也不能为补发结果追加新记录。若 stdout 等响应通道已经失效，可能没有可读 JSON；调用者使用原请求身份核对，不能依非零退出码推断未提交。纯读取、export/read-blob 输出失败使用 not_applicable，只说明未改变 Ledger，不声称输出文件不存在或已持久化。
 
 写成功响应恰含 `status: "COMMITTED"`、`commit_state: "committed"`、`operation_kind`、`result_ref`、`recorded_at`、`replayed`。普通成功响应恰含 `status: "OK"`、`commit_state: "not_applicable"` 与 `data`；data 携带对应读取记录、校验报告或辅助操作结果。
 
@@ -286,10 +293,10 @@ SQLite 文件不是 portable package。A1 不提供 snapshot、NAS 搬运或恢�
 
 | 类别 | 必须验证的行为 |
 | --- | --- |
-| 输入与边界 | 重复 key、非法 Unicode、未知字段、错误版本、整数浮点/指数 token；所有尺寸阈值的低于/等于/超过；0 byte 内容；空 Ledger 与空包 |
+| 输入与边界 | 重复 key、非法 Unicode、未知字段、错误版本、整数浮点/指数 token；所有尺寸阈值的低于/等于/超过；payload-map 超限及低节点数/长路径输入；0 byte 内容；空 Ledger 与空包 |
 | 身份 | 七类 ID 跨类型碰撞；相同内容不同 ID；已有 Artifact 再 create；不可变 namespace/type 不可改 |
-| 版本与内容 | 缺失/跨 Artifact parent、分支与显式多父 merge；错误 Manifest digest；逻辑键大小写和 Unicode 差异；不可达内容；实际 bytes 缺失或被改动 |
-| 幂等与故障 | 相同请求重放、同 key 不同请求、含转义 U+0000/控制字符的合法 key 经 CLI 写入/查询/重放、竞争写入、提交前回滚、提交后响应丢失、未知状态核对；不得产生重复历史 |
+| 版本与内容 | 缺失/跨 Artifact parent、分支与显式多父 merge；错误 Manifest digest；逻辑键大小写和 Unicode 差异；不可达内容；实际 bytes 缺失或被改动；复用 bytes 仍计入 Version 闭包上限；校验后输入文件被替换不能改变提交 bytes |
+| 幂等与故障 | 相同请求重放、同 key 不同请求、合法控制字符 key 经 CLI 写入/查询/重放、竞争写入、提交前回滚、COMMIT 持锁回滚、提交后响应丢失、已确认提交后的处理异常、未知状态核对；COMMITTED 始终含 replayed；不得产生重复历史 |
 | 导入 | 相同完整历史收敛；子集/超集/不同分支冲突；输入后段失败时全无部分提交；当前请求与包内历史幂等冲突；Receipt ID 冲突；erased 拒绝 |
 | 封装 | metadata bytes/hash/length 不一致；重复/缺失/额外 payload；无效 Base64；全包 descriptor 不符；中断或仅生成一个输出文件不能视为可导入成果 |
 | 读取与重启 | 原进程退出后新进程仍可读出准确身份、版本、来源及 bytes；已损坏内容不能返回完整成功 |

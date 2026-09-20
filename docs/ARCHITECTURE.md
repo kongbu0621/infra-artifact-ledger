@@ -34,7 +34,11 @@ Artifact 的身份与每个 Version 分离。Version 指向一个 ContentRoot，
 
 写路径先有界解析及校验字节，再 `BEGIN IMMEDIATE`，在事务内重查幂等键、引用与所有碰撞，写入后提交；只在确认成功后响应。首次提交时间在事务内生成；重试返回原记录。读取/整库导出在同一读事务中取得一致视图，不能分次读取拼成不同瞬间的状态。
 
-部署只支持一个逻辑写入者。意外并发仍由 SQLite 锁串行化，不能破坏正确性：同请求最多一个持久结果；冲突请求至多一个成功；锁等待超时须证明尚未开始修改才可报告可重试的未提交状态。不能证明回滚或提交时一律报告不确定，不能把 I/O error 推断成没有提交。
+Python 连接采用 `isolation_level=None`，由服务显式控制 BEGIN/COMMIT/ROLLBACK，避免隐式事务与上述边界混用；这在 [Python 3.11 的 sqlite3 接口](https://docs.python.org/3.11/library/sqlite3.html#transaction-control) 内可用。SQLite backend 的锁等待参数固定 5 秒，不在内部无限重试；它不代表所有 I/O 的总耗时上限。每个 Ledger handle 由创建线程使用，提供 close/上下文管理释放连接；不同进程使用各自连接。
+
+部署只支持一个逻辑写入者。意外并发仍由 SQLite 锁串行化，不能破坏正确性：同请求最多一个持久结果；冲突请求至多一个成功；锁等待超时须证明本次未提交（尚未开始修改或已完整回滚）才可报告可重试状态。不能证明回滚或提交时一律报告不确定，不能把 I/O error 推断成没有提交。
+
+未取得事务的锁冲突可报告 BUSY。COMMIT 阶段也可能因读连接持锁而返回 SQLITE_BUSY，事务此时仍可能有效，不能仅凭该错误码宣称未提交；本 backend 不在该调用内重试 COMMIT，先完成并确认回滚后才以 BUSY/not_committed 返回，否则进入 DURABILITY_UNKNOWN。该边界依据 [SQLite 事务语义](https://www.sqlite.org/lang_transaction.html)。已确认 COMMIT 成功后，响应准备或资源清理失败也不撤销该事实：若仍能报告，保留 committed 和原结果引用；若输出通道已经断开，调用者以原幂等身份核对。
 
 事务前验证后到真正写入前仍可能被其他请求改变，因此关键检查必须在事务内重做。导入要求整体判断，禁止逐条自动提交。此前成功结果仍成立但 bytes 后来损坏时，读取/verify 单独报告完整性失败；重试不重写历史来“修复”它。
 
@@ -50,7 +54,7 @@ A1 导出整个 committed Ledger。输出包含完整 metadata 原始 bytes、�
 
 ## 5. 技术选择与扩展
 
-Python 3.12 和标准库作为首次实现基线；SQLite 同事务保存 bounded BLOB 降低元数据和独立文件之间的失败组合。暂不采用“SQL metadata + 目录对象存储”或云对象存储，因为它们需要额外提交协议和 orphan reconciliation。A1 仍应有内部 store 边界，以便以后用相同不变量检验替换。
+Python 3.11 和标准库作为最低实现基线；当前接口没有需要 3.12 专属能力的要求，先验证 3.11 可降低采用门槛。SQLite 同事务保存 bounded BLOB 降低元数据和独立文件之间的失败组合。暂不采用“SQL metadata + 目录对象存储”或云对象存储，因为它们需要额外提交协议和 orphan reconciliation。A1 仍应有内部 store 边界，以便以后用相同不变量检验替换。
 
 字段格式、CLI JSON 和 bundle 分别有版本。未知版本或 profile 不能尽力猜测。0.x 接口的实质改变要明确版本和迁移方案；读写旧数据前验证兼容性。包版本不自动等于 metadata contract 版本。上游兼容标记保持固定，不意味着私有仓库成为公共消费者依赖。
 

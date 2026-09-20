@@ -17,7 +17,7 @@
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative interface dependency | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)，与三文档一起固定 |
-| Documentation baseline A | `00338602338f5d66864b33ba4783c31d5c753d18`；该既有提交包含三文档及规范性引用，本次后续提交仅记录基线 |
+| Documentation baseline A | PENDING_REBASELINE：本轮复审已修订技术文档，形成新提交后由独立 bookkeeping 提交固定其完整 SHA |
 | Authorized implementation scope | **none** |
 | Proposed scope | `A1-local-ledger-v0.1`，仅实施计划 P1–P5 与其明确列出的交付 |
 | Owner closure decision B | **none**；无批准文本、时间/event ID 或稳定决定引用 |
@@ -25,6 +25,8 @@
 | Reopen conditions | 需求、架构、计划、规范接口、scope、R/A、规则来源/完整性、Authority、mandate、exceptions 或 change rule 实质改变；无法核实原决定或读取一致规则来源 |
 
 本次仓库创建、Connector 授权和 A0 文档工作不记录为关闭决定。当前任务仅整理和评审文档。后续批准应针对既有 A 及准确 scope；状态变更需保存 Owner 可核实原话、身份、时间或 event ID 与稳定来源，而非执行者代拟已批准结论。
+
+前一文档基线 `00338602338f5d66864b33ba4783c31d5c753d18` 保留为历史，已由本轮兼容性、错误分类和接口边界修订替代，不再代表当前待批准设计。此前没有 Owner closure；本次复审请求也不构成关闭决定。
 
 交付历史必须能够分别定位 R、文档 A、Owner 决定 B、独立 CLOSED 状态 C 与后续实现 D。若按 PR 内 A 批准，应使用保留 A 的 merge 方式；若 squash 产生新基线，先重新确定已合并文档 SHA，再取得对应确认。C 仅记录关闭与必要 bookkeeping，不能同时修改设计或加入实现。
 

@@ -16,7 +16,7 @@
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative dependencies | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)、[ACCEPTANCE.md](ACCEPTANCE.md) |
 | Input implementation baseline | `bd5128e7cebc844d8fca622c791681f7c65184f8`；A1输入，不是A2文档基线 |
-| Documentation baseline A | 本轮实质复审修订待提交后固定完整SHA；原候选 `9636b1b7b987986c57399e36b9765799c32e09b9` 不再代表当前设计，尚未获Owner closure |
+| Documentation baseline A | `817f1bff3b2ac8d59dbe22f6234b200c4dcf2ad1`；本轮复审后的三层文档、接口与验收候选版本，由后续bookkeeping固定；替代原候选 `9636b1b7b987986c57399e36b9765799c32e09b9`，尚未获Owner closure |
 | Proposed implementation scope | `A2-snapshot-nas-restore-v0.1`，S1–S5 |
 | Authorized implementation scope | **none for A2**；当前推进文档准备、审查和只读核对 |
 | Owner closure B / CLOSED commit C | 尚无；“推进A2”、设计PR合并和A1授权不自动成为closure |

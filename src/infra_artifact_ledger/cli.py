@@ -90,6 +90,19 @@ def _valid_path(value, label):
     return value
 
 
+def _check_output_paths(database, *outputs):
+    """Reserve SQLite's sidecar names before opening or publishing any file."""
+    try:
+        database_paths = {Path(database).absolute(), Path(database).resolve()}
+        reserved = {Path(str(path) + suffix).resolve()
+                    for path in database_paths for suffix in ("-journal", "-wal", "-shm")}
+        for output in outputs:
+            if Path(output).resolve() in reserved:
+                raise LedgerError("INVALID_INPUT", "Output path is reserved for the current SQLite database.")
+    except RuntimeError as error:
+        raise LedgerError("INVALID_INPUT", "Output or database path contains a symlink loop.") from error
+
+
 def _read_file(path, limit, label):
     """Limit both known file size and actual bytes read before JSON decoding."""
     _valid_path(path, label)
@@ -240,10 +253,12 @@ def _dispatch(args):
         elif args.command == "export":
             _valid_path(args.package, "package output")
             _valid_path(args.descriptor, "descriptor output")
+            _check_output_paths(args.db, args.package, args.descriptor)
             if os.path.abspath(args.package) == os.path.abspath(args.descriptor):
                 raise LedgerError("INVALID_INPUT", "Package and descriptor outputs must be different paths.")
         elif args.command == "read-blob":
             _valid_path(args.output, "blob output")
+            _check_output_paths(args.db, args.output)
         handle = initialize(args.db) if args.command == "init" else open_ledger(args.db)
         if args.command == "init":
             result = _ok({"profile": "bounded-local-v0.1", "storage_schema_version": 1})

@@ -217,10 +217,16 @@ class Ledger:
                 if len(failures) < 100:
                     failures.append({"location": location, "reason": reason})
 
+            def fail_integrity(location, error):
+                public = _error(error, "not_applicable")
+                if public.code != "INTEGRITY_FAILURE":
+                    raise public from error
+                fail(location, public.message)
+
             try:
                 metadata = self._store.metadata()
             except Exception as error:
-                fail("metadata", str(error))
+                fail_integrity("metadata", error)
                 raise LedgerError("INTEGRITY_FAILURE", "Ledger verification failed.",
                                   details={"failures": failures, "truncated": False}) from error
             try:
@@ -229,19 +235,29 @@ class Ledger:
                 fail("metadata", error.message)
             try:
                 self._verify_indexes(metadata)
-            except (LedgerError, KeyError, TypeError) as error:
+            except (KeyError, TypeError) as error:
                 fail("indexes", str(error))
+            except Exception as error:
+                fail_integrity("indexes", error)
             verified_count = verified_length = 0
             for record in metadata["blobs"]:
                 location = str(record.get("blob_ref", "blob"))
                 try:
                     validate_record("blob", record)
+                except (LedgerError, KeyError, TypeError) as error:
+                    # These are validation failures in persisted metadata,
+                    # even when its field validator uses INVALID_INPUT.
+                    fail(location, str(error))
+                    continue
+                try:
                     data = self._blob(record)
                     verified_count += 1
                     verified_length += len(data)
                     del data
-                except (LedgerError, KeyError, TypeError) as error:
+                except (KeyError, TypeError) as error:
                     fail(location, str(error))
+                except Exception as error:
+                    fail_integrity(location, error)
             if failure_count:
                 raise LedgerError("INTEGRITY_FAILURE", "Ledger verification failed.",
                                   details={"failures": failures, "truncated": failure_count > 100})

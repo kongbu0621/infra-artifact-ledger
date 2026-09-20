@@ -138,11 +138,22 @@ def _path(path):
         raise LedgerError("INVALID_INPUT", "Database path must be a valid local path.") from error
 
 
+def _sql_text(raw):
+    # SQLite permits ill-formed UTF-8 in TEXT. Decode at the connection boundary
+    # so its Python adapter cannot turn known corrupt text into a generic I/O
+    # error before our record validation gets to see it.
+    try:
+        return raw.decode("utf-8", errors="strict")
+    except UnicodeError as error:
+        raise LedgerError("INTEGRITY_FAILURE", "Stored SQL text is not valid UTF-8.") from error
+
+
 class SQLiteStore:
     """One handle owns one thread-bound, explicitly controlled connection."""
 
     def __init__(self, connection):
         self.connection = connection
+        self.connection.text_factory = _sql_text
         self.closed = False
 
     @classmethod
@@ -289,10 +300,14 @@ class SQLiteStore:
         return None if row is None else self._decode(row[0])
 
     def payload(self, blob_ref, limit):
-        length = self.execute("SELECT length(data) FROM payloads WHERE blob_ref=?", (blob_ref,)).fetchone()
-        if length is None:
+        info = self.execute("SELECT typeof(data),length(data) FROM payloads WHERE blob_ref=?", (blob_ref,)).fetchone()
+        if info is None:
             raise LedgerError("INTEGRITY_FAILURE", "Persisted Blob bytes are missing.", details={"blob_ref": blob_ref})
-        if length[0] > limit:
+        # length(TEXT) counts characters only up to its first NUL. Reject its
+        # storage class before fetching any bytes or trusting that size bound.
+        if info[0] != "blob":
+            raise LedgerError("INTEGRITY_FAILURE", "Persisted Blob is not binary data.", details={"blob_ref": blob_ref})
+        if info[1] > limit:
             raise LedgerError("INTEGRITY_FAILURE", "Persisted Blob bytes exceed the supported length.", details={"blob_ref": blob_ref})
         data = self.execute("SELECT data FROM payloads WHERE blob_ref=?", (blob_ref,)).fetchone()[0]
         if type(data) is not bytes:
@@ -301,11 +316,24 @@ class SQLiteStore:
 
     def metadata(self):
         metadata = empty_metadata()
-        for kind, raw in self.execute("SELECT kind, data FROM records ORDER BY id"):
+        for identity, kind, raw in self.execute("SELECT id,kind,data FROM records ORDER BY id"):
             if kind not in KINDS:
                 raise LedgerError("INTEGRITY_FAILURE", "Stored record has an unknown kind.")
-            metadata[KINDS[kind][0]].append(self._decode(raw))
-        operations = [self._decode(row[0]) for row in self.execute("SELECT data FROM operations")]
+            record = self._decode(raw)
+            if record.get(KINDS[kind][1]) != identity:
+                raise LedgerError("INTEGRITY_FAILURE", "Stored owned identity index differs from its immutable record.")
+            metadata[KINDS[kind][0]].append(record)
+        operations = []
+        for scope, kind, key, result_ref, raw in self.execute(
+            "SELECT scope,kind,key,result_ref,data FROM operations"
+        ):
+            record = self._decode(raw)
+            if (scope, kind, key, result_ref) != (
+                record.get("idempotency_scope_ref"), record.get("operation_kind"),
+                record.get("idempotency_key"), record.get("result_ref")
+            ):
+                raise LedgerError("INTEGRITY_FAILURE", "Stored operation index differs from its immutable record.")
+            operations.append(record)
         try:
             metadata["idempotency_records"] = sorted(operations, key=lambda item: (
                 item["idempotency_scope_ref"], item["operation_kind"], item["idempotency_key"]))

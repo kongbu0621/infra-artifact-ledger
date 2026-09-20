@@ -17,7 +17,7 @@
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative interface dependency | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)，与三文档一起固定 |
-| Documentation baseline A | PENDING_COMMIT：三文档及规范性引用形成 commit 后，另以 bookkeeping commit 写入其完整 SHA |
+| Documentation baseline A | `00338602338f5d66864b33ba4783c31d5c753d18`；该既有提交包含三文档及规范性引用，本次后续提交仅记录基线 |
 | Authorized implementation scope | **none** |
 | Proposed scope | `A1-local-ledger-v0.1`，仅实施计划 P1–P5 与其明确列出的交付 |
 | Owner closure decision B | **none**；无批准文本、时间/event ID 或稳定决定引用 |

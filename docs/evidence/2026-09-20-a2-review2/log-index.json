@@ -1,0 +1,107 @@
+[
+  {
+    "name": "a2-resources.log.txt",
+    "raw_sha256": "02c9b2e244facbb553ee4c2f7ae67dd577690efec2a48e786fdda50fa2b0a2d0",
+    "public_sha256": "02c9b2e244facbb553ee4c2f7ae67dd577690efec2a48e786fdda50fa2b0a2d0",
+    "raw_bytes": 6585,
+    "public_bytes": 6585
+  },
+  {
+    "name": "a2-semantic-resources.log.txt",
+    "raw_sha256": "42aa511685b50b68a81f1e57febc5e4a4fc87757b03aab94d6b7ed1a8b804a95",
+    "public_sha256": "42aa511685b50b68a81f1e57febc5e4a4fc87757b03aab94d6b7ed1a8b804a95",
+    "raw_bytes": 8336,
+    "public_bytes": 8336
+  },
+  {
+    "name": "build-environment.log.txt",
+    "raw_sha256": "b019cbb39e29a71164b6337eca13bae6bd9c9cb66b17efb11239a5ff8c6b6a40",
+    "public_sha256": "b019cbb39e29a71164b6337eca13bae6bd9c9cb66b17efb11239a5ff8c6b6a40",
+    "raw_bytes": 191,
+    "public_bytes": 191
+  },
+  {
+    "name": "build.log.txt",
+    "raw_sha256": "f97174d97add9a97d5de608ca04e83ea8e5d502cd121dbee4e33fcbb487fa6e7",
+    "public_sha256": "0ad5adb18cb542528163fe18ea4ad31e931551be86177637327b976c603c7670",
+    "raw_bytes": 851,
+    "public_bytes": 831
+  },
+  {
+    "name": "compile311.log.txt",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "public_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "public_bytes": 0
+  },
+  {
+    "name": "compile312.log.txt",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "public_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "public_bytes": 0
+  },
+  {
+    "name": "diff-check.log.txt",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "public_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "public_bytes": 0
+  },
+  {
+    "name": "install.log.txt",
+    "raw_sha256": "b5ed14e77840ca3d42e66a9c69c9d7f614584d389c11ca2919b0953bed760e81",
+    "public_sha256": "b5ed14e77840ca3d42e66a9c69c9d7f614584d389c11ca2919b0953bed760e81",
+    "raw_bytes": 173,
+    "public_bytes": 173
+  },
+  {
+    "name": "installed-a1.log.txt",
+    "raw_sha256": "d95fd61a1193b9d80db43e26054d65051d10173e70520b73aedf8599b4c122f0",
+    "public_sha256": "df06325bb6aa4c730fc5d5864031daa3d359d97948c130d8596b16cb34c87db7",
+    "raw_bytes": 3804,
+    "public_bytes": 3784
+  },
+  {
+    "name": "installed-a2-logic.log.txt",
+    "raw_sha256": "57451c7b0bdaf17882c88b12bc047607dff418135d6e54accf57d405d5646dcc",
+    "public_sha256": "57451c7b0bdaf17882c88b12bc047607dff418135d6e54accf57d405d5646dcc",
+    "raw_bytes": 39108,
+    "public_bytes": 39108
+  },
+  {
+    "name": "installed-unsupported-storage.log.txt",
+    "raw_sha256": "ec12bc2011de5f3d7be4c0ee5928f6d0b956161e4851e7518196344b38c7ee37",
+    "public_sha256": "d5d9437f02a7ee56f2dcaee691f464206a715e35d4b2fc4e0334bf793baaf439",
+    "raw_bytes": 330,
+    "public_bytes": 310
+  },
+  {
+    "name": "runtime.log.txt",
+    "raw_sha256": "549982d4cf0382225de1de22dee5a0ad1d54f8e7f214c9bb9e71da6700ef3a5f",
+    "public_sha256": "80d826a47a9bee7aa36630fbbcdcfb001f7c7d01aca3d6301da60efd2c77f230",
+    "raw_bytes": 414,
+    "public_bytes": 354
+  },
+  {
+    "name": "source311.log.txt",
+    "raw_sha256": "e96c766f4def2762efb2ef4caa1828be4cb5c1c1a7e218a4c532a584de0ae6ca",
+    "public_sha256": "e96c766f4def2762efb2ef4caa1828be4cb5c1c1a7e218a4c532a584de0ae6ca",
+    "raw_bytes": 66803,
+    "public_bytes": 66803
+  },
+  {
+    "name": "source312.log.txt",
+    "raw_sha256": "1d466767fc727a3da94d1188cde3d677f36b7fd087095bfac3029a00b64c62bd",
+    "public_sha256": "1d466767fc727a3da94d1188cde3d677f36b7fd087095bfac3029a00b64c62bd",
+    "raw_bytes": 66803,
+    "public_bytes": 66803
+  },
+  {
+    "name": "storage-profile.log.txt",
+    "raw_sha256": "506df16a629acfb3618d6db82f75a048c41e319740f29937e89b102f12cc66d0",
+    "public_sha256": "506df16a629acfb3618d6db82f75a048c41e319740f29937e89b102f12cc66d0",
+    "raw_bytes": 93,
+    "public_bytes": 93
+  }
+]

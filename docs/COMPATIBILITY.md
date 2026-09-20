@@ -38,10 +38,12 @@ CLI 正常操作和错误使用单行 JSON；`--help` 是面向人的文本辅�
 
 ## A2 0.2.0a1 补充状态
 
-以上是 A1 0.1.0a1 历史兼容证据；不把它自动套用到 A2。A2 五个快照/恢复入口已实现；本轮复审固定 D2 `47b525ebb0add3a6aebc1cb13119f4046eea42b8`，Cloud 源码/wheel 结果与原 D1 历史证据分别记录在 [A2_VALIDATION](A2_VALIDATION.md)。环境为 Linux x86_64 / Python 3.11.16、3.12.14 / SQLite 3.53.1。安装态检查的包从独立 venv 导入，测试与 NAS 工具脚本来自固定 checkout；不声称这些验收脚本已打入 wheel。
+以上是 A1 0.1.0a1 历史证据；A2 当前固定修订 D3 `478ce4b39bc82df2bb1f6543de208e54ac100d8f`。D1/D2/D3 的源码与 wheel 摘要、执行日志分别见 [A2_VALIDATION](A2_VALIDATION.md)，不能跨提交挪用结果。当前环境 Linux x86_64 / Python 3.11.16、3.12.14 / SQLite 3.53.1；安装态包来自新独立 venv，测试与 NAS 工具来自固定 checkout。
 
-本轮两版本源码各发现 349 项、执行通过 329 项、跳过 20 项；这 20 项资源专项另行全部通过。安装包 A2 逻辑发现 183 项、执行通过 172 项、跳过 11 项 A2 资源专项。编译、构建、隔离安装及 A1 安装态回归通过；这些计数存在重复，不合计为独立用例数量。
+D3 两版本源码各发现 388 项、普通 368 项通过、资源 20 项跳过；本轮另跑 A2 7+4=11 项资源，全部通过。A1 8+1 项资源本轮未重跑，保留 D2 历史证据。安装态 A2 222 项发现、211 项通过、11 项专项跳过；A1 普通回归、安装态文档闭环、编译、构建与安装均通过。数字存在重复，不能合计为独立测试数量。
 
-A2 本地候选文件系统为 ext4/xfs/btrfs，NAS profile 为显式核实的 nfs/nfs4/cifs；类型名称不等于已获兼容认证。实际 Cloud overlay（`fsync=volatile`）被生产入口拒绝，此项只证明安装态拒绝行为；正向模拟挂载分类的结果为 LOGIC_ONLY。D2 补充 T06 发布后回读 EIO/摘要变化四项、T08 完全丢响应五项，以及 T09 四组合法库 12 个边界点和总 TEXT 上界证明，均不构成真实设备兼容性证据；具体结果与限制见验证记录和 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。GX10、受支持本地文件系统安装态正向、真实 NAS 及 T06/T08 实际部署演练仍 NOT_RUN，整体 PARTIAL。不改变上文 A1 的 Windows/macOS/网络文件系统未验边界。
+本轮修复源 WAL/SHM 保持、复合关闭错误、已完成发布后的报告状态、Linux 路径/挂载文本及 NAS 工具归属绑定；不会改变 A1 wire/schema。A2 本地候选文件系统为 ext4/xfs/btrfs，NAS profile 为显式核实的 nfs/nfs4/cifs；类型名称不等于兼容认证。实际 Cloud overlay（fsync=volatile）仍被生产 API/CLI 拒绝，正向模拟仅 LOGIC_ONLY。
 
-A2 封存文件上限 1 GiB，其他预算及合作式 300 秒期限见 [A2 接口](a2/INTERFACE_PROFILE.md)。读回核对不证明过去发布者完成同步，也不证明设备断电耐久性。构建/部署步骤见 [A2_RUNBOOK](A2_RUNBOOK.md)。
+GX10、受支持本地文件系统安装态正向、真实 NAS 及 T06/T08 实际部署演练仍 NOT_RUN，整体 PARTIAL。资源可达性证明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)，不替代部署资源或耐久性认证。上文 Windows/macOS/其他未验组合边界保留。
+
+A2 封存文件上限 1 GiB，其他预算与合作式 300 秒期限见 [A2 接口](a2/INTERFACE_PROFILE.md)。读回核对不能证明过去发布同步或设备断电耐久性。构建/部署见 [A2_RUNBOOK](A2_RUNBOOK.md)。

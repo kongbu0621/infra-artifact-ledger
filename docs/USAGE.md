@@ -62,12 +62,13 @@ python3.11 -m venv "$LEDGER_VENV"
 
 构建成功后消费者安装完全使用本地 wheel，不依赖私有 checkout 或模型服务。执行结果应为版本 `0.1.0a1`；软件包与合同的版本含义分别见 §8。不执行 `pip install infra-artifact-ledger` 猜测公开索引来源。Windows 或其他平台的命令须随其实际验证提供。下列 CLI 操作使用上述消费者 venv 中的可执行文件，避免调用到其他版本。
 
-开发者可在固定 checkout 内复核普通测试和显式资源测试，再从消费者 venv 运行文档闭环。资源测试会真实处理最高 384 MiB 包及 256 MiB 内容，并记录内存峰值，所需内存高于文件大小；运行前查看验证记录中的实测值。普通 discovery 会跳过这组昂贵检查，须执行第二条命令才算覆盖实际限额。
+开发者可在固定 checkout 内复核普通测试和显式资源测试，再从消费者 venv 运行文档闭环。资源测试会真实处理最高 384 MiB 包及 256 MiB 内容，并记录内存峰值，所需内存高于文件大小；运行前查看验证记录中的实测值。普通 discovery 会跳过资源检查，须分别显式执行下面两个资源脚本，才能覆盖内容、字节和累计响应节点的实际限额。
 
 ```sh
 cd "$LEDGER_SRC"
 PYTHONPATH=src "$LEDGER_BUILD_VENV/bin/python" -m unittest discover -s tests -v
 PYTHONPATH=src "$LEDGER_BUILD_VENV/bin/python" tests/test_resources.py -v
+PYTHONPATH=src "$LEDGER_BUILD_VENV/bin/python" tests/test_response_boundaries.py -v
 "$LEDGER_VENV/bin/python" -I "$LEDGER_SRC/tests/installed_walkthrough.py" --repo "$LEDGER_SRC"
 ```
 

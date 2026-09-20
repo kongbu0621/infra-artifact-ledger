@@ -2,9 +2,11 @@
 
 范围：`A1-local-ledger-v0.1` 的 P1–P5；软件 `0.1.0a1`；日期 2026-09-20。只使用合成数据。
 
-已验证实现 source D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。本记录的后续证据提交只更新文档，不改变已验源码/测试/构建配置。
+当前复审修复 source F：`d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`；tree：`2cac6ae79075c5e6167a12a6105e21143183a41f`。F 的验证见 §6；§2–5 保留初次实现 D 的历史结果，不能直接当作 F 的本轮实测。
 
-最终本地 wheel：`infra_artifact_ledger-0.1.0a1-py3-none-any.whl`，33,756 字节；SHA-256：`7c9275665e242f1820cae6a88d5d6a244e60660fd5048bfff61f0b651f977129`。该摘要标识本次构建产物；未声明不同时刻或工具环境构建的 ZIP 必然字节相同。wheel 内所有 Python 源文件与 D 逐字节相等，含原 MIT LICENSE，无 Requires-Dist 运行依赖。
+初次已验实现 D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。E `fd31f87f97e6f1b5505f5266f56ba28e96547223` 仅补录 D 的文档证据；F 在 E 后追加范围内缺陷修复，保留 C/D/E 历史。
+
+D 对应的本地 wheel：`infra_artifact_ledger-0.1.0a1-py3-none-any.whl`，33,756 字节；SHA-256：`7c9275665e242f1820cae6a88d5d6a244e60660fd5048bfff61f0b651f977129`。该摘要标识本次构建产物；未声明不同时刻或工具环境构建的 ZIP 必然字节相同。wheel 内所有 Python 源文件与 D 逐字节相等，含原 MIT LICENSE，无 Requires-Dist 运行依赖。
 
 ## 1. 授权链
 
@@ -81,3 +83,67 @@ python3.11 -m venv /tmp/ledger-consumer
 [P5 完整补验报告](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5750914668)确认最终 HEAD/tree 不变、工作树和暂存区均无修改。因此本地和 Cloud 均已执行固定 D 的完整 wheel/独立消费闭环；没有修改产品源码来解除环境阻塞，没有重复大资源 suite。
 
 维护工作台此前经授权读取了固定私有 R，并在 B/C 之后实施；Cloud 此处承担公开软件的只读消费和验证，不承担私有规则复核或实现授权判定。后续若由 Cloud 执行新实现，仍须满足自身规则可读性要求，不能把本轮公开运行通过当作豁免。
+
+## 6. 两个 PR 的再次独立复审与 F 补验
+
+### PR #2：授权与 Gate
+
+固定 C 的授权链复审通过：Owner 原话、明确标注执行者转录的 GitHub 记录及决定副本一致；C 仅 8 个 Markdown 文件，无源码、测试、运行配置；A 中 ARCHITECTURE、INTERFACE_PROFILE、REUSE_EXAMPLE 未变；D 的直接父提交是 C。没有需要重新请求 Owner 授权的范围变化。
+
+发现并更正一条验收记录：原 C 的 `git diff --check main..C` 实际返回 2，原因是决定文件末尾多一个空行；PR #2 先前写“通过”不准确，现已更正。保留原 C 的不可变证据，后续文档整理去掉末尾空行；不重写 C，也不把此格式提示当作授权失效。合并顺序仍是先保留独立 C 合并 #2，再把 #3 转向 main。
+
+### PR #3：实际发现与修复
+
+复审先在 E 对应的旧源码上复现，再修复；没有为符合实现而改写批准的接口合同。
+
+| 问题 | 修复前观察 | 修复和反例验收 |
+|---|---|---|
+| 初始化目标竞争 | O_EXCL 后、SQLite 打开前目标被替换；初始化会向另一数据库写入 ledger 表及 PRAGMA | 私有暂存完整建库、关闭、fsync 后硬链接拒覆盖发布；竞争文件字节、表和 journal 模式不变 |
+| 遗留 SQLite 侧车 | 目标主文件缺失但存在真实热回滚日志，初始化会消费并删除该日志 | 构建前与发布前拒绝已有 -journal/-wal/-shm；真实热日志逐字节保留，目标不存在；发布后合法 writer 的日志不删除 |
+| 异常退出丢失提交证据 | execute 已提交后响应失败，加上 close 失败，会把 committed/原身份覆盖成 not_applicable | context 保留原异常及精确身份，清理异常附 note；初始化/打开双重失败同样保留原问题 |
+| 本地格式检查不完整 | 添加忽略 operation 插入的 trigger 后仍可 open，create 返回成功但缺失成功幂等记录 | 精确 schema/自动索引/显式索引/约束核对；trigger、view、缺 PK/FK/NOT NULL/index 均拒绝，不改库 |
+| CLI 解析期状态错误 | 已识别读取命令缺参/重复/未知参数，返回 not_committed | 根据真实解析子命令归类；读取/辅助为 not_applicable，write 为 not_committed；帮助仍为文本 |
+| 累计历史节点超限 | 两次各自合法的 Version 写入后，低于 8 MiB 的完整历史可超过 500,000 节点，旧实现仍成功返回 | 完整响应统一检查字节/深度/节点；公开库和真实 CLI 对 500,001 节点明确拒绝，不截断、不改记录 |
+
+新增 storage 专项 18 项、CLI 测试方法 3 项、显式响应节点资源专项 1 项。节点专项用三个原始阈值 499,999 / 500,000 / 500,001，不修改数据库或上限。前后同一 500,001 节点子场景在 E 上失败（`LedgerError not raised`，5.958s），在修复上通过（9.000s）；预期完整响应 4,278,342 字节，隔离验证节点上限而非字节上限。
+
+独立合同探针另试验 1,410 个 metadata/transport 类型或形状变异：1,384 个以 LedgerError 拒绝、26 个合同允许输入接受，无裸 Python 异常；这些是审读探针，不冒充新增的 unittest 数量。portable 输出 metadata 已严格解析；对于 B 个 Blob，package 的 `11 + 8B` 节点少于合法 metadata 的至少 `15 + 10B`，不存在同一出口漏检，因此没有对大型包重复解码。
+
+### F 的本地最终验证
+
+| 检查 | 精确结果 |
+|---|---|
+| 环境 | Python 3.11.16 / SQLite 3.53.1；Linux 6.18.44 x86_64 / glibc 2.39；固定构建工具版本沿用 §2 |
+| 编译 | `python -m compileall -q src tests`，exit 0 |
+| 普通回归 | `Ran 135 tests in 20.574s / OK (skipped=9)`；126 项通过，9 项资源默认跳过，exit 0 |
+| 读取节点资源专项 | `tests/test_response_boundaries.py -v`：1 test / 3 阈值，29.596s；499999/500000 成功，500001 为 RESOURCE_LIMIT/not_applicable，CLI exit 2；进程峰值 231,924 KiB |
+| 读取字节资源专项 | `tests/test_resources.py ActualProfileResourceTests.test_public_history_response_limit_includes_complete_envelope_and_lf -v`：1 test / 8 MiB±1 三阈值，13.226s，exit 0；峰值 99,548 KiB |
+| 构建及安装 | 精确暂存文件树导出到新临时副本，固定工具构建 wheel，另建 consumer venv 离线安装，均 exit 0 |
+| 独立消费 | consumer Python `-I tests/installed_walkthrough.py --repo 固定副本`，25 次 CLI（24 exit 0、1 预期冲突 exit 4），实际 USAGE Python 示例 PASS，验证 40 字节；仅使用 consumer site-packages |
+| wheel 一致性 | 35,236 字节；SHA-256 `6a3da007e9c12077a84b9c5165ad519162b3c8dae540152c6e1f23356bdc5201`；10 个 Python 源文件逐字节等于 F，MIT 正文一致，无 Requires-Dist |
+
+资源专项在相同响应修复代码上执行；随后只补初始化遗留侧车保护，最终 F 的全部普通测试及 wheel 安装在该补修后重新执行。没有把修复前的完整资源 suite 当作 F 的完整资源重跑；此次针对受影响的节点和响应字节两项补验，未重跑无改动的 64/256/384 MiB 内容算法上限。
+
+### F 的 Codex Cloud 验证
+
+[本轮请求](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751030228)固定 F/tree，[实际 Cloud 任务](https://chatgpt.com/codex/cloud/tasks/task_e_6ab007b104dc8329a8f75dc55e4083fe)已经完成。[完整 Cloud 报告](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751066782)与本地分开记录：
+
+| 检查 | 固定 F 的 Cloud 实测 |
+|---|---|
+| 环境与来源 | Python 3.11.15 / SQLite 3.45.1；Linux 6.18.44 x86_64 / glibc 2.39；构建工具四个版本与 §2 相同；临时 Git archive 重算 tree 等于 F |
+| 编译 | compileall，exit 0 |
+| 普通 suite | `Ran 135 tests in 33.933s / OK (skipped=9)`；126 通过，exit 0 |
+| 响应节点专项 | 499999/500000/500001 三阈值的公共库及 CLI，68.305s，exit 0；峰值 229,632 KiB |
+| 响应字节专项 | 显式文件入口执行真实 8 MiB±1，22.336s，exit 0；峰值 87,212 KiB |
+| wheel 与安装 | 固定工具构建、新 consumer 离线安装均 exit 0；wheel 35,236 字节，SHA-256 `73f6ad48388efc71d9f0cab2defda18957b684ff1fa0c0e7fb5904731e5d41d0` |
+| 独立消费 | 25 次 CLI 及实际 USAGE Python 代码块 PASS；40 字节；模块来自 consumer site-packages |
+| wheel 与源码对应 | 10 个 Python 源文件逐字节等于 F，MIT 正文一致，Requires-Dist 为零 |
+| 只读性 | 原 checkout HEAD/tree 不变、staged/unstaged diff 为空；未改代码、commit、push 或 merge |
+
+Cloud 首次调用缺失的 `/usr/bin/time` 返回 127；另一次以 unittest 模块形式调用资源项被正确跳过，均未计为有效通过。随后用资源脚本自身的计时/RSS 和规定的显式文件入口完成实测；没有改测试或资源上限。两个环境的 wheel 各有实际摘要，不宣称 ZIP 字节可重复构建。
+
+Cloud 的私有 companion 复读仍因未认证单列 BLOCKED；它仅验证公开软件。维护工作台已读取固定 R 并在 Owner B/C 后实施，未把 Cloud 公开运行结果作为新授权或规则豁免。
+
+格式检查另行记录：本轮修复与证据文档增量 `git diff --check` 通过；相对 main 的累计 diff 仍有初次 D 引入的 5 处文件末尾空行提示（`.gitignore`、`LICENSE`、`pyproject.toml`、`__init__.py`、`__main__.py`）。这是非语义格式提示，不冒充累计检查通过，也不为消除提示而重写已验 F。
+
+F 保持 A1/alpha 边界：未发布包或 tag，未新增 CI/网络服务，未改变 R/A/公共合同；未验证真实掉电、NAS 恢复、独立第二 backend 或真实消费者采用。初始化依赖的硬链接和目录同步要求，以及发布后失败时需 open 核对的行为，已写入 USAGE/COMPATIBILITY。

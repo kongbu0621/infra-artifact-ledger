@@ -5,7 +5,8 @@
 | 项目 | 本轮结果 / 边界 |
 |---|---|
 | 必验环境 | Linux x86_64，kernel 6.18.44，glibc 2.39；Python 3.11.16；SQLite 3.53.1 |
-| Cloud 验收 | Python 3.11.15 / SQLite 3.45.1，同 Linux kernel/glibc；105 普通测试、8 资源测试与编译通过；固定工具 wheel 构建、隔离安装和文档闭环补验通过 |
+| 历史 D 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；105 普通测试、8 资源测试与编译通过；wheel 构建、隔离安装和文档闭环通过，具体记录见 A1_VALIDATION §5 |
+| 当前 F 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；126 普通测试、响应节点/字节两个真实资源专项、编译、wheel 隔离安装及文档闭环通过，见 A1_VALIDATION §6 |
 | 附加环境 | Python 3.12.14 的结果见验证记录；不能替代 3.11 验收 |
 | 运行依赖 | Python 标准库；无需模型、云账号、私有 companion 或第三方运行包 |
 | 构建环境 | pip 24.0、setuptools 84.0.0、wheel 0.48.0、packaging 26.3 |

@@ -24,7 +24,9 @@ A1 的范围包含下述 P1–P5、MIT LICENSE、本地安装与测试所需配�
 | `src/infra_artifact_ledger/cli.py`、`__init__.py` | 公共库出口与单次 JSON CLI |
 | `tests/`、`tests/fixtures/` | 操作级、故障、CLI、兼容性与独立安装验证；仅合成数据 |
 | `pyproject.toml`、`.gitignore`、`LICENSE` | 包、命令入口、临时产物排除、Owner 已确认的 MIT 许可 |
-| `docs/USAGE.md`、`docs/COMPATIBILITY.md` | 已实现的安装、限额、错误恢复与版本支持 |
+| `docs/COMPATIBILITY.md` | A1 实测的软件、数据格式与平台版本支持表 |
+
+A0 已提供 [USAGE.md](USAGE.md) 与 [REUSE_EXAMPLE.md](REUSE_EXAMPLE.md) 的接入设计及完整合成场景。它们不是现有可运行示例；P5 将其更新为与具体构建对应的操作指南，记录实际执行结果和未支持范围。
 
 运行依赖使用 Python 3.11 标准库的 `sqlite3`、`json`、`hashlib`、`base64`、`argparse` 等，不需要模型 SDK。最低运行版本为 3.11，不使用 3.12 专属 API。测试使用 `unittest`；构建工具版本在 P1 固定并记录，构建依赖不进入运行依赖。外部安装验证使用离线 wheel 安装（在已准备的环境），避免测试悄悄读取私有 checkout。Linux/Python 3.11 下的编译、全部必需测试和安装闭环均为 A1 必验；只在 3.12 或更高版本通过不满足此条件。
 
@@ -40,7 +42,7 @@ API、CLI JSON、portable metadata 及包格式均按接口文档实现，不另
 | P2 原子本地记录 | 初始化/打开、create、append、精确读取与 verify、幂等查询 | P1；重启可读，分支/多父可记录，冲突不改状态，同 key 重放不新增记录 |
 | P3 完整搬运 | 一致整库 export、descriptor、整包 import、ImportReceipt | P2；空库/空包、边界包、损坏包、所有碰撞情形有证据；不部分导入 |
 | P4 故障与并发核对 | 事务前后进程终止、响应丢失、锁竞争、I/O 故障分类、重试核对 | P2/P3；持久结果完整或不存在，未知结果不误报；同请求并发收敛；COMMIT 成功后异常仍保留 committed，COMMIT 锁冲突先确认回滚 |
-| P5 外部使用验收 | 隔离安装后的库/CLI 完整闭环、使用文档、兼容表与证据记录 | P1–P4；无私有资料或模型依赖；Owner/Reviewer 能按相同命令复核 |
+| P5 外部使用验收 | 隔离安装后的库/CLI 完整闭环、使用文档、兼容表与证据记录 | P1–P4；按 USAGE 与普通报告示例从安装走到内容读回、重试和新库导入；无私有资料或模型依赖；Owner/Reviewer 能按相同命令复核 |
 
 P1–P5 属于一个已拟议 A1 范围，可分 PR 交付，不必每个局部实现动作重新请求授权。若范围或固定文档实质变更则按 Gate 重新确认。没有现存旧实现，首次实现不能虚构“旧版本失败”；后续缺陷须尽可能保存同一复现的修复前失败与修复后通过证据。
 
@@ -56,6 +58,8 @@ P1–P5 属于一个已拟议 A1 范围，可分 PR 交付，不必每个局部�
 | R07 | 事务提交边界与结果核对 | P4：写入前、中、commit 前、commit 后/响应前终止；COMMIT 成功后响应准备异常、stdout 断开；未取得事务与 COMMIT 持锁分别核对；重启后全量核对，未知结果使用原 key |
 | R08 / R09 | 公共入口、版本/profile、无向上依赖 | P5：Linux/Python 3.11 的 wheel 隔离安装、独立进程库和 CLI、不同新库往返；SQLite schema 不作为公共 API；明确这不构成 A3/A4 |
 | R10 | 一致快照/新目标恢复 | 不在 A1；A2 提案须定义真实存储、快照来源与全量比较，当前不得写“已恢复验证” |
+
+P5 的复用验收以一个脱离 Code Driver 的普通报告消费进程为主线，在全新项目虚拟环境中从固定 wheel 安装；分别执行 Python 公共入口与独立 CLI 进程，核对指定版本的真实内容、来源和重试结果。另行确认两个独立 Ledger 的数据不会串写。CLI 接入检查覆盖参数数组、stdout JSON/退出码和 stderr 诊断；子进程被终止或无有效响应时按未知结果核对原幂等身份。指南中的每个步骤须记录源提交、构建版本、实际命令、退出码和读回内容的比较结果；任何尚未运行的入口或平台仍标为未验证。这里验证公开接入方式，不计为 A3 的两个真实消费者或 A4 的独立第二实现。
 
 输入边界另需检查：重复 JSON key、NaN/Infinity、浮点/指数 byte_length、超安全整数、非法 UTF-8/BOM/lone surrogate、未知字段、重复 ID/entry_key、引用不闭合、悬空成功结果，以及 import body 历史时间和 fingerprint 保留。Manifest 摘要和请求指纹不得混用。
 

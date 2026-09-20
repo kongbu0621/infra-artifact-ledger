@@ -1,6 +1,6 @@
 # Working in this repository
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前实现为 A1 `0.1.0a1` alpha；wire 合同仍为 `candidate`，不意味着稳定发布。实际验证、固定源提交和限制见 [验证记录](docs/A1_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)；后续阶段计划不写成已完成能力。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，本次 Cloud 验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。A2 的 GX10、真实 NAS 验收尚未执行，整个 A2 尚未完成；实现存在和模拟测试通过不得改写为实机通过。
 
 ## Current execution boundary
 
@@ -11,6 +11,8 @@
 ## Engineering boundaries
 
 A2 的需求、架构、计划、接口、验收与独立授权见 [A2 Gate](docs/a2/GATE.md)。A2 已按固定 R/A 获 Owner 明确批准，CLOSED 范围为 `A2-snapshot-nas-restore-v0.1` S1–S5；实现必须以独立 CLOSED 记录 C 为祖先。维护 A1 时继续使用已批准范围；改变 A2 规范内容须按 reopen 条件重新确认。五份设计文档保留基线原文，历史 OPEN 不覆盖后续明确授权，实际通过状态以执行证据为准。
+
+A2 接入与实机操作从 [使用指南](docs/A2_USAGE.md)、[运行手册](docs/A2_RUNBOOK.md) 开始。每台机器、每个项目使用独立 build/runtime venv；NAS 演练限定本轮专属合成目录。当前环境未提供真实 NAS 时如实记录 NOT_RUN，不以本地替身或降低文件系统要求完成该验收。
 
 - 元数据、可用 payload 与成功幂等结果必须共同提交；禁止先宣告成功再补内容。
 - 原始 ID、版本和关系不可静默改写。不得把摘要、文件名或存储路径当作 Artifact 身份。

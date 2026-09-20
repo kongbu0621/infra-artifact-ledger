@@ -77,6 +77,9 @@ def _parser():
         if command == "write":
             for name in ("payload-map", "package", "descriptor"):
                 child.add_argument("--" + name, action=_Once)
+    # A2 owns its parser and envelope; dispatch below keeps A1 wire behavior.
+    commands.add_parser("snapshot", allow_abbrev=False,
+                        help="create, save, verify and restore Ledger snapshots")
     return parser
 
 
@@ -343,9 +346,13 @@ def _encode_error(error):
 
 def main(argv=None):
     """Return a stable exit code; no storage or file exception leaks as traceback."""
+    arguments = sys.argv[1:] if argv is None else list(argv)
+    if arguments and arguments[0] == "snapshot":
+        from .snapshot_cli import main as snapshot_main
+        return snapshot_main(arguments[1:])
     exit_code = 0
     try:
-        encoded = _dispatch(_parser().parse_args(argv))
+        encoded = _dispatch(_parser().parse_args(arguments))
     except LedgerError as error:
         encoded = _encode_error(error)
         exit_code = EXIT_CODES[error.code]

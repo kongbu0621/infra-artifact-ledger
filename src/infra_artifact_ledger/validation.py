@@ -1,5 +1,7 @@
 """Strict input, record and graph validation for bounded-local-v0.1."""
 
+from ._checkpoints import checkpoint
+
 from collections import deque
 from calendar import monthrange
 import json
@@ -421,6 +423,7 @@ def validate_metadata(metadata, *, check_closure=True):
         _array(records, collection)
         by_kind[kind] = {}
         for record in records:
+            checkpoint()
             validate_record(kind, record)
             identity = record[id_field]
             if identity in owned:
@@ -430,6 +433,7 @@ def validate_metadata(metadata, *, check_closure=True):
     _array(metadata["idempotency_records"], "idempotency_records")
     operations = set()
     for record in metadata["idempotency_records"]:
+        checkpoint()
         validate_record("idempotency_record", record)
         triple = tuple(record[field] for field in ("idempotency_scope_ref", "operation_kind", "idempotency_key"))
         if triple in operations:
@@ -447,6 +451,7 @@ def validate_metadata(metadata, *, check_closure=True):
     indegree = {}
     children = {identity: [] for identity in by_kind["version"]}
     for identity, record in by_kind["version"].items():
+        checkpoint()
         reference("artifact", record["artifact_id"], "version.artifact_id")
         reference("content_root", record["content_root_ref"], "version.content_root_ref")
         used_roots.add(record["content_root_ref"])
@@ -459,6 +464,7 @@ def validate_metadata(metadata, *, check_closure=True):
     queue = deque(identity for identity, degree in indegree.items() if degree == 0)
     visited = 0
     while queue:
+        checkpoint()
         identity = queue.popleft()
         visited += 1
         for child in children[identity]:
@@ -468,30 +474,37 @@ def validate_metadata(metadata, *, check_closure=True):
     if visited != len(indegree):
         _fail("versions", "version parent graph contains a cycle", "INTEGRITY_FAILURE")
     for record in by_kind["content_root"].values():
+        checkpoint()
         kind = record["kind"]
         target = record[kind + "_ref"]
         reference(kind, target, "content_root." + kind + "_ref")
         (used_blobs if kind == "blob" else used_manifests).add(target)
     for record in by_kind["manifest"].values():
+        checkpoint()
         for entry in record["entries"]:
+            checkpoint()
             reference("blob", entry["blob_ref"], "manifest.entry.blob_ref")
             used_blobs.add(entry["blob_ref"])
     for kind, used in (("content_root", used_roots), ("manifest", used_manifests), ("blob", used_blobs)):
         if set(by_kind[kind]) != used:
             _fail(KINDS[kind][0], "contains unreachable content records", "INTEGRITY_FAILURE")
     for record in by_kind["version"].values():
+        checkpoint()
         refs = _content_refs(by_kind["content_root"], by_kind["manifest"], record)
         if sum(by_kind["blob"][ref]["byte_length"] for ref in refs) > MAX_PAYLOAD:
             _resource("version.content_root_ref", f"Version content closure exceeds {MAX_PAYLOAD}")
     for record in by_kind["provenance_link"].values():
+        checkpoint()
         reference("version", record["subject_version_ref"], "provenance_link.subject_version_ref")
         if record["object"]["kind"] == "artifact_version":
             reference("version", record["object"]["ref"], "provenance_link.object.ref")
     for record in by_kind["import_receipt"].values():
+        checkpoint()
         for identity in record["imported_artifact_refs"]:
             reference("artifact", identity, "import_receipt.imported_artifact_refs")
     result_kinds = {"create_artifact": "artifact", "append_version": "version", "import_bundle": "import_receipt"}
     for record in metadata["idempotency_records"]:
+        checkpoint()
         reference(result_kinds[record["operation_kind"]], record["result_ref"], "idempotency_record.result_ref")
     return metadata
 

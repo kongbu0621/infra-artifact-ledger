@@ -1,6 +1,6 @@
 # A1 实施与验收计划
 
-状态：Candidate，A0 文档提案；Decision Authority：Owner。拟议 scope：`A1-local-ledger-v0.1`。当前授权为 none；本文件列出将来的实现，不创建代码骨架。需求来自 [REQUIREMENTS](REQUIREMENTS.md)，技术约束来自 [ARCHITECTURE](ARCHITECTURE.md)，字段级规范来自 [INTERFACE_PROFILE](INTERFACE_PROFILE.md)。
+状态：Candidate，A0 文档提案；Decision Authority：Owner。拟议 scope：`A1-local-ledger-v0.1`。P1–P5 已获 Owner 授权，准确 R/A/scope 及独立 CLOSED 记录见 Gate；本文件本身不构成运行实现。需求来自 [REQUIREMENTS](REQUIREMENTS.md)，技术约束来自 [ARCHITECTURE](ARCHITECTURE.md)，字段级规范来自 [INTERFACE_PROFILE](INTERFACE_PROFILE.md)。
 
 ## 1. 输入基线与开工顺序
 

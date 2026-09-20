@@ -1,6 +1,6 @@
 # 独立复用与接入指南
 
-状态：**A0 接入指南候选，尚无可安装或运行的软件**。本文把既有接口串成消费者接入步骤，不增加公共字段、方法或实现范围；字段与行为以 [公共接口提案](INTERFACE_PROFILE.md) 为准。所有安装模板、操作步骤和预期结果都须待 A1 实现后在 P5 验证，不能当作当前执行证据。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 仍为 OPEN。
+状态：**A0 接入指南候选，尚无可安装或运行的软件**。本文把既有接口串成消费者接入步骤，不增加公共字段、方法或实现范围；字段与行为以 [公共接口提案](INTERFACE_PROFILE.md) 为准。所有安装模板、操作步骤和预期结果都须待 A1 实现后在 P5 验证，不能当作当前执行证据。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 已为 A1 的 P1–P5 记录 CLOSED。
 
 ## 1. 什么情况下复用
 

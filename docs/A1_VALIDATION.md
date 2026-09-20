@@ -4,6 +4,8 @@
 
 当前复审修复 source L：`55e561f9e77c0fa4e4352df1c612c97a93845af3`；tree：`0a8fb11df3081097ee19c9b482bf143a5d636394`，验证见 §9。
 
+合并后的 GX10 实机验证：source `a00926dff89ae5ddc498105472899a48381b1927`，tree `56dca8bbe9dca627e05b89d8bb7eea109846bf0b`，见 §10。该提交相对 L 仅有本文件与 COMPATIBILITY 的证据文档差异；本轮实机结果单独记录，不改写 §9 的历史状态。
+
 历史结果分别保留：§8 为 J `e69d247783acff7c228693c03856a5cff8017a8f`（tree `5d79c2c0b4f51ff12789b601676289a1bbb9f250`）；§7 为 H `5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`（tree `e5138d72f377d224a1df89aaaf732e12629d1b9c`）；§6 为 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）；§2–5 为初次实现 D。历史通过不能直接当作 L 的本轮实测。
 
 初次已验实现 D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。E `fd31f87f97e6f1b5505f5266f56ba28e96547223` 仅补录 D 的文档证据；F 在 E 后追加范围内缺陷修复，保留 C/D/E 历史。
@@ -318,3 +320,32 @@ L 的唯一父提交是 K。生产源码仅在 `sqlite_store._path` 增加主机
 Cloud 私有规则访问单列 BLOCKED，只验证公开软件；维护工作台已完整读取固定 R，不把 Cloud 通过视为实施授权或规则豁免。本轮没有重跑资源专项，也没有将历史 J/D 数据算作 L 新执行；两个环境分别保存 wheel 摘要，不宣称 ZIP 字节可复现。真实掉电/NAS、真实消费者采用和第二 backend 仍未证明。
 
 紧随 L 的本次证据提交仅修改 A1_VALIDATION 和 COMPATIBILITY；源码、测试、USAGE、构建配置及 MIT 保持已验 L 的 Git 对象。
+
+## 10. 合并后 GX10 / Linux aarch64 实机验证
+
+执行时间：2026-09-20 UTC（北京时间 2026-09-21）。Owner 在 GX10 本机执行会话提供的固定版本命令，并上传两份原始日志；维护工作台对原始归档、完整测试集合和安装态结果进行复核。这是操作者提供的实机执行证据，不是工作台直接运行 GX10，也不是 Codex Cloud 或 GitHub Actions 的结果。
+
+源码为 [PR #3 合并提交](https://github.com/kongbu0621/infra-artifact-ledger/commit/a00926dff89ae5ddc498105472899a48381b1927)。执行脚本按完整 SHA checkout 并核对 HEAD；资源阶段还检查跟踪文件相对 HEAD 无差异。原始安装日志只打印 `a00926d` 前缀；本记录的完整 SHA 绑定来自已发执行命令及 Git 提交对应关系，不声称两份 stdout 自含签名式源码证明。合并 tree 与 PR #3 已审查交付一致；相对 L 的 43 个既有跟踪文件中，41 个 Git blob 不变，仅两份证据文档更新。
+
+[证据目录说明](evidence/2026-09-20-gx10/README.md)保存来源、命令、脱敏方式及证据限制；[manifest](evidence/2026-09-20-gx10/manifest.json)分别记录上传归档、原始日志与公开副本的字节数和 SHA-256。公开日志仅替换私人路径与主机名，测试名称、结果、时间和数值保持原样。
+
+| 检查 | GX10 实测 / 可核对结果 |
+|---|---|
+| 环境 | Linux 6.17.0-1031-nvidia，aarch64，glibc 2.39；Python 3.12.3；SQLite 3.45.1；数据目录所在挂载点为本机 ext4 |
+| 隔离环境 | 构建与运行使用该项目的两个独立 venv；源码、venv、数据目录分离，未借用其他项目环境；测试临时目录显式放在本项目验收目录 |
+| 构建工具 | pip 24.0、setuptools 84.0.0、wheel 0.48.0、packaging 26.3 |
+| 编译 | 已发脚本先执行 `compileall -q src tests`，遇错即停；最终退出 0。静默编译未单独打印阶段退出码，该结论由脚本顺序及最终状态支持 |
+| 普通 suite | `Ran 166 tests in 44.216s / OK (skipped=9)`；157 项通过，9 项资源测试在 discovery 中按设计跳过 |
+| 实际容量边界 | 显式执行 `tests/test_resources.py`：8 项通过，无跳过，52.350s |
+| 实际响应节点边界 | 显式执行 `tests/test_response_boundaries.py`：1 项通过，无跳过，18.628s；覆盖 499,999 / 500,000 / 500,001 节点 |
+| 集合核对 | 普通日志 166 个用例身份与固定源码完全对应；随后执行的 9 项恰好覆盖此前全部 skip。两阶段合计 166 个不同 unittest 用例通过，不把 discovery 的 skip 计为执行通过 |
+| wheel 构建及消费安装 | 构建成功，在独立运行 venv 以 `--no-index --no-deps` 安装 `0.1.0a1`；安装态模块来自该 venv 的 site-packages |
+| 实际指南闭环 | `installed_walkthrough.py` 使用运行 venv 的 Python `-I`：25 次 CLI 中 24 次 exit 0、1 次预期幂等冲突 exit 4；`result=PASS`、`library_guide=PASS`，40 字节往返一致 |
+| 完整包往返 | 源库 1 Artifact / 2 Version / 3 成功幂等记录 / 0 Receipt；目标原内容与版本保持，增加为 4 成功幂等记录 / 1 Receipt，符合新导入语义 |
+| 阶段结果 | 安装验证脚本和资源脚本均记录最终 `退出码=0`；没有失败后继续打印成功的分支 |
+
+资源 suite 覆盖真实 64 MiB Blob、256 MiB payload / 复用内容闭包、384 MiB package、8 MiB 请求 / 完整响应、4 KiB descriptor，以及深度与节点限额。库及 CLI 的响应节点边界按源码断言检查：上限内可返回、上限外拒绝，读取前后 Ledger 状态保持。资源峰值记录最大 `1,551,072 KiB`（约 `1.479 GiB`）；响应节点专项的最大记录为 `199,064 KiB`。这些是测试进程记录的峰值，不是单个输入的独立增量、全机峰值、普遍内存上限或吞吐承诺。
+
+本次 wheel 的日志报告：`infra_artifact_ledger-0.1.0a1-py3-none-any.whl`，36,448 字节，SHA-256 `904e413fcc11d6fb0d3b6044c37fe8d1e0f34c1c5a163cd2302bfcab6255ede0`；pip 与 `sha256sum` 两处输出一致。上传归档只包含日志，不含 wheel；维护工作台未取得该二进制，不能把日志核对说成已独立验证 wheel 内容，也不要求它与历史构建 ZIP 摘要一致。
+
+结论：固定合并版本在上述 GX10 / Python 3.12.3 / SQLite 3.45.1 / ext4 组合上的 A1 安装、普通测试、资源边界与公开使用示例通过。该附加平台证据不替代 Linux/Python 3.11 必验基线，不自动覆盖其他 ARM 设备或文件系统。测试使用合成数据；真实掉电、NAS 快照恢复、A3 真实消费者与 A4 独立第二实现仍未证明。Local Hand 对该项目的接纳尚未完成，当前没有自动调度或常驻服务声明。

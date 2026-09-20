@@ -18,7 +18,7 @@
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative interface dependency | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)，与三文档一起固定 |
 | Consumer documentation | [USAGE.md](USAGE.md)、[REUSE_EXAMPLE.md](REUSE_EXAMPLE.md)，随本轮文档一起固定；字段与语义以规范接口为准 |
-| Documentation baseline A | 待本轮复用指南文档提交形成后，以独立 bookkeeping 提交记录准确 SHA；旧基线不覆盖本轮修改 |
+| Documentation baseline A | `a6599939de2db91503b97aaefd9ce68d82a184c2`；本次独立 bookkeeping 提交仅固定已存在的复用指南文档基线 |
 | Authorized implementation scope | **none** |
 | Proposed scope | `A1-local-ledger-v0.1`，仅实施计划 P1–P5 与其明确列出的交付 |
 | Owner closure decision B | **none**；无批准文本、时间/event ID 或稳定决定引用 |

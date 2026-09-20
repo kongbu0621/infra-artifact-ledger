@@ -7,8 +7,9 @@
 | 必验环境 | Linux x86_64，kernel 6.18.44，glibc 2.39；Python 3.11.16；SQLite 3.53.1 |
 | 历史 D 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；105 普通测试、8 资源测试与编译通过；wheel 构建、隔离安装和文档闭环通过，具体记录见 A1_VALIDATION §5 |
 | 历史 F 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；126 普通测试、响应节点/字节两个真实资源专项、编译、wheel 隔离安装及文档闭环通过，见 A1_VALIDATION §6 |
-| 当前 H 的本地验收 | 必验环境下139普通测试、两个响应资源专项、编译、wheel隔离安装及实际文档示例通过，见 A1_VALIDATION §7 |
-| 当前 H 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；139 普通测试、两个响应资源专项、编译、wheel 隔离安装及文档示例通过，见 A1_VALIDATION §7；私有规则可读性单列 BLOCKED |
+| 历史 H 的验收 | 本地及 Cloud 的139普通测试、两个响应资源专项、编译、wheel隔离安装及实际文档示例通过，见 A1_VALIDATION §7 |
+| 当前 J 的本地验收 | 必验环境下154普通测试、两个响应资源专项、编译、wheel隔离安装及实际文档示例通过，见 A1_VALIDATION §8 |
+| 当前 J 的 Cloud 验收 | Python 3.11.15 / SQLite 3.45.1；154普通测试、两个响应资源专项、编译、wheel隔离安装及实际文档示例通过，见 A1_VALIDATION §8；私有规则可读性单列 BLOCKED |
 | 附加环境 | Python 3.12.14 的结果见验证记录；不能替代 3.11 验收 |
 | 运行依赖 | Python 标准库；无需模型、云账号、私有 companion 或第三方运行包 |
 | 构建环境 | pip 24.0、setuptools 84.0.0、wheel 0.48.0、packaging 26.3 |
@@ -17,7 +18,7 @@
 | 固定 schema 标识 | `urn:code-driver-theory:artifact-ledger:v0.1:candidate`；候选后缀保持批准的合同原值 |
 | SQLite 格式 | version 1；DELETE journal，synchronous FULL，锁等待 5 秒；无自动 migration |
 | 部署范围 | 本地可靠文件系统、单一受信数据域、一个逻辑写入者；每个进程独立连接，handle 由创建线程使用 |
-| CLI 文件 | 输入为普通文件；输出使用同目录临时文件、fsync 和硬链接拒覆盖发布，需要文件系统支持相应行为 |
+| CLI 文件 | 输入为普通文件；输出使用同目录临时文件、fsync 和硬链接拒覆盖发布，需要文件系统支持相应行为；提前拒绝输出到当前数据库同名 -journal/-wal/-shm 路径 |
 | 数据库初始化 | Python initialize / CLI init 在同目录私有临时目录构建后，使用硬链接拒覆盖发布并 fsync 父目录；发布后失败可能留下完整目标，须 open 核对 |
 | 未验平台 | Windows、macOS、其他 Python/SQLite 组合、网络文件系统及真实 NAS；不宣称兼容 |
 | 许可 | 仓库根目录 MIT [LICENSE](../LICENSE) |

@@ -2,7 +2,7 @@
 
 范围：`A1-local-ledger-v0.1` 的 P1–P5；软件 `0.1.0a1`；日期 2026-09-20。只使用合成数据。
 
-当前复审修复 source H：`5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`；tree：`e5138d72f377d224a1df89aaaf732e12629d1b9c`。H 的验证见 §7；§2–5 是初次实现 D 的历史结果，§6 是 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）的历史结果，不能直接当作 H 的本轮实测。
+当前复审修复 source J：`e69d247783acff7c228693c03856a5cff8017a8f`；tree：`5d79c2c0b4f51ff12789b601676289a1bbb9f250`。J 的验证见 §8；§2–5 是初次实现 D 的历史结果，§6 是 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）的历史结果；§7 是 H `5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`（tree `e5138d72f377d224a1df89aaaf732e12629d1b9c`）的历史结果。历史通过不能直接当作 J 的本轮实测。
 
 初次已验实现 D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。E `fd31f87f97e6f1b5505f5266f56ba28e96547223` 仅补录 D 的文档证据；F 在 E 后追加范围内缺陷修复，保留 C/D/E 历史。
 
@@ -205,3 +205,58 @@ H 还清理 §6 记录的五处尾部空行，每个文件仅删除一个 LF；M
 运行过程单列：初次版本探针直接同时导入 pip/setuptools 触发 distutils 断言，改用 importlib.metadata 读取安装版本后完成核对；初次 archive 内容比较使用了临时父目录，修正到 source-h 后全部 40 文件匹配；后台尝试曾没有有效资源日志且进程已退出，不能计为通过。维护工作台停止重复普通 suite，并明确仅补资源和安装，随后以前台执行取得上述有效结果。未因这些执行方式问题修改产品代码、测试上限或环境配置。
 
 Cloud 私有 companion 读取仍单列 BLOCKED，仅承担已提交公开软件的只读验证。维护工作台已重读固定 R；本轮没有改变规则、Owner 决策或公共合同，也没有将 Cloud 结果作为后续实现的权限豁免。真实掉电/NAS、真实消费者采用和独立第二 backend 仍未证明。
+
+## 8. 本次分别复审与 J 补验
+
+### PR #2：授权及合并链路复核
+
+固定 R 再次完整读取；Owner B 评论原话与 committed 决定副本逐字一致。C2 相对 main 仍只有 8 个 Markdown 文件，D 的直接父提交仍为 C；C→C2 只删除末尾一个 LF。独立检查 H→I 仅为两份证据文档，源码、测试、构建配置和许可 Git 对象未变，§7 没有将历史结果冒充当前结果。
+
+使用 `git merge-tree --write-tree` 模拟 main→C2→I 无冲突，最终 tree 完全等于 I；在 J 上补验 C2→J 也无冲突，最终 tree 为文首 J tree。相对 main 的累计 `git diff --check` 通过。#2 无本轮未解决阻塞；保留 C/C2 历史，先合并 #2，再将 #3 转向 main。本轮没有合并。
+
+### PR #3：新增反例与修复
+
+J 的唯一父提交为 I `9c70bb62998dd82b8e40e9911a60647b8d2c7799`。J 修改三个实现文件、USAGE 使用说明，并新增两个测试文件，共 15 个测试方法；公共规范、资源上限、许可和授权范围未变。
+
+| 问题 | 修复前的证据 | J 的行为与回归 |
+|---|---|---|
+| verify 错误分类与失败明细不一致 | 已打开 handle 后，另一真实连接持有排他锁，verify 将 BUSY 误报为损坏；注入读取 IOERR 同样误报。后续索引和 payload 阶段的 CORRUPT 又缺少 failures/truncated | 三个读取阶段保留 BUSY/IO_ERROR；已确认完整性错误汇总为规定明细。存储字段验证失败仍为 INTEGRITY_FAILURE，不把非法 Blob 元数据误报为调用者 INVALID_INPUT |
+| metadata 查询未逐行绑定身份 | 交换两条 Version 正文，整体集合合法，history 却按错误身份顺序返回；operation 的 result_ref 索引错绑也可漏检 | metadata 读取逐行核对 owned ID、kind 和操作三元组/result_ref。只读查询拒绝错绑；仅 payload 损坏仍可查询 metadata，不偷偷读取全部内容 |
+| SQLite 存储类型与文本解码遗漏 | 非 UTF-8 TEXT 被适配器误报为 I/O；payload 存成含 NUL 的 TEXT 时，SQL length 不代表字节长度 | 连接边界严格解码 SQL 文本，非法文本为存储损坏。payload 先核对 typeof 为 BLOB，再使用 length 限额及取值；trace 断言坏类型内容未被 SELECT 读出 |
+| CLI 输出占用当前数据库的侧车文件名 | 普通 20 字节报告输出到当前数据库同名 -journal/-wal 后，后续 SQLite 操作可删除该输出或改变打开结果 | read-blob 与 export 在打开 DB 前检查全部输出，拒绝 -journal/-wal/-shm，包含相对路径、目录及数据库符号链接；export 另一文件也不发布。相近合法文件名仍成功且后续 verify 后内容保留 |
+
+新增 `test_read_integrity.py` 的 11 项与 `test_cli_output_paths.py` 的 4 项均有聚焦验证；对应反例先复现再修复。交叉复核发现的非法 Blob 字段分类回归已在冻结前修正。接口独审另执行 624 个小数据输入变体和 8 组语义组合，未发现额外未解决缺陷；这些诊断不增加 unittest 数量，也不代表 A2–A4 已完成。
+
+一次 CLI 子审查的扩展探测被平台以 “This content was flagged for possible cybersecurity risk” 中止；没有重试该扩展探测，也没有将其计为通过。侧车路径修复与验收采用已确认的普通文本文件案例，不依赖构造数据库恢复文件。
+
+### J 的本地验证
+
+| 检查 | 固定 J 的结果 |
+|---|---|
+| 来源与环境 | J/tree 如文首；Python 3.11.16 / SQLite 3.53.1，Linux 6.18.44 x86_64 / glibc 2.39；构建工具同 §2 |
+| 编译与普通回归 | compileall exit 0；`Ran 163 tests in 41.654s / OK (skipped=9)`，即 154 通过、9 资源默认跳过；exit 0 |
+| 响应节点专项 | 显式脚本入口，499999/500000/500001 三阈值，1 test，34.558s，exit 0；峰值 234,160 KiB |
+| 响应字节专项 | 含完整 envelope/LF 的实际 8 MiB±1，1 test，14.045s，exit 0；峰值 103,236 KiB |
+| 构建与隔离消费 | 固定 tree 的 archive 共 42 个跟踪文件，构建前后均逐字节等于 J；pip wheel、新 venv、离线安装和实际文档 walkthrough 均 exit 0 |
+| 复用示例 | 25 次 CLI：24 exit 0、1 预期冲突 exit 4；实际 USAGE Python 代码 PASS；40 字节往返一致；模块来自 consumer site-packages |
+| wheel | 36,382 字节，SHA-256 `6a9d7d12830733ac24bca4e0098d7dd876468ce20880ed13b341aaa2d7cbec0e`；10 个 Python 源与 MIT 均 J=wheel=安装文件，Requires-Dist 为空 |
+
+构建准备时查询可选 `build` 包的探针返回 1，环境未安装该包；随后按仓库既定 `pip wheel` 路径构建成功，未增加依赖。两个响应资源专项因读取路径改变而重跑；未改动的 64/256/384 MiB 专项仍仅引用 D 的历史执行，不记为 J 的新通过。所有时间与 RSS 均为本次观测。
+
+### J 的 Codex Cloud 验证
+
+[实际 Cloud 任务](https://chatgpt.com/codex/cloud/tasks/task_e_6ab015213af083298ca8990bc1147fdb)已完成；[维护工作台转录报告](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751398123)记录真实日志和最终报告，不冒充 GitHub 自动 CI check。
+
+| 检查 | 固定 J 的 Cloud 实测 |
+|---|---|
+| 来源与环境 | HEAD/tree/parent 均匹配 J；archive 共 42 个跟踪文件逐字节等于 J。Python 3.11.15 / SQLite 3.45.1，Linux 6.18.44 x86_64 / glibc 2.39；四个构建工具版本同 §2 |
+| 编译与普通 suite | compileall exit 0；普通 suite 仅运行一次，163 项中 154 通过、9 资源默认跳过，57.303s，exit 0 |
+| 响应节点专项 | 显式脚本入口，499999/500000/500001 三阈值；1 test，69.929s，峰值 230,716 KiB，exit 0 |
+| 响应字节专项 | 实际 8 MiB±1，含完整 envelope/LF；1 test，22.594s，峰值 93,564 KiB，exit 0 |
+| 构建、安装与消费 | 固定 J 副本构建、新 consumer venv 离线安装、25 CLI（24 exit 0、1 预期冲突 exit 4）与实际 USAGE Python 示例全部通过；各命令 exit 0；40 字节往返一致，模块来自 consumer site-packages |
+| wheel | 36,382 字节，SHA-256 `3ab379a8a7d7e4401e573944833502355a662deea8124d1ca2d141c66ce32e08`；10 个 Python 源与 MIT 均 J=wheel=安装文件，Requires-Dist 为空 |
+| 原工作树 | 结束 HEAD/tree/parent 未变，status 项目为零，staged/unstaged diff 为空；未实施、commit、push、merge 或发布 |
+
+Cloud 私有 companion 访问仍单列 BLOCKED；本轮仅验证已提交公开软件。维护工作台已经完整读取固定 R，不把 Cloud 通过转成实施授权或规则豁免。未修改测试、资源限额或已有环境配置；两个环境的 wheel 各记实际摘要，不声明 ZIP 字节可复现。真实掉电/NAS、真实消费者采用和独立第二 backend 仍未证明。
+
+J 后续的证据提交仅修改本文件和 COMPATIBILITY，源码、测试、USAGE、构建配置与 MIT 保持 J 的 Git 对象；因此上表对应实际跑过的源码及使用示例，而非未经验证的后续实现。

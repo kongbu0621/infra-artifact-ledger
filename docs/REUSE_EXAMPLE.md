@@ -1,14 +1,14 @@
 # 独立复用示例：普通报告的版本归档与搬运
 
-状态：**A0 设计示例，尚未实现或运行**。以下命令和预期结果均用于指导 A1 交付后的验证，不是当前可执行教程或已通过证据。安装入口见 [USAGE](USAGE.md)，字段和错误以 [公共接口提案](INTERFACE_PROFILE.md) 为准；概念示例不能替代 [实施计划](IMPLEMENTATION_PLAN.md) P1–P5 的真实验收。
+状态：**A1 `0.1.0a1` alpha 的可执行合成报告教程**。本文主流程已通过隔离安装的 CLI walkthrough，并运行对应 Python 库代码块；实际源提交、wheel 和执行结果见 [验证记录](A1_VALIDATION.md)。安装入口见 [USAGE](USAGE.md)，字段和错误以 [公共接口](INTERFACE_PROFILE.md) 为准；本例不覆盖 [实施计划](IMPLEMENTATION_PLAN.md) P1–P5 的全部验收。
 
 场景：一个普通报告管理程序要保存季度报告 v1、v2，明确 v2 来自 v1，随后将完整历史搬到另一新 Ledger。它不需要 Code Driver、Agent、模型账号或私有仓库。报告审批、展示名称和“当前采用哪个版本”由报告程序负责；Ledger 只保存精确身份、版本、内容与来源关系。
 
 ## 1. 安装与准备
 
-先按 [USAGE 的安装前提](USAGE.md) 选择将来经验证的 wheel 与 Python 3.11 环境。当前没有可安装包，不执行 `pip install infra-artifact-ledger` 猜测包来源。本示例拟在 Linux 上运行；在 A1 安装完成后，从一个全新、本地可靠文件系统目录开始，所有数据库和输出目标必须不存在。
+先按 [USAGE 的构建与安装步骤](USAGE.md) 使用固定源码构建 wheel，在 Python 3.11 独立环境离线安装。当前没有 PyPI 发布，不执行 `pip install infra-artifact-ledger` 猜测包来源。本示例在已验证的 Linux 环境运行；安装完成后，从一个全新、本地可靠文件系统目录开始，所有数据库和输出目标必须不存在。
 
-主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 shell/Python 片段也是待 A1 的操作说明；Python 仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为 USAGE 中已安装 wheel 的同一个 venv 的绝对路径；本例显式使用该环境，不依赖激活：
+主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 Python 片段仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为 USAGE 中已安装 wheel 的同一个 venv 的绝对路径；本例显式使用该环境，不依赖激活：
 
 ```sh
 LEDGER_VENV=/path/to/venvs/report-tool
@@ -24,7 +24,7 @@ PY
 "$LEDGER_VENV/bin/artifact-ledger" init --db source.sqlite
 ```
 
-这两个文件均为精确 UTF-8/ASCII，末尾只有一个 LF，无 BOM。不要用编辑器将 LF 改为 CRLF。文档编写时已独立重算下表；这是样例字节核对，不是产品验证。
+这两个文件均为精确 UTF-8/ASCII，末尾只有一个 LF，无 BOM。不要用编辑器将 LF 改为 CRLF。下表摘要已独立计算，并在产品实际写入、指定版本读回和导入后逐字节比较；具体执行记录见验证记录。
 
 | 文件 | 原始字节长度 | SHA-256 |
 |---|---:|---|
@@ -255,6 +255,6 @@ PY
 
 ## 8. 此示例的验收边界
 
-A1 应记录确切软件 SHA、wheel 摘要、Python/SQLite 版本、逐步命令/退出码、关键响应以及前后计数，并用库入口完成等价闭环。本文列出的期望尚未由产品执行；输入样例能解析、摘要正确不等于安装、事务和导入已实现。
+A1 的确切软件 SHA、wheel 摘要、Python/SQLite 版本、命令/退出码、关键响应和前后计数见 [验证记录](A1_VALIDATION.md)。`tests/installed_walkthrough.py` 从本文提取七份 JSON 输入，执行 25 次已安装 CLI 调用，并运行 USAGE 的实际 Python 代码块；复现命令见 USAGE。其他故障与边界测试分别留证，本教程自身不覆盖全部失败模型。
 
 这说明普通业务程序怎样独立复用同一组件和搬运格式。单机同实现的往返不证明真实 NAS 恢复、多个消费者采用、跨厂商替换或第二实现兼容；这些分别由 A2、A3、A4 取得独立证据。

@@ -1,6 +1,6 @@
 # A1 公共接口与可移植封装候选
 
-状态：A0 设计候选，尚无实现或运行验收。本文中的接口、命令、限额和退出码是拟议的 A1 交付要求，不能据此宣称当前仓库已经可安装或运行。实施资格以仓库文档 Gate 为准。
+状态：Owner 已批准的 A1 规范接口，当前 `0.1.0a1` alpha 按此实现。接口、命令、限额和退出码的约束保持冻结文档基线；wire 的 `contract_status` 仍为 `candidate`，尚非稳定合同。实际安装与运行验收见 [验证记录](A1_VALIDATION.md)，环境限制见 [兼容表](COMPATIBILITY.md)；实施资格以仓库文档 Gate 为准。
 
 本文件定义 `bounded-local-v0.1` 的公共工程接口。首个实现使用本机 SQLite，在同一事务中保存元数据、有界内容与成功幂等结果。profile 固定有界、单域和原子行为，不要求独立替代实现也使用 SQLite。它不提供 HTTP 服务、身份认证、分布式写入、主动删除或垃圾回收。
 
@@ -117,7 +117,7 @@ append 的传入 bytes 与待登记内容闭包分别计量。相同 BlobRef 被
 
 ## 4. 拟议 Python 与 CLI 表面
 
-下表是接口设计要求，不是可执行代码或当前可用命令。库与 CLI 使用同一语义校验与提交路径；CLI 只处理参数和文件传输。
+下表是 alpha 实现遵循的规范接口要求；库与 CLI 使用同一语义校验与提交路径，CLI 只处理参数和文件传输。实际构建和调用方式见 [USAGE](USAGE.md)；表格本身不代替运行证据。
 
 Python 包根 `infra_artifact_ledger` 必须公开导出 `initialize`、`open` 和 `LedgerError`。`initialize(path)` / `open(path)` 为包级函数，返回 Ledger handle；下表其余库操作均为该 handle 的方法。消费者无需导入内部 `service` 或 `sqlite_store` 模块，也不依赖内部 handle 类的路径。
 
@@ -235,7 +235,7 @@ COMMIT 已确认成功后，若响应准备或资源清理失败且仍能构造�
 
 写成功响应恰含 `status: "COMMITTED"`、`commit_state: "committed"`、`operation_kind`、`result_ref`、`recorded_at`、`replayed`。普通成功响应恰含 `status: "OK"`、`commit_state: "not_applicable"` 与 `data`；data 携带对应读取记录、校验报告或辅助操作结果。
 
-下面是合成 create 请求与响应示例；时间由首次成功提交生成，示例不代表已经运行：
+下面是合成 create 请求与响应的格式示例；时间由首次成功提交生成，示例中的固定时间不是某次执行日志：
 
 ```json
 {
@@ -312,4 +312,4 @@ SQLite 文件不是 portable package。A1 不提供 snapshot、NAS 搬运或恢�
 | 读取与重启 | 原进程退出后新进程仍可读出准确身份、版本、来源及 bytes；已损坏内容不能返回完整成功；仅 bytes 损坏时成功操作仍可查询，read_blob/verify 必须识别损坏，不能以查询成功替代内容验收 |
 | 范围诚实 | 只证明声明的本地 profile；未执行真实 NAS 恢复、两个实际消费者与独立第二实现之前，不宣称相关更高阶段已经完成 |
 
-这些是后续实现的验收要求；本 A0 文档没有执行它们，也不以静态文档校验代替它们。
+这些验收要求在 A0 固定，A1 的执行结果统一记录在 [验证记录](A1_VALIDATION.md)；本文中的反例列表不代替实际测试与故障证据。

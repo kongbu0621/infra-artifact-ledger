@@ -1,6 +1,6 @@
 # 独立复用与接入指南
 
-状态：**A0 接入指南候选，尚无可安装或运行的软件**。本文把既有接口串成消费者接入步骤，不增加公共字段、方法或实现范围；字段与行为以 [公共接口提案](INTERFACE_PROFILE.md) 为准。所有安装模板、操作步骤和预期结果都须待 A1 实现后在 P5 验证，不能当作当前执行证据。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 已为 A1 的 P1–P5 记录 CLOSED。
+状态：**A1 `0.1.0a1` alpha 的独立接入指南**。可以从固定源码构建 wheel，在独立环境安装并运行库或 CLI；当前没有 PyPI 发布。本文不增加公共字段、方法或实现范围，字段与行为以 [公共接口](INTERFACE_PROFILE.md) 为准。实际源提交、构建和运行结果见 [验证记录](A1_VALIDATION.md)，支持矩阵见 [兼容表](COMPATIBILITY.md)。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 已为 A1 的 P1–P5 记录 CLOSED。
 
 ## 1. 什么情况下复用
 
@@ -19,7 +19,7 @@
 
 ## 2. 选择接入方式与数据归属
 
-| 选择 | 拟议接入方式 | 适用边界 |
+| 选择 | 接入方式 | 适用边界 |
 |---|---|---|
 | Python 项目 | 安装后导入 `infra_artifact_ledger`，使用库操作 | 同一进程调用；公开操作、返回值与 `LedgerError` 见接口 §4/§6 |
 | 非 Python 项目 | 用语言自身的进程 API 启动 `artifact-ledger`，交换 JSON 文件与结果 | 例如 C++、JavaScript 应用；仍需安装受支持的 Python 运行环境及 CLI，不代表原生 SDK |
@@ -29,26 +29,49 @@
 
 同一受信域内的多个本机进程若访问同一 Ledger，由上层明确协调一个逻辑写入者，各进程使用自己的连接。项目间若无共同数据所有者，优先保留独立实例，通过明确的包交换分享数据；不要把多个项目随意指向同一文件当作权限隔离方案。
 
-网络共享服务、多租户访问、HTTP API、原生 C++/JavaScript SDK、云同步均不在 A1 交付内。需要这些能力时另行设计消费者适配或后续实现，不按拟议 CLI 推导出已经存在的服务。
+网络共享服务、多租户访问、HTTP API、原生 C++/JavaScript SDK、云同步均不在 A1 交付内。需要这些能力时另行设计消费者适配或后续实现，不从本地 CLI 推导出已经存在的服务。
 
 ## 3. 从安装准备到第一次读回
 
-以下顺序适用于 **A1 通过相应验收后**。现在只能评审步骤，不能安装本仓尚不存在的包。
+以下顺序适用于当前 alpha，在 [兼容表](COMPATIBILITY.md) 列出的已验证环境复现；使用合成数据开始。
 
 1. 核对实际交付的 wheel、软件版本、来源提交、许可证和兼容证据；没有这些材料时不猜版本号或下载地址。
 2. 在使用方项目的独立 venv 中安装该 wheel，不依赖维护者的 checkout 或其他项目的环境。
 3. 选择本地可靠文件系统上的新数据库路径，和软件安装目录分开；确认只有一个逻辑写入者。
 4. 先按下表完成一个合成报告的闭环，再连接真实业务数据。
 
-**仅供 A1 交付后的 Linux/Python 3.11 安装模板；占位路径必须替换为当次已核验的真实路径，当前不执行：**
+**Linux/Python 3.11 构建与离线安装。** 把下面四个绝对路径替换为自己的目录。`LEDGER_SRC` 指向 [验证记录](A1_VALIDATION.md) 中固定源提交的完整 checkout；先核对来源 SHA。构建与消费者使用两个不同 venv，数据目录另选。`pyproject.toml` 固定 setuptools/wheel；这里同时固定其构建环境使用的 packaging 版本。准备构建工具这一步需要已配置的包索引，或事先准备的同版本 wheel。
 
 ```sh
+LEDGER_SRC=/path/to/projects/infra-artifact-ledger
+LEDGER_BUILD_VENV=/path/to/venvs/infra-artifact-ledger-build
+LEDGER_WHEEL_DIR=/path/to/verified-wheels
 LEDGER_VENV=/path/to/venvs/report-tool
+git -C "$LEDGER_SRC" rev-parse HEAD
+python3.11 -m venv "$LEDGER_BUILD_VENV"
+"$LEDGER_BUILD_VENV/bin/python" -m pip install \
+  "setuptools==84.0.0" "wheel==0.48.0" "packaging==26.3"
+"$LEDGER_BUILD_VENV/bin/python" -m pip wheel --no-build-isolation --no-deps \
+  --wheel-dir "$LEDGER_WHEEL_DIR" "$LEDGER_SRC"
 python3.11 -m venv "$LEDGER_VENV"
-"$LEDGER_VENV/bin/python" -m pip install --no-index "/path/to/verified/<实际wheel文件名>.whl"
+"$LEDGER_VENV/bin/python" -m pip install --no-index --no-deps \
+  "$LEDGER_WHEEL_DIR/infra_artifact_ledger-0.1.0a1-py3-none-any.whl"
+"$LEDGER_VENV/bin/python" -I -c \
+  'import importlib.metadata; print(importlib.metadata.version("infra-artifact-ledger"))'
 ```
 
-模板选择已有 wheel 的离线安装，不声称仓库已发布 PyPI 包。独立 venv 不能复用其他项目环境；Windows 或其他平台的安装路径和命令须随相应平台的实际验证提供。下列 CLI 操作使用该 venv 中的可执行文件，避免调用到系统里的其他版本。
+构建成功后消费者安装完全使用本地 wheel，不依赖私有 checkout 或模型服务。执行结果应为版本 `0.1.0a1`；软件包与合同的版本含义分别见 §8。不执行 `pip install infra-artifact-ledger` 猜测公开索引来源。Windows 或其他平台的命令须随其实际验证提供。下列 CLI 操作使用上述消费者 venv 中的可执行文件，避免调用到其他版本。
+
+开发者可在固定 checkout 内复核普通测试和显式资源测试，再从消费者 venv 运行文档闭环。资源测试会真实处理最高 384 MiB 包及 256 MiB 内容，并记录内存峰值，所需内存高于文件大小；运行前查看验证记录中的实测值。普通 discovery 会跳过这组昂贵检查，须执行第二条命令才算覆盖实际限额。
+
+```sh
+cd "$LEDGER_SRC"
+PYTHONPATH=src "$LEDGER_BUILD_VENV/bin/python" -m unittest discover -s tests -v
+PYTHONPATH=src "$LEDGER_BUILD_VENV/bin/python" tests/test_resources.py -v
+"$LEDGER_VENV/bin/python" -I "$LEDGER_SRC/tests/installed_walkthrough.py" --repo "$LEDGER_SRC"
+```
+
+最后一条命令读取报告示例的合成输入，实际调用已安装 CLI，并执行本文的 Python 代码块；程序断言库来自消费者 venv，没有从 checkout 的 `src` 导入。该次 walkthrough 包含 25 次 CLI 调用；它读取文档作为测试输入，不使生产运行依赖源码仓库。每次复现自行保存输出与退出码，准确执行版本以验证记录为准。
 
 | 次序 | 消费者动作 | 使用既有操作及确认点 |
 |---|---|---|
@@ -68,7 +91,7 @@ python3.11 -m venv "$LEDGER_VENV"
 
 Python 消费者从包根导入 `initialize`、`open` 和需要处理的 `LedgerError`；其余操作在返回的 handle 上调用，不读取 SQLite 表布局或导入内部模块。写请求为严格 UTF-8 JSON bytes；payloads 使用 BlobRef 到不可变 bytes 的映射；不适用的传输参数省略。库 handle 在使用后关闭，并由创建它的线程使用。具体参数和返回类型沿用接口 §4，本文不重新定义签名。
 
-**待 A1 的 Python 接入示例，当前不执行。** 先按 [报告示例](REUSE_EXAMPLE.md) 准备 `create-report.json`、`append-v1.json`、`append-v2.json` 和两份 `report-v1.txt` / `report-v2.txt`。下面使用另一尚不存在的 `python-source.sqlite`，不与 CLI 示例的库混用。公开导出、handle 方法和上下文管理的调用形状须在 P5 按接口 §4 实测核对。
+**Python 接入示例。** 先按 [报告示例](REUSE_EXAMPLE.md) 准备 `create-report.json`、`append-v1.json`、`append-v2.json` 和两份 `report-v1.txt` / `report-v2.txt`。下面使用另一尚不存在的 `python-source.sqlite`，不与 CLI 示例的库混用。此代码块已由隔离安装 walkthrough 执行，版本和结果见验证记录。
 
 ```python
 from pathlib import Path
@@ -106,12 +129,16 @@ with open_ledger("python-source.sqlite") as ledger:
 
 CLI append 总是提供 `--payload-map`；全部复用既有 bytes 时文件内容为 `[]`。登记新空 Blob 时仍提供对应条目，input_path 指向空文件；具体允许和必需选项以接口 §4 为准。
 
+当前 Linux CLI 从调用者明确指定的**普通文件**读取请求、payload-map、内容和包；不会把 FIFO、设备或无限输入流当作有界文件读取。read-blob/export 在输出目录创建临时文件，写完并核验后使用同目录 hard link 发布新目标，避免覆盖既有文件；需要支持硬链接的本地文件系统。两个 export 文件仍是两个发布动作，必须配套验证，不能把一个文件成功写出解释为整个包已完成。实际平台边界见兼容表。
+
 CLI 接入应按以下顺序处理结果：
 
 1. 分别捕获 stdout、stderr 和退出状态；同时消费两个输出通道，避免诊断输出阻塞进程。
 2. stdout 按接口规定解析为一行 UTF-8 JSON；stderr 是诊断信息，不拼入 JSON。实际 Blob 内容由 `read-blob` 写入显式输出文件。
 3. 同时核对退出码、`status` 和 `commit_state`；成功写入为 `COMMITTED`，读取等操作为 `OK`，各字段形状见接口 §6。
 4. stdout 缺失、截断、解析失败或进程超时属于结果尚未取得；不能仅凭非零退出码推断写入未提交，转入原请求核对。
+
+`--help` 是面向人的说明入口，输出普通帮助文本并退出 0；它不执行 Ledger 操作，也不属于上述机器 JSON 结果。消费者调用业务命令时不要把帮助输出当作成功 envelope。
 
 幂等查询通过 `operation --request FILE` 传递 JSON，文件只包含接口规定的 scope、kind、key。合法 key 可能包含 JSON 转义的控制字符，不能改成 argv 的 key 参数或自动剔除字符。
 
@@ -148,7 +175,7 @@ CLI 接入应按以下顺序处理结果：
 
 ## 7. 数据交换、本地与云上边界
 
-独立实例间的拟议交换顺序为：源库 `export_bundle` / `export` → 保存配套 package 与 descriptor → 在目标新库以 `import_bundle` 提交 → 核对 Receipt、精确记录和实际 bytes。传输方式由消费者安排，Ledger 不自动联网。完整格式见 [接口 §7](INTERFACE_PROFILE.md#7-完整字节包与导出)。
+独立实例间的交换顺序为：源库 `export_bundle` / `export` → 保存配套 package 与 descriptor → 在目标新库以 `import_bundle` 提交 → 核对 Receipt、精确记录和实际 bytes。传输方式由消费者安排，Ledger 不自动联网。完整格式见 [接口 §7](INTERFACE_PROFILE.md#7-完整字节包与导出)。
 
 目标已有相同 Artifact 时，只接受完全一致的身份、全部版本及来源历史；子集、超集、不同分支均冲突。不要把包导入当作“给另一项目同步最新版本”。原始历史保持不变，新导入会增加本次 Receipt 及成功幂等结果；比较时不能要求导入后所有记录计数与源库完全相等。
 
@@ -162,20 +189,20 @@ A1 首个 backend 依赖本机可靠文件系统和单一受信数据域。云�
 
 整库历史可以增长，但 A1 只能导出仍能装入一个 package 的完整 Ledger；超限就拒绝，不自动分片或挑选历史。大型模型权重或长期海量知识内容不能仅凭“制品”这个名称被视作首版适用对象；序列化上限也不等于内存峰值。
 
-| 版本层次 | 当前候选与接入要求 |
+| 版本层次 | 当前实现与接入要求 |
 |---|---|
-| 软件包版本 | 尚未发布；使用实际交付的固定版本与来源提交，不从合同版本猜包版本 |
+| 软件包版本 | `0.1.0a1` alpha；从固定源提交构建 wheel，当前未发布 PyPI 包 |
 | 公共 metadata 合同 | `contract_version=0.1.0`，状态 `candidate`；固定兼容标记不要求访问私有来源 |
 | 行为 profile | `bounded-local-v0.1`；确认操作和上限，不把有相似 API 的产品自动视为兼容 |
 | 传输封装 | `transport_version=0.1.0`；package 与 descriptor 均须支持并验证 |
-| 本地存储格式 | 初始 `storage_schema_version=1` 为设计要求；未知格式拒绝打开，无自动 migration |
+| 本地存储格式 | `storage_schema_version=1`；未知格式拒绝打开，无自动 migration |
 | 运行平台 | 最低 Python 3.11；Linux/Python 3.11 为 A1 必验，3.12 是附加项；其他平台未验不宣称支持 |
 
-升级或软件回退前核对已发布的兼容证据，不直接降级数据库或复制变化中的 SQLite 文件。`COMPATIBILITY.md` 随 P5 提供实际验收矩阵，当前没有跨平台或升级兼容通过声明。
+升级或软件回退前核对 [兼容表](COMPATIBILITY.md)，不直接降级数据库或复制变化中的 SQLite 文件。首个 alpha 没有旧版升级/降级兼容通过声明；未验证的平台仍保持未验证。
 
 ## 9. P5 接入验收
 
-以下各项均为待执行验收，当前状态全部为**未实现/未验证**，不以本指南存在代替通过。
+以下是接入验收清单。当前库与 CLI 合成报告闭环、实际资源阈值已有执行；最终源提交对应的完整结果和仍未证明事项统一见 [验证记录](A1_VALIDATION.md)，不以本指南存在代替通过。
 
 | 接入验收 | 必须留下的证据 |
 |---|---|

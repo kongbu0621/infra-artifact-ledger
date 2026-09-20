@@ -15,22 +15,24 @@
 | ID | 需求/责任 | 正反例与检查 | 通过依据 |
 |---|---|---|---|
 | A2-T01 | R01 / SQLite | 空库、多版本/分支/Manifest/来源/已有导入；T0前后写握手、未提交事务、backup失败 | 固定完整状态、不混后续提交、源不被快照修改 |
-| A2-T02 | R01/R07 / 锁 | 锁竞争、hot journal、WAL/未知schema、期限、backup增长 | 明确失败、有限检查、源锁在本地backup后释放 |
+| A2-T02 | R01/R07 / 锁 | 锁竞争、hot journal、WAL/未知schema、A1合法schema的UTF-16源、期限、backup增长 | 非UTF-8在TEXT统计前报UNSUPPORTED_FORMAT且不改源；有限检查、源锁在本地backup后释放 |
 | A2-T03 | R02 / 格式 | 缺/多成员、symlink/hardlink数据/FIFO、非法ID、marker先到、重复键/超深JSON | 不完整或不匹配拒绝，不以marker单独判完成 |
-| A2-T04 | R04 / 校验 | 结构坏、外键坏、合法SQLite但业务关系/幂等坏、Blob坏、summary伪造 | 物理、外键和业务校验各有能捕获的反例 |
+| A2-T04 | R04 / 校验 | 结构坏、外键坏、合法SQLite但业务关系/幂等坏、Blob坏、summary伪造、manifest编码自报与UTF-16实际库不符 | 所有私有副本入口在TEXT统计前拒非UTF-8；物理、外键和业务校验各有反例 |
 | A2-T05 | R03 / 挂载 | 正确NAS、未挂载同名本机目录、换export/root、非预期子挂载/overlay、fd mnt_id不符、运行中变化；完整根bind可识别性限制 | 不回退本机，非预期绑定拒绝/unknown，不声称识别所有bind |
-| A2-T06 | R03 / 发布 | DB/manifest/marker前中后中断，短写/空间/权限/回读失败 | 旧代不变；未完成不可读；不明如实报告 |
+| A2-T06 | R03 / 发布 | DB/manifest/marker前中后中断，短写/空间/权限/回读失败；有效marker可见但发布者最后目录同步未完成 | 旧代不变；缺marker/成员或内容不符拒绝；只读verify可确认完整字节，不冒充发布者同步完成；不明如实报告 |
 | A2-T07 | R03/R06 / 冲突 | 两进程同ID、既有不完整目录、同ID不同内容 | 至多一个独占，无覆盖/续传/自动清理 |
 | A2-T08 | R02/R03/R06 / 不明 | marker link后fsync失败、mount消失、stdout断开；create响应完全丢失且尚无manifest hash | 原ID/hash核对当前状态；create按接口自洽性流程处理，不伪称事先摘要、不重复发布 |
-| A2-T09 | R07 / 资源 | 文件1GiB、metadata16MiB、refs32MiB、全部TEXT64MiB、行数及JSON limit/limit+1 | 合格上限通过，超限拒绝，记录实测RSS/时间 |
+| A2-T09 | R07 / 资源 | 文件1GiB、metadata16MiB、refs32MiB、全部TEXT64MiB、行数及JSON limit/limit+1；中文及ASCII UTF-8精确字节计量、UTF-16不能绕过或被当UTF-8计量 | 合格上限通过，超限拒绝，其他编码先拒绝，记录实测RSS/时间 |
 | A2-T10 | R04 / 固定读取 | 验证后路径替换、复制中修改、超长度、digest错、截断 | 验证/发布绑定同份暂存，不偷换对象 |
 | A2-T11 | R05 / 拒覆盖 | 新目录；旧空/非空目录、断链、旧sidecar、并发同目标 | 旧对象完整保留，只有独占目录可发布 |
-| A2-T12 | R05/R06 / 恢复发布 | copy/verify/link前失败，link后同步失败，丢响应/终止 | 不公开半库，公开后保留，check_restore不写 |
+| A2-T12 | R05/R06 / 恢复发布 | copy/verify/link前失败；link已尝试但证明无公开对象；link后清理/同步失败；hardlink后暂存仍在、nlink=2时终止；丢响应；sidecar含断链 | 确定无发布为对应错误/not_published，不确定为PUBLICATION_UNKNOWN/unknown，既有冲突为TARGET_EXISTS/not_applicable；核对允许中断残留但拒sidecar；不公开半库、公开后保留、核对不写 |
 | A2-T13 | R05 / 状态延续 | 逐行/全部Blob，旧key重放、冲突重试、新请求 | 不增Receipt/operations，旧结果保持，新写只在测试库 |
-| A2-T14 | R08 / 接入 | wheel独立venv，五入口API/CLI、参数/错误/JSON，全部A1回归 | 不从checkout导入，无私有依赖，3.11及GX10分别记录 |
+| A2-T14 | R08 / 接入 | wheel独立venv，五入口API/CLI、参数/错误/JSON，全部A1回归；配置字段类型/16KiB预算一致、CLI原始与规范编码预算、固定后修改调用方dict；Python签名TypeError与操作RecoveryError | 配置后续修改不改变目标，非法类型/预算明确拒绝；不从checkout导入，无私有依赖，3.11及GX10分别记录 |
 | A2-T15 | R09 / 真NAS | 保存→独立回读→移除本地测试副本→NAS恢复→全量核对 | 真挂载证据、无fallback、原业务数据不动 |
 
 T09还包含累计payload>256MiB且SQLite文件>384MiB的合法库；文件limit±1与合法页边界按实施计划区分。所有注入测试检查失败后的实际状态，不能只断言报错。
+
+T06/T12共同检查公开系统调用的三种结果：确定没有创建、已公开但后续同步/核对不明、NFS已创建却返回错误；不得用同一个not_published吞掉后两者。T12还须确认成功恢复先清理本次暂存再做最终目录同步；中断目标的check_restore只读核对数据库、保留其余条目，OK不代表清理或业务启用已完成。
 
 预算边界区分“可达的合法输入”和解析/预检器边界。合法可达上限须真实成功并检查超限；固定schema或其他更紧预算使某边界不可独立达到时，在解析/预检层核验limit±1，之后仍可按字段/语义拒绝。不得要求1024节点marker等畸形对象在限额处整流程成功，也不得把未触达的实际边界标成已验。
 

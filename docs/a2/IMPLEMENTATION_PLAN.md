@@ -40,9 +40,9 @@ NAS profile尚未确认不阻止本地S1的设计及后续获批实现；它阻�
 
 ## 4. 复用与验证
 
-复用A1 schema检查、Ledger.verify、错误分类、拒覆盖发布原则。现有open为mode=rw，不直接打开NAS归档；验证在本地私有副本进行。恢复复制完整SQLite状态，不调用import_bundle；内部重构保留A1同用例前后结果。
+复用A1 schema检查、Ledger.verify、错误分类、拒覆盖发布原则。A2在源视图及每份私有验证/恢复副本中先检查UTF-8编码再计量TEXT预算，不把A1格式检查当编码保证。现有open为mode=rw，不直接打开NAS归档；验证在本地私有副本进行。恢复复制完整SQLite状态，不调用import_bundle；内部重构保留A1同用例前后结果。
 
-验证覆盖限额/limit+1、未知格式、真实错误阶段、时间预算、路径替换、已有目标/sidecar、响应丢失，必须检查原库/旧归档实际不变。SQLite统计与完整性检查设progress handler检查期限；Python图遍历等长循环也应有检查点，不因backup有回调就声称整操作已限时。OS阻塞I/O仍不保证硬超时。
+验证覆盖限额/limit+1、未知格式、真实错误阶段、时间预算、路径替换、已有目标/sidecar、响应丢失，必须检查原库/旧归档实际不变。分别验证确定未发布、结果不明和只读核对的状态边界；覆盖hardlink后尚未清理暂存就中断，以及入口配置固定后调用方修改dict。SQLite统计与完整性检查设progress handler检查期限；Python图遍历等长循环也应有检查点，不因backup有回调就声称整操作已限时。OS阻塞I/O仍不保证硬超时。
 
 记录实际磁盘/RSS/耗时，不把1GiB文件预算当RSS保证。至少一个合法Ledger同时满足累计payload>256MiB、SQLite文件>384MiB，并在A2预算内成功恢复；A1 portable按自身限额拒绝。实际封存大小和metadata/refs上限需边界证据；不可只缩小常量跑微型fixture。固定库文件以SQLite页为单位，文件字节limit±1可由有界复制/畸形输入测试覆盖，合法数据库成功边界用相邻合法页大小，不伪造“任意字节长度的合法SQLite”。
 

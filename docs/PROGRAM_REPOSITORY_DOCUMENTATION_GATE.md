@@ -17,7 +17,7 @@
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative interface dependency | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)，与三文档一起固定 |
-| Documentation baseline A | PENDING_REBASELINE：本轮复审已修订技术文档，形成新提交后由独立 bookkeeping 提交固定其完整 SHA |
+| Documentation baseline A | `883f1c869117c8dd23ad9a6459d44c0b34a0f98d`；本次独立 bookkeeping 提交仅固定已存在的复审后文档基线 |
 | Authorized implementation scope | **none** |
 | Proposed scope | `A1-local-ledger-v0.1`，仅实施计划 P1–P5 与其明确列出的交付 |
 | Owner closure decision B | **none**；无批准文本、时间/event ID 或稳定决定引用 |

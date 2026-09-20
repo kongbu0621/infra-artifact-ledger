@@ -22,7 +22,7 @@ A1 的范围包含下述 P1–P5、MIT LICENSE、本地安装与测试所需配�
 | `src/infra_artifact_ledger/sqlite_store.py` | 本地格式版本、事务、索引和 BLOB |
 | `src/infra_artifact_ledger/portable.py` | 有界完整包与 descriptor，精确字节校验 |
 | `src/infra_artifact_ledger/cli.py`、`__init__.py` | 公共库出口与单次 JSON CLI |
-| `tests/`、`tests/fixtures/` | 操作级、故障、CLI、兼容性与独立安装验证；仅合成数据 |
+| `tests/`（输入工厂为 `acceptance_helpers.py`） | 操作级、故障、CLI、兼容性与独立安装验证；运行时生成合成数据，不提交大型 payload |
 | `pyproject.toml`、`.gitignore`、`LICENSE` | 包、命令入口、临时产物排除、Owner 已确认的 MIT 许可 |
 | `docs/COMPATIBILITY.md` | A1 实测的软件、数据格式与平台版本支持表 |
 

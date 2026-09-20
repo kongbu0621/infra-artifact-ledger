@@ -22,6 +22,13 @@ class MountParsingTests(unittest.TestCase):
                           item.fs_type, item.source),
                          (25, 1, "/some root", "/mnt/archive one", "nfs4", "server:/some export"))
 
+    def test_unicode_whitespace_inside_paths_is_not_a_kernel_separator(self):
+        raw = "25 1 0:27 /export\u00a0root /mnt/archive\u2028one rw - nfs4 server:/some\u2003export rw\n"
+        item, = storage.parse_mountinfo(raw)
+        self.assertEqual(item.root, "/export\u00a0root")
+        self.assertEqual(item.point, "/mnt/archive\u2028one")
+        self.assertEqual(item.source, "server:/some\u2003export")
+
     def test_bad_mountinfo_fails_closed(self):
         for raw in ("", "25 1 nope", "0 1 0:1 / / rw - ext4 device rw",
                     "1 1 0:1 / / rw - ext4 device rw\n1 1 0:1 / / rw - ext4 device rw"):
@@ -161,6 +168,96 @@ class StorageTests(unittest.TestCase):
             self.assertFalse(temp_path.exists())
         self.assertEqual(sentinel.read_bytes(), b"keep")
 
+    def test_walk_close_failure_closes_child_without_reclosing_reused_parent_fd(self):
+        real_open, real_close = os.open, os.close
+        opened, reused, failed = [], [], []
+
+        def track_open(*args, **kwargs):
+            descriptor = real_open(*args, **kwargs)
+            opened.append(descriptor)
+            return descriptor
+
+        def close_then_fail(descriptor):
+            real_close(descriptor)
+            if not failed:
+                failed.append(descriptor)
+                reused.append(real_open("/dev/null", os.O_RDONLY))
+                self.assertEqual(reused[-1], descriptor)
+                raise OSError(errno.EIO, "close reported failure after releasing parent")
+
+        try:
+            with mock.patch.object(storage.os, "open", side_effect=track_open), \
+                    mock.patch.object(storage.os, "close", side_effect=close_then_fail):
+                self.assert_code("IO_ERROR", lambda: storage._walk_directory(self.base))
+            self.assertEqual(len(opened), 2)
+            self.assertNotEqual(opened[1], reused[0])
+            os.fstat(reused[0])
+            with self.assertRaises(OSError):
+                os.fstat(opened[1])
+        finally:
+            for descriptor in set(opened + reused):
+                try:
+                    real_close(descriptor)
+                except OSError:
+                    pass
+
+    def test_copy_close_failure_does_not_close_a_reused_descriptor(self):
+        (self.base / "source").write_bytes(b"contents")
+        real_close, real_exclusive = os.close, storage._exclusive_file
+        output, reused, failed = [], [], []
+
+        def exclusive(*args, **kwargs):
+            descriptor = real_exclusive(*args, **kwargs)
+            output.append(descriptor)
+            return descriptor
+
+        def close_then_fail(descriptor):
+            real_close(descriptor)
+            if output and descriptor == output[0] and not failed:
+                failed.append(descriptor)
+                reused.append(os.open("/dev/null", os.O_RDONLY))
+                self.assertEqual(reused[-1], descriptor)
+                raise OSError(errno.EIO, "close reported failure after releasing output")
+
+        with self.directory() as directory:
+            source = directory.open_file("source")
+            try:
+                with mock.patch.object(storage, "_exclusive_file", side_effect=exclusive), \
+                        mock.patch.object(storage.os, "close", side_effect=close_then_fail):
+                    self.assert_code("IO_ERROR", lambda: storage.copy_file(source, directory, "copy", self.budget))
+                self.assertTrue(reused)
+                os.fstat(reused[0])
+                self.assertEqual((self.base / "copy").read_bytes(), b"contents")
+            finally:
+                real_close(source)
+                for descriptor in reused:
+                    try:
+                        real_close(descriptor)
+                    except OSError:
+                        pass
+
+    def test_cleanup_rejects_replaced_child_before_deleting_its_contents(self):
+        replacement = self.base / "replacement"
+        replacement.mkdir()
+        (replacement / "unrelated").write_bytes(b"must survive")
+        original_open = os.open
+        changed = []
+        with self.directory() as parent, parent.mkdir("owned") as owned:
+            with owned.mkdir("nested") as nested:
+                storage.write_file(nested, "original", b"also preserved", self.budget)
+
+            def replace_before_open(name, *args, **kwargs):
+                if name == "nested" and kwargs.get("dir_fd") == owned.fd and not changed:
+                    changed.append(True)
+                    (owned.path / "nested").rename(self.base / "retained")
+                    replacement.rename(owned.path / "nested")
+                return original_open(name, *args, **kwargs)
+
+            with mock.patch.object(storage.os, "open", side_effect=replace_before_open):
+                self.assert_code("IO_ERROR", lambda: storage._remove_owned_contents(owned))
+            self.assertEqual((owned.path / "nested" / "unrelated").read_bytes(), b"must survive")
+            self.assertEqual((self.base / "retained" / "original").read_bytes(), b"also preserved")
+
     def test_copy_hash_short_writes_and_existing_target(self):
         raw = b"x" * (storage.COPY_CHUNK + 23)
         source = self.base / "source"
@@ -221,6 +318,26 @@ class StorageTests(unittest.TestCase):
             self.assert_code("RESOURCE_LIMIT", lambda: storage.read_file(directory, "data", 4, self.budget))
             self.assert_code("TARGET_EXISTS", lambda: storage.write_file(directory, "data", b"bad", self.budget))
         self.assertEqual((self.base / "data").read_bytes(), b"12345")
+
+    def test_file_fsync_failures_report_sync_stage_and_preserve_partial_files(self):
+        (self.base / "source").write_bytes(b"copy contents")
+        with self.directory() as directory:
+            source = directory.open_file("source")
+            try:
+                with mock.patch.object(storage.os, "fsync", side_effect=OSError(errno.EIO, "sync failed")):
+                    copied = self.assert_code("IO_ERROR", lambda: storage.copy_file(
+                        source, directory, "copied", self.budget))
+                    written = self.assert_code("IO_ERROR", lambda: storage.write_file(
+                        directory, "written", b"written contents", self.budget))
+                self.assertEqual(copied.stage, "sync")
+                self.assertEqual(written.stage, "sync")
+                self.assertEqual(copied.publication_state, "not_published")
+                self.assertEqual(written.publication_state, "not_published")
+                self.assertEqual((self.base / "copied").read_bytes(), b"copy contents")
+                self.assertEqual((self.base / "written").read_bytes(), b"written contents")
+                self.assertEqual((self.base / "source").read_bytes(), b"copy contents")
+            finally:
+                os.close(source)
 
     def test_deadline_and_fsync_failures(self):
         with self.directory() as directory:

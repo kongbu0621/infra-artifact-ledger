@@ -32,7 +32,10 @@ class RecoveryError(Exception):
             raise ValueError("Invalid recovery error classification.")
         if type(message) is not str:
             raise TypeError("Recovery error message must be a string.")
-        message = message.encode("utf-8", "replace")[:1024].decode("utf-8", "ignore")
+        # Every code point produces at least one byte (including surrogate
+        # replacement). Slice first so an oversized diagnostic never requires
+        # an equally oversized temporary UTF-8 allocation merely to truncate it.
+        message = message[:1024].encode("utf-8", "replace")[:1024].decode("utf-8", "ignore")
         super().__init__(message)
         self.code, self.message = code, message
         self.stage, self.publication_state = stage, publication_state

@@ -290,6 +290,27 @@ os._exit(0)
         self.assertIsNotNone(children[0].poll())
         self.assertTrue(children[0].stdout.closed)
 
+    def test_child_closed_stdout_still_obeys_wait_deadline_and_is_reaped(self):
+        original = ss.subprocess.Popen
+        children = []
+
+        def child(*args, **kwargs):
+            process = original([
+                sys.executable, "-I", "-c", "import os,time; os.close(1); time.sleep(30)",
+            ], **kwargs)
+            children.append(process)
+            return process
+
+        self.budget.deadline = time.monotonic() + 0.15
+        with patch.object(ss.subprocess, "Popen", side_effect=child), patch.object(
+            ss, "_connect_readonly", side_effect=AssertionError("incomplete child was accepted")
+        ):
+            self.error("TIMEOUT", self.snapshot)
+        self.assertEqual(len(children), 1)
+        self.assertIsNotNone(children[0].poll())
+        self.assertTrue(children[0].stdout.closed)
+        self.assertFalse(self.target.exists())
+
     def test_detected_source_binding_change_refuses_to_open_replacement(self):
         original = ss._read_header
 
@@ -366,6 +387,37 @@ os._exit(0)
                 self.assertEqual(probe.returncode, 0, probe.stderr)
                 if self.target.exists():
                     self.target.unlink()
+
+    def test_failed_target_close_preserves_primary_timeout_and_releases_source(self):
+        original_connect = ss.sqlite3.connect
+
+        class TimedOutSource(sqlite3.Connection):
+            def backup(inner, target, **kwargs):
+                raise RecoveryError("TIMEOUT", "Synthetic backup deadline.", "snapshot")
+
+        class FailedTargetClose(sqlite3.Connection):
+            def close(inner):
+                super().close()
+                raise sqlite3.OperationalError("Synthetic target close failure.")
+
+        def connect(database, **kwargs):
+            if database.startswith(self.source.as_uri()):
+                kwargs["factory"] = TimedOutSource
+            elif database.startswith(self.target.as_uri()):
+                kwargs["factory"] = FailedTargetClose
+            return original_connect(database, **kwargs)
+
+        before = self.source.read_bytes()
+        with patch.object(ss.sqlite3, "connect", side_effect=connect):
+            error = self.error("TIMEOUT", self.snapshot)
+        self.assertTrue(any("cleanup" in note for note in error.__notes__))
+        self.assertEqual(self.source.read_bytes(), before)
+        probe = subprocess.run([
+            sys.executable, "-I", "-c",
+            "import sqlite3,sys; c=sqlite3.connect(sys.argv[1],timeout=0); c.execute('BEGIN EXCLUSIVE'); c.close()",
+            str(self.source),
+        ], capture_output=True, timeout=10)
+        self.assertEqual(probe.returncode, 0, probe.stderr)
 
     def test_private_validation_rejects_blob_fk_indexes_and_sidecars(self):
         self.snapshot()
@@ -458,6 +510,51 @@ os._exit(0)
 
         with patch.object(ss, "_format_and_budget", side_effect=expire):
             self.error("TIMEOUT", lambda: ss.validate_database(self.target, Budget()))
+
+    def test_sqlite_timeout_inside_a1_verify_keeps_timeout_classification(self):
+        self.snapshot()
+        budget = Budget()
+
+        def interrupted_metadata(store):
+            budget.deadline = time.monotonic() - 1
+            store.execute(
+                "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM r WHERE n<10000) SELECT sum(n) FROM r"
+            ).fetchone()
+            self.fail("SQLite progress handler did not interrupt Ledger.verify")
+
+        with patch.object(ss.SQLiteStore, "metadata", interrupted_metadata):
+            self.error("TIMEOUT", lambda: ss.validate_database(self.target, budget))
+        # A subsequent unrelated A1 verification is unaffected by the ended
+        # recovery callback and the failed operation's read transaction.
+        with open_ledger(self.target) as ledger:
+            self.assertEqual(ledger.verify()["verified_blob_count"], 1)
+
+    def test_nested_checkpoint_failure_restores_outer_and_does_not_affect_thread(self):
+        calls = []
+        thread_errors = []
+
+        def inner_deadline():
+            raise RecoveryError("TIMEOUT", "Nested synthetic deadline.", "verify")
+
+        def unrelated_thread():
+            try:
+                checkpoint()
+            except BaseException as error:
+                thread_errors.append(error)
+
+        with checkpoint_scope(lambda: calls.append("outer")):
+            checkpoint()
+            with self.assertRaises(RecoveryError):
+                with checkpoint_scope(inner_deadline):
+                    thread = threading.Thread(target=unrelated_thread)
+                    thread.start()
+                    thread.join(5)
+                    self.assertFalse(thread.is_alive())
+                    checkpoint()
+            checkpoint()
+        checkpoint()
+        self.assertEqual(calls, ["outer", "outer"])
+        self.assertEqual(thread_errors, [])
 
     def test_metadata_bytes_count_utf8_and_limit_boundary(self):
         # This tests the pre-decoding budget layer. The deliberately synthetic

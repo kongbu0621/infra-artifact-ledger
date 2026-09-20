@@ -12,6 +12,8 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import os
+import stat
 from pathlib import Path
 import platform
 import sqlite3
@@ -25,12 +27,17 @@ def encode(value):
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
-def main():
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scratch-parent", type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--storage-config", type=Path)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     import infra_artifact_ledger as library
     from infra_artifact_ledger import recovery
@@ -39,11 +46,20 @@ def main():
     from infra_artifact_ledger.snapshot_storage import open_directory
 
     module_path = Path(library.__file__).resolve()
-    assert sys.flags.isolated and sys.prefix != sys.base_prefix, "Use the consumer venv Python with -I."
-    assert Path(sys.prefix).resolve() in module_path.parents, "Use an isolated installed wheel."
+    require(sys.flags.isolated and sys.prefix != sys.base_prefix, "Use the consumer venv Python with -I.")
+    require(Path(sys.prefix).resolve() in module_path.parents, "Use an isolated installed wheel.")
     executable = Path(sys.executable).parent / "artifact-ledger"
-    assert executable.is_file(), "Installed CLI entry point is missing."
-    assert len(args.source_commit) == 40 and all(c in "0123456789abcdef" for c in args.source_commit)
+    require(executable.is_file(), "Installed CLI entry point is missing.")
+    require(len(args.source_commit) == 40 and all(c in "0123456789abcdef" for c in args.source_commit), 'Installed snapshot acceptance condition failed.')
+    require(Path(__file__).resolve().parents[1] not in module_path.parents,
+            "Installed acceptance must not import the source checkout.")
+    config = None
+    if args.storage_config is not None:
+        fd = os.open(args.storage_config, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(fd, "rb") as stream:
+            require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode), "Storage config must be an ordinary file.")
+            raw = stream.read(16 * 1024 + 1)
+        config = capture_storage_config(parse_json(raw, limit=16 * 1024))
     scratch = args.scratch_parent.absolute()
     # Public APIs also enforce the profile.  This early check avoids placing
     # even synthetic fixtures on unsupported temporary/overlay filesystems.
@@ -75,11 +91,16 @@ def main():
         original_summary = ledger.verify()
     original_bytes = source.read_bytes()
 
-    config = None
-    if args.storage_config is not None:
-        with args.storage_config.open("rb") as stream:
-            raw = stream.read(16 * 1024 + 1)
-        config = capture_storage_config(parse_json(raw, limit=16 * 1024))
+    # CLI and API share this once-captured value. Later edits to the input
+    # config cannot redirect only the CLI half of the same acceptance run.
+    fixed_config_path = None
+    if config is not None:
+        fixed_config_path = work / "storage-config.json"
+        fd = os.open(fixed_config_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(encode(config))
+            stream.flush()
+            os.fsync(stream.fileno())
 
     calls = []
 
@@ -90,19 +111,19 @@ def main():
         for key, value in kwargs.items():
             if value is not None:
                 if key == "storage_config":
-                    value = args.storage_config.absolute()
+                    value = fixed_config_path
                 argv.extend(["--" + key.replace("_", "-"), str(value)])
         run = subprocess.run(argv, capture_output=True, timeout=360, cwd=work)
-        assert run.returncode == 0, (command, run.returncode, run.stdout, run.stderr)
-        assert run.stderr == b"" and run.stdout.count(b"\n") == 1
-        assert len(run.stdout) <= 64 * 1024
+        require(run.returncode == 0, (command, run.returncode, run.stdout, run.stderr))
+        require(run.stderr == b"" and run.stdout.count(b"\n") == 1, 'Installed snapshot acceptance condition failed.')
+        require(len(run.stdout) <= 64 * 1024, 'Installed snapshot acceptance condition failed.')
         return json.loads(run.stdout)
 
     for mode in ("api", "cli"):
         def invoke(command, **kwargs):
             response = getattr(recovery, command)(**kwargs) if mode == "api" else run_cli(command, **kwargs)
-            assert response["operation"] == command and response["status"] == "OK"
-            assert response["publication_state"] == ("not_applicable" if command in {"verify", "check_restore"} else "published")
+            require(response["operation"] == command and response["status"] == "OK", 'Installed snapshot acceptance condition failed.')
+            require(response["publication_state"] == ("not_applicable" if command in {"verify", "check_restore"} else "published"), 'Installed snapshot acceptance condition failed.')
             calls.append({"entry": mode, "operation": command, "status": "PASS"})
             return response["data"]
 
@@ -110,13 +131,13 @@ def main():
                          snapshot_id=uuid.uuid4().hex, source_commit=args.source_commit)
         snapshot = created["snapshot_path"]
         expected = created["manifest_sha256"]
-        assert created["summary"] == original_summary
+        require(created["summary"] == original_summary, 'Installed snapshot acceptance condition failed.')
         source_config = None
         if config is not None:
             published = invoke("publish", snapshot=snapshot, storage_config=config,
                                expected_manifest_sha256=expected, scratch_parent=str(work))
-            assert published["manifest_sha256"] == expected
-            assert published["database_sha256"] == created["database_sha256"]
+            require(published["manifest_sha256"] == expected, 'Installed snapshot acceptance condition failed.')
+            require(published["database_sha256"] == created["database_sha256"], 'Installed snapshot acceptance condition failed.')
             snapshot, source_config = published["snapshot_path"], config
         verified = invoke("verify", snapshot=snapshot, expected_manifest_sha256=expected,
                           scratch_parent=str(work), storage_config=source_config)
@@ -125,18 +146,20 @@ def main():
                           expected_manifest_sha256=expected, scratch_parent=str(work), storage_config=source_config)
         checked = invoke("check_restore", target_dir=str(target), expected_database_sha256=created["database_sha256"],
                          scratch_parent=str(work))
-        assert verified["summary"] == restored["summary"] == checked["summary"] == original_summary
-        assert sorted(child.name for child in target.iterdir()) == ["ledger.sqlite"]
+        require(verified["summary"] == restored["summary"] == checked["summary"] == original_summary, 'Installed snapshot acceptance condition failed.')
+        require(sorted(child.name for child in target.iterdir()) == ["ledger.sqlite"], 'Installed snapshot acceptance condition failed.')
         # Only after check_restore, enable the synthetic restored database to
         # prove that physical restore preserved the existing idempotency record.
         with library.open(restored["database_path"]) as ledger:
-            assert ledger.read_blob("blob:installed-a2-v1") == payload
-            assert ledger.execute(encode(append), payloads={"blob:installed-a2-v1": payload}) == dict(appended, replayed=True)
-            assert ledger.verify() == original_summary
-    assert source.read_bytes() == original_bytes
+            require(ledger.read_blob("blob:installed-a2-v1") == payload, 'Installed snapshot acceptance condition failed.')
+            require(ledger.execute(encode(append), payloads={"blob:installed-a2-v1": payload}) == dict(appended, replayed=True), 'Installed snapshot acceptance condition failed.')
+            require(ledger.verify() == original_summary, 'Installed snapshot acceptance condition failed.')
+    require(source.read_bytes() == original_bytes, 'Installed snapshot acceptance condition failed.')
     print(json.dumps({"result": "PASS", "python": platform.python_version(), "sqlite": sqlite3.sqlite_version,
                       "platform": platform.platform(), "package_version": importlib.metadata.version("infra-artifact-ledger"),
                       "module_path": str(module_path), "source_commit": args.source_commit, "work_dir": str(work),
+                      "source_commit_evidence": "CALLER_ASSERTED_NOT_GIT_ATTESTED",
+                      "wheel_bytes_evidence": "NOT_ATTESTED_BY_THIS_SMOKE_TOOL; bind wheel digest separately",
                       "calls": calls, "nas_publish_flow": "PASS" if config is not None else "NOT_RUN",
                       "nas_capability_acceptance": "NOT_ATTESTED", "nas_loss_exercise": "NOT_RUN"}, ensure_ascii=False))
 

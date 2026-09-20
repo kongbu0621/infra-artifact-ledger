@@ -51,6 +51,10 @@ def identity(info):
     return info.st_dev, info.st_ino
 
 
+def file_stamp(info):
+    return (*identity(info), info.st_size, info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
+
+
 def mount_id(fd):
     with open(f"/proc/self/fdinfo/{fd}", encoding="ascii") as source:
         values = [line.partition(":")[2].strip() for line in source if line.startswith("mnt_id:")]
@@ -105,8 +109,9 @@ class OwnedRun:
 
     def close(self):
         if self.fd is not None:
-            os.close(self.fd)
+            descriptor = self.fd
             self.fd = None
+            os.close(descriptor)
 
     def write_new(self, name, raw):
         require("/" not in name and name not in {"", ".", ".."}, "Invalid evidence name.")
@@ -139,58 +144,108 @@ class OwnedRun:
         finally:
             os.close(marker_fd)
 
-    def remove_disposable(self):
-        """Reject all links/mount crossings before deleting any synthetic file."""
+    def _inspect_disposable(self, expected_paths, action):
+        """Hold checked descriptors while inventorying only known generated names."""
         self.check()
         require(identity(os.stat("disposable", dir_fd=self.fd, follow_symlinks=False))
                 == self.disposable_identity, "Disposable directory binding changed.")
-        descriptors = []
-        entries = []
+        descriptors, entries, inventory = [], [], {}
         flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
         root = os.open("disposable", flags | os.O_DIRECTORY, dir_fd=self.fd)
         descriptors.append(root)
         try:
             require(identity(os.fstat(root)) == self.disposable_identity,
                     "Disposable directory binding changed.")
-            def inspect(fd, depth):
-                require(depth <= 8 and len(entries) <= 128, "Unexpected synthetic tree size.")
+
+            def inspect(fd, relative, depth):
+                require(depth <= 8 and len(descriptors) <= 128, "Unexpected synthetic tree size.")
                 require(mount_id(fd) == self.mount, "Cleanup refuses a mount boundary.")
                 for name in sorted(os.listdir(fd)):
                     require(len(descriptors) <= 128, "Unexpected synthetic tree size.")
+                    entry_path = relative + name
+                    require(entry_path in expected_paths, "Disposable tree contains an unowned entry.")
                     info = os.stat(name, dir_fd=fd, follow_symlinks=False)
                     require(info.st_dev == self.root_identity[0], "Cleanup refuses another device.")
-                    require(stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode),
-                            "Cleanup refuses links or special files.")
-                    child = os.open(name, flags | (os.O_DIRECTORY if stat.S_ISDIR(info.st_mode) else 0),
-                                    dir_fd=fd)
+                    directory = stat.S_ISDIR(info.st_mode)
+                    require(directory or stat.S_ISREG(info.st_mode), "Cleanup refuses links or special files.")
+                    child = os.open(name, flags | (os.O_DIRECTORY if directory else 0), dir_fd=fd)
                     descriptors.append(child)
-                    require(identity(os.fstat(child)) == identity(info)
-                            and mount_id(child) == self.mount, "Cleanup entry binding changed.")
-                    if stat.S_ISDIR(info.st_mode):
-                        inspect(child, depth + 1)
+                    before = os.fstat(child)
+                    require(identity(before) == identity(info) and mount_id(child) == self.mount,
+                            "Cleanup entry binding changed.")
+                    record = {"identity": list(identity(info)), "directory": directory, "mount_id": self.mount}
+                    if directory:
+                        inspect(child, entry_path + "/", depth + 1)
                     else:
-                        require(info.st_nlink == 1, "Cleanup refuses hardlinked files.")
-                    entries.append((fd, name, identity(info), stat.S_ISDIR(info.st_mode)))
+                        require(before.st_nlink == 1, "Cleanup refuses hardlinked files.")
+                        hasher = hashlib.sha256()
+                        while block := os.read(child, 1024 * 1024):
+                            hasher.update(block)
+                        after = os.fstat(child)
+                        require(file_stamp(before) == file_stamp(after), "Synthetic file changed while being inventoried.")
+                        record.update(stamp=list(file_stamp(after)), sha256=hasher.hexdigest())
+                    inventory[entry_path] = record
+                    entries.append((fd, name, child, entry_path, directory))
 
-            inspect(root, 0)
+            inspect(root, "", 0)
+            require(set(inventory) == set(expected_paths), "Disposable tree is missing a generated entry.")
             self.check()
-            for fd, name, expected, directory in entries:
+            return action(inventory, entries)
+        finally:
+            pending, first_error = sys.exc_info()[1], None
+            for fd in reversed(descriptors):
+                try:
+                    os.close(fd)
+                except OSError as error:
+                    if first_error is None:
+                        first_error = error
+            if first_error is not None:
+                if pending is not None:
+                    pending.add_note("One acceptance inventory descriptor could not be closed.")
+                else:
+                    raise first_error
+
+    def freeze_disposable(self, expected_paths):
+        """Freeze the explicitly named fixture after close, before NAS actions.
+
+        This is an internal call with tool-generated paths, never a CLI input or
+        permission to adopt arbitrary files found by traversal. The caller must
+        retain exclusive control throughout the exercise and deletion.
+        """
+        require(not hasattr(self, "disposable_inventory"), "Disposable inventory is already frozen.")
+        expected_paths = frozenset(expected_paths)
+        require(bool(expected_paths) and all(type(name) is str and name and not name.startswith("/")
+                and all(part not in {"", ".", ".."} for part in name.split("/")) for name in expected_paths),
+                "Invalid generated inventory path.")
+        self.disposable_inventory = self._inspect_disposable(expected_paths, lambda inventory, _: inventory)
+        self.write_new("disposable-ownership.json", encode(self.disposable_inventory))
+        os.fsync(self.fd)
+
+    def remove_disposable(self):
+        """Delete only the frozen generated tree; any addition/change stops first."""
+        require(hasattr(self, "disposable_inventory"), "No frozen disposable ownership inventory exists.")
+
+        def remove(inventory, entries):
+            require(inventory == self.disposable_inventory, "Generated file identity or bytes changed after freezing.")
+            for fd, name, child, entry_path, directory in entries:
                 current = os.stat(name, dir_fd=fd, follow_symlinks=False)
-                require(identity(current) == expected and not stat.S_ISLNK(current.st_mode),
-                        "Cleanup entry changed after inspection.")
+                expected = inventory[entry_path]
+                require(list(identity(current)) == expected["identity"] and mount_id(child) == self.mount
+                        and not stat.S_ISLNK(current.st_mode), "Cleanup entry changed after inspection.")
                 if directory:
+                    require(stat.S_ISDIR(current.st_mode), "Cleanup directory changed its type.")
                     os.rmdir(name, dir_fd=fd)
                 else:
-                    require(current.st_nlink == 1, "Cleanup entry acquired another link.")
+                    require(stat.S_ISREG(current.st_mode) and list(file_stamp(current)) == expected["stamp"],
+                            "Cleanup file changed after inspection.")
                     os.unlink(name, dir_fd=fd)
             require(identity(os.stat("disposable", dir_fd=self.fd, follow_symlinks=False))
                     == self.disposable_identity, "Disposable directory binding changed.")
             os.rmdir("disposable", dir_fd=self.fd)
             os.fsync(self.fd)
             require(not os.path.lexists(self.path / "disposable"), "Synthetic loss was not complete.")
-        finally:
-            for fd in reversed(descriptors):
-                os.close(fd)
+
+        self._inspect_disposable(self.disposable_inventory, remove)
 
 
 def request(kind, body, key):
@@ -260,6 +315,65 @@ def database_image(database):
     return result
 
 
+def verify_wheel(wheel, package_directory):
+    """Hash and inspect one fixed wheel descriptor, never reopen its pathname."""
+    wheel = Path(wheel)
+    fd = os.open(wheel, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        stream = os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+    with stream as source:
+        before = os.fstat(source.fileno())
+        require(stat.S_ISREG(before.st_mode) and before.st_size <= 64 * 1024 * 1024,
+                "An ordinary bounded wheel file is required.")
+        hasher = hashlib.sha256()
+        while block := source.read(1024 * 1024):
+            hasher.update(block)
+        source.seek(0)
+        with zipfile.ZipFile(source) as archive:
+            members = [item for item in archive.infolist()
+                       if item.filename.startswith("infra_artifact_ledger/") and not item.is_dir()]
+            require(bool(members) and len(members) == len({item.filename for item in members}),
+                    "Wheel package members are invalid.")
+            require(sum(item.file_size for item in members) <= 16 * 1024 * 1024,
+                    "Wheel package members exceed the acceptance budget.")
+            installed_names = {"infra_artifact_ledger/" + str(path.relative_to(package_directory))
+                               for path in package_directory.rglob("*") if path.is_file()
+                               and "__pycache__" not in path.relative_to(package_directory).parts}
+            require({item.filename for item in members} == installed_names,
+                    "Installed package members differ from supplied wheel.")
+            for item in members:
+                parts = Path(item.filename).parts
+                require(".." not in parts and not Path(item.filename).is_absolute(), "Wheel member path is invalid.")
+                path = package_directory.joinpath(*parts[1:])
+                require(not any(candidate.is_symlink() for candidate in (path, *path.parents)
+                                if candidate == package_directory or package_directory in candidate.parents),
+                        "Installed package member is linked.")
+                installed_fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                try:
+                    installed_stream = os.fdopen(installed_fd, "rb")
+                except BaseException:
+                    os.close(installed_fd)
+                    raise
+                with installed_stream as installed, archive.open(item) as archived:
+                    initial = os.fstat(installed.fileno())
+                    require(stat.S_ISREG(initial.st_mode) and initial.st_size == item.file_size,
+                            "Installed package member length differs from supplied wheel.")
+                    while True:
+                        left, right = installed.read(1024 * 1024), archived.read(1024 * 1024)
+                        require(left == right, "Installed package bytes differ from supplied wheel.")
+                        if not left:
+                            break
+                    require(file_stamp(initial) == file_stamp(os.fstat(installed.fileno()))
+                            == file_stamp(os.stat(path, follow_symlinks=False)),
+                            "Installed package changed during wheel comparison.")
+        require(file_stamp(before) == file_stamp(os.fstat(source.fileno()))
+                == file_stamp(os.stat(wheel, follow_symlinks=False)), "Wheel binding or bytes changed during inspection.")
+    return hasher.hexdigest()
+
+
 def installed_identity(wheel):
     import infra_artifact_ledger as library
     require(bool(sys.flags.isolated), "Run with the installed environment's python -I.")
@@ -269,26 +383,11 @@ def installed_identity(wheel):
             "A dedicated installed-wheel virtual environment is required.")
     require(Path(__file__).resolve().parents[2] not in module.parents,
             "Acceptance must not import the source checkout.")
-    wheel = Path(wheel)
-    require(wheel.is_file() and not wheel.is_symlink(), "An ordinary wheel file is required.")
-    hasher = hashlib.sha256()
-    with wheel.open("rb") as source:
-        while block := source.read(1024 * 1024):
-            hasher.update(block)
-    with zipfile.ZipFile(wheel) as archive:
-        members = [name for name in archive.namelist() if name.startswith("infra_artifact_ledger/") and not name.endswith("/")]
-        require(bool(members) and len(members) == len(set(members)), "Wheel package members are invalid.")
-        installed_names = {"infra_artifact_ledger/" + str(path.relative_to(module.parent))
-                           for path in module.parent.rglob("*") if path.is_file() and "__pycache__" not in path.parts}
-        require(set(members) == installed_names, "Installed package members differ from supplied wheel.")
-        for name in members:
-            parts = Path(name).parts
-            require(".." not in parts and not Path(name).is_absolute(), "Wheel member path is invalid.")
-            path = module.parent.joinpath(*parts[1:])
-            require(not path.is_symlink() and path.read_bytes() == archive.read(name),
-                    "Installed package bytes differ from supplied wheel.")
+    wheel_hash = verify_wheel(wheel, module.parent)
     return {"module_path": str(module), "package_version": importlib.metadata.version("infra-artifact-ledger"),
-            "wheel_sha256": hasher.hexdigest(), "python": sys.version, "executable": sys.executable,
+            "wheel_sha256": wheel_hash, "installed_package_wheel_bytes": "MATCH",
+            "git_source_identity": "NOT_ATTESTED; source_commit is caller asserted",
+            "python": sys.version, "executable": sys.executable,
             "sqlite": sqlite3.sqlite_version, "platform": platform.platform(), "machine": platform.machine()}
 
 
@@ -319,7 +418,13 @@ def child_cli(argv, cwd, calls=None):
         require(process.returncode == 0 and not output["stderr"], "Independent recovery command failed.")
         require(raw.endswith(b"\n") and raw.count(b"\n") == 1, "Independent recovery response is malformed.")
         response = json.loads(raw)
-        require(response.get("status") == "OK", "Independent recovery command did not succeed.")
+        operation = argv[0].replace("-", "_")
+        require(type(response) is dict and set(response) == {
+            "protocol", "status", "operation", "publication_state", "data"}
+            and response["protocol"] == "infra-artifact-ledger-recovery/v1"
+            and response["status"] == "OK" and response["operation"] == operation
+            and response["publication_state"] == ("not_applicable" if operation in {"verify", "check_restore"} else "published")
+            and type(response["data"]) is dict, "Independent recovery command returned a mismatched envelope.")
         return response
     finally:
         if process.poll() is None:
@@ -409,20 +514,12 @@ def exercise(args):
     run = OwnedRun(args.local_parent)
     report = {"format": "infra-artifact-ledger-a2-nas-exercise/v1", "run_id": run.run_id,
               "status": "RUNNING", "source_commit": args.source_commit, "runtime": runtime,
+              "source_commit_evidence": "CALLER_ASSERTED_NOT_GIT_ATTESTED",
               "endpoints": endpoints, "storage_config": config, "stages": {}, "commands": [],
               "coverage": "synthetic NAS roundtrip only; not all T01-T15 or server power-loss testing"}
-    stage = "storage_preflight"
+    stage = "synthetic_fixture"
+    pending_error = None
     try:
-        # Snapshot root and preflight stay in a new NAS subtree; never remove it.
-        with storage.open_directory(config["archive_root"], budget=Budget(), storage_config=config) as nas:
-            with nas.mkdir(run.run_id) as archive:
-                archive.fsync()
-                nas.fsync()
-                private_config = dict(config, archive_root=str(archive.path))
-                report["stages"][stage] = storage.preflight(archive, Budget())
-                report["stages"]["concurrent_directory_probe"] = concurrent_directory_probe(archive)
-                report["stages"]["mount_loss_or_disconnect"] = "NOT_RUN; see separate fault-injection evidence"
-        run.write_new("storage-config.json", encode(private_config))
         work = run.path / "disposable"
         for name in ("snapshots", "scratch"):
             (work / name).mkdir(mode=0o700)
@@ -437,18 +534,40 @@ def exercise(args):
                                   source_commit=args.source_commit)
         manifest_hash = created["data"]["manifest_sha256"]
         database_hash = created["data"]["database_sha256"]
+        require(created["data"]["snapshot_id"] == snapshot_id
+                and created["data"]["summary"] == expected["summary"], "Local snapshot result differs from fixture.")
         report["stages"][stage] = created
         run.write_new("snapshot-reference.json", encode({"snapshot_id": snapshot_id,
                       "manifest_sha256": manifest_hash, "database_sha256": database_hash}))
+        run.freeze_disposable({"source.sqlite", "donor.sqlite", "snapshots", "scratch",
+                               "snapshots/" + snapshot_id,
+                               *("snapshots/" + snapshot_id + "/" + name
+                                 for name in ("ledger.sqlite", "manifest.json", "COMMITTED.json"))})
+        stage = "storage_preflight"
+        # Snapshot root and preflight stay in a new NAS subtree; never remove it.
+        with storage.open_directory(config["archive_root"], budget=Budget(), storage_config=config) as nas:
+            with nas.mkdir(run.run_id) as archive:
+                archive.fsync()
+                nas.fsync()
+                private_config = dict(config, archive_root=str(archive.path))
+                report["stages"][stage] = storage.preflight(archive, Budget())
+                report["stages"]["concurrent_directory_probe"] = concurrent_directory_probe(archive)
+                report["stages"]["mount_loss_or_disconnect"] = "NOT_RUN; see separate fault-injection evidence"
+        run.write_new("storage-config.json", encode(private_config))
         stage = "publish"
         published = recovery.publish(snapshot=work / "snapshots" / snapshot_id, storage_config=private_config,
                                      expected_manifest_sha256=manifest_hash, scratch_parent=work / "scratch")
+        reference = {"snapshot_id": snapshot_id, "manifest_sha256": manifest_hash,
+                     "database_sha256": database_hash, "summary": expected["summary"]}
+        require(all(published["data"].get(key) == value for key, value in reference.items()),
+                "NAS publication result does not match the independently saved reference.")
         report["stages"][stage] = published
         nas_snapshot = str(Path(private_config["archive_root"]) / snapshot_id)
         stage = "independent_nas_verify"
         verified = child_cli(["verify", "--snapshot", nas_snapshot, "--storage-config", str(run.path / "storage-config.json"),
                               "--expected-manifest-sha256", manifest_hash, "--scratch-parent", str(work / "scratch")], run.path, report["commands"])
-        require(verified["data"]["summary"] == expected["summary"], "NAS summary differs from independent expectation.")
+        require(all(verified["data"].get(key) == value for key, value in reference.items()),
+                "NAS verification result does not match the independently saved reference.")
         report["stages"][stage] = verified
         stage = "synthetic_local_loss"
         require(database_image(source) == expected["image"], "Source changed before simulated local loss.")
@@ -462,6 +581,8 @@ def exercise(args):
         restored = child_cli(["restore", "--snapshot", nas_snapshot, "--storage-config", str(run.path / "storage-config.json"),
                              "--target-dir", str(target), "--expected-manifest-sha256", manifest_hash,
                              "--scratch-parent", str(run.path / "restore-scratch")], run.path, report["commands"])
+        require(all(restored["data"].get(key) == value for key, value in reference.items()),
+                "NAS restore result does not match the independently saved reference.")
         report["stages"][stage] = restored
         stage = "check_restore"
         checked = recovery.check_restore(target_dir=target, expected_database_sha256=database_hash,
@@ -486,6 +607,7 @@ def exercise(args):
                                    "new_synthetic_write": "PASS"}
         report["status"] = "PASS"
     except Exception as error:
+        pending_error = error
         report["status"] = "FAILED"
         report["failure"] = {"stage": stage, "type": type(error).__name__,
                              "code": getattr(error, "code", None), "publication_state": getattr(error, "publication_state", None)}
@@ -496,8 +618,28 @@ def exercise(args):
             run.check()
             run.write_new("report.json", encode(report))
             os.fsync(run.fd)
+            if pending_error is not None:
+                pending_error.acceptance_evidence_saved = True
+        except Exception as evidence_error:
+            if pending_error is None:
+                evidence_error.acceptance_run_id = run.run_id
+                evidence_error.acceptance_evidence_saved = False
+                raise
+            pending_error.acceptance_evidence_saved = False
+            pending_error.add_note("The owned acceptance report could not be durably recorded.")
         finally:
-            run.close()
+            active_error = sys.exc_info()[1]
+            try:
+                run.close()
+            except Exception as close_error:
+                if active_error is not None:
+                    active_error.add_note("The acceptance run directory descriptor could not be closed.")
+                else:
+                    # The report was already durably written. Keep that
+                    # evidence locatable when descriptor cleanup alone fails.
+                    close_error.acceptance_run_id = run.run_id
+                    close_error.acceptance_evidence_saved = True
+                    raise
     return {"status": "PASS", "run_id": run.run_id, "evidence": "report.json",
             "scope": "synthetic_nas_roundtrip", "server_power_loss": "NOT_RUN"}
 
@@ -515,6 +657,7 @@ def main(argv=None):
         # Private paths/config remain only in the explicitly owned local report.
         result = {"status": "FAILED", "type": type(error).__name__,
                   "code": getattr(error, "code", None), "run_id": getattr(error, "acceptance_run_id", None),
+                  "evidence_saved": getattr(error, "acceptance_evidence_saved", False),
                   "scope": "synthetic_nas_roundtrip"}
         print(encode(result).decode())
         return 1

@@ -78,6 +78,8 @@ git -C "$LEDGER_A2_SRC" rev-parse HEAD > "$LEDGER_A2_RUN/source-commit.txt"
 
 runtime 输出应显示 `0.2.0a1`，模块来自该 runtime venv 的 `site-packages`。不要把 `PYTHONPATH=src` 的源码运行写成已安装软件验证。
 
+`--source-commit` 是调用者声明的来源值；脚本核对其格式，但不据此证明 wheel 来自该 Git 提交。保留固定 checkout 的完整 SHA、干净工作树检查、构建日志、wheel 摘要、安装日志和实际模块位置，形成可复核的构建链。NAS 工具使用同一个固定文件描述符计算 wheel 摘要并比较已安装包字节；这证明本次比较的字节匹配，不等于 Git 来源证明。安装态 smoke 工具另行明确其不核对 wheel 字节，不能省略上述构建记录。
+
 ## 3. 源码回归、资源和安装态验证
 
 以下命令沿用上一节设置的变量。各项失败保留日志并处理，不能把前一次运行结果写给新 SHA。
@@ -95,6 +97,9 @@ PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" tests/test_response_boundaries
 A2_RESOURCE_TESTS=1 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" \
   -m unittest discover -s tests -p test_snapshot_resources.py -v \
   > "$LEDGER_A2_RUN/a2-resources.log" 2>&1
+A2_RESOURCE_TESTS=1 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" \
+  -m unittest discover -s tests -p test_snapshot_semantic_resources.py -v \
+  > "$LEDGER_A2_RUN/a2-semantic-resources.log" 2>&1
 "$LEDGER_A2_RUNTIME_VENV/bin/python" -I "$LEDGER_A2_SRC/tests/installed_walkthrough.py" \
   --repo "$LEDGER_A2_SRC" > "$LEDGER_A2_RUN/a1-installed.log" 2>&1
 "$LEDGER_A2_RUNTIME_VENV/bin/python" -I "$LEDGER_A2_SRC/tests/installed_snapshot_walkthrough.py" \
@@ -103,6 +108,8 @@ A2_RESOURCE_TESTS=1 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" \
 ```
 
 资源专项会真实构造大文件/大数据并消耗明显高于序列化大小的内存和磁盘，需在日志中保留实际耗时/RSS；1 GiB 文件上限不是内存上限。普通 discovery 中被跳过的资源项不算已通过。小常量故障测试与实际上限测试各自留证，不能相互替代。
+
+`test_snapshot_semantic_resources.py` 的四项专跑分别覆盖合法 Ledger 的 metadata 16 MiB、metadata 50,000 行、refs 250,000 行和 refs 32 MiB，共十二个 −1／等于／+1 场景。构造方式、完整恢复比对和总 TEXT 64 MiB 的可达性说明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。这组测试的文件系统类型分类使用明确的开发态模拟，实际执行数据库与文件操作；通过结果属于 `LOGIC_ONLY`，不能据此承认 Cloud overlay 的持久性或 GX10/NAS 的实机支持。未开启 `A2_RESOURCE_TESTS=1` 时四项跳过，须保留上述专门日志。
 
 安装态 A2 脚本只在显式提供的本地父目录下生成合成库、两个新快照及新恢复目录；分别调用 API 与已安装 CLI，核对 Blob、已有操作重放和源库不变。未传 NAS 配置时，`nas_publish_flow=NOT_RUN`，只证明本地接入流程。本脚本无论是否提供 NAS 配置，都不能代替下一节的 NAS 丢失恢复演练。
 
@@ -122,7 +129,7 @@ findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
 
 ## 5. GX10 → NAS → GX10 合成恢复
 
-前提是 S1–S4 已有相应证据、wheel 已安装并与构建来源匹配、已选择专属合成范围，且真实 NAS 配置已核实。该工具先执行当前挂载能力预检，并在本次专属子树检查两个独立进程争用同一目录时只有一个创建者，失败不继续采用目标。挂载丢失/断网另列 `NOT_RUN`，不能由此竞争测试代替。
+前提是 S1–S4 已有相应证据、wheel 已安装且构建链已留存、已选择专属合成范围，且真实 NAS 配置已核实。工具先只读核对本地与 NAS 端点，再构造并关闭本轮合成库和本地快照，冻结精确归属清单；此后才创建 NAS 专属子树、执行当前挂载能力预检和发布。能力预检包含两个独立进程争用同一目录时只有一个创建者，失败不继续采用目标。挂载丢失/断网另列 `NOT_RUN`，不能由此竞争测试代替。
 
 ```sh
 "$LEDGER_A2_RUNTIME_VENV/bin/python" -I "$LEDGER_A2_SRC/tools/acceptance/a2_nas_exercise.py" \
@@ -134,11 +141,15 @@ findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
 
 脚本检查隔离解释器、安装包位于 venv 且不来自 checkout、安装包字节与指定 wheel 相符。本地创建全新的 `a2-nas-<32位ID>` 运行目录，NAS 也在指定 archive_root 下创建本次专属新子树，不复用既有 generation。
 
-合成数据包含版本分支、Manifest、来源关系、已有导入及幂等记录。流程为创建快照 → NAS 发布 → 独立进程从 NAS 校验 → 删除经归属核对的本次可丢弃本地源库/导入源/快照/暂存 → 独立进程只从 NAS 恢复 → `check_restore` → 全部 SQL 行与 Blob 摘要对账 → 原请求重放 → 新合成写入。预期记录只保留比较材料与摘要，不保留可用于偷偷恢复的数据副本。
+合成数据包含版本分支、Manifest、来源关系、已有导入及幂等记录。流程为构造并关闭合成库与快照 → 冻结明确生成路径的归属清单 → NAS 能力预检与发布 → 独立进程从 NAS 校验 → 删除经清单复核的本次可丢弃本地源库/导入源/快照/暂存 → 独立进程只从 NAS 恢复 → `check_restore` → 全部 SQL 行与 Blob 摘要对账 → 原请求重放 → 新合成写入。NAS 核验结果须匹配独立保存的 snapshot ID、manifest 摘要、数据库摘要与 summary，才进入本地删除步骤。预期记录只保留比较材料与摘要，不保留可用于偷偷恢复的数据副本。
 
-删除动作只针对脚本本轮自行创建、完成归属检查的 disposable 子树；不删除已有项目、业务库、NAS 归档或其他验收目录。脚本不挂载、卸载或改 NAS 服务。失败现场与原归档保留，避免覆盖掩盖问题。
+删除动作只针对脚本本轮自行创建、已冻结清单的 disposable 子树。清单记录明确生成的相对路径、inode、挂载身份及文件大小、时间、link count 和分块 SHA-256；删除前检查整棵树精确匹配。后来新增的普通文件、同名替换或原文件改写都会阻止删除，不因其位于本轮目录内就自动视为可丢弃；符号链接、额外硬链接和挂载边界同样拒绝。操作者须持续独占管理本轮目录，这不是对任意并发管理员改动的原子删除保证。
 
-本地运行目录保存 `report.json`、`expected.json`、`snapshot-reference.json` 等证据；其中可能包含部署路径/端点，只在部署侧保管。控制台返回有界状态与 run_id；若在创建运行目录前失败，run_id 可以为空，此时先检查原始调用条件，不猜测证据路径。
+脚本不删除已有项目、业务库、NAS 归档或其他验收目录，也不挂载、卸载或改 NAS 服务。失败现场与原归档保留，避免覆盖掩盖问题。
+
+本地运行目录保存 `report.json`、`expected.json`、`snapshot-reference.json`、`disposable-ownership.json` 等证据；其中可能包含部署路径/端点，只在部署侧保管。控制台返回有界状态与 run_id；若在创建运行目录前失败，run_id 可以为空，此时先检查原始调用条件，不猜测证据路径。
+
+失败输出中的 `evidence_saved=false` 表示本轮未确认报告已可靠记录，可能是尚未建立运行目录，也可能是报告写入或同步失败；它不表示数据操作没有发生，也不表示 `report.json` 必定不存在。报告保存失败不会替换此前的操作错误。保留控制台日志、原 run_id、独立摘要和现有目录，按实际停止阶段核对；不得因为缺少完整报告而覆盖重试或清理已发布对象。
 
 `scope=synthetic_nas_roundtrip` 的 PASS 只证明这次真实配置下的合成 NAS 恢复链路。它不自动覆盖 T01–T15 的全部反例，不代表 NAS 服务端断电、硬件故障、全部挂载丢失模型或所有 nfs/cifs 系统栈已通过。仍需按验收矩阵核对剩余项；未跑项目保留 `NOT_RUN`。
 

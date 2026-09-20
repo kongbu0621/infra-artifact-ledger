@@ -5,6 +5,7 @@ import hashlib
 from importlib import metadata
 from pathlib import Path
 import tempfile
+import tracemalloc
 import unittest
 from unittest.mock import Mock, patch
 
@@ -106,6 +107,23 @@ class SnapshotFormatTests(unittest.TestCase):
         error = self.assert_code("RESOURCE_LIMIT", fmt.validate_marker, marker)
         self.assertLessEqual(len(error.message.encode()), 1024)
         self.assertNotIn("private", error.message)
+
+    def test_large_diagnostic_truncates_before_utf8_allocation(self):
+        huge = "😀" * 1_000_000
+        tracemalloc.start()
+        try:
+            error = RecoveryError("IO_ERROR", huge, "report", "published")
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        self.assertEqual(error.message, "😀" * 256)
+        self.assertLess(peak, 128 * 1024)
+        self.assertEqual(error.to_envelope("create")["publication_state"], "published")
+        # Preserve exact historical UTF-8 replacement/truncation, including a
+        # split multibyte character at byte 1024 and invalid Unicode scalars.
+        for message in ("x" * 1023 + "中" + "tail", "\ud800" * 1023 + "😀", "中\udc00" * 700):
+            expected = message.encode("utf-8", "replace")[:1024].decode("utf-8", "ignore")
+            self.assertEqual(RecoveryError("IO_ERROR", message).message, expected)
 
     def test_lowercase_identity_and_digest_lengths(self):
         for validator, good in ((fmt.validate_snapshot_id, ID), (fmt.validate_sha256, SHA),
@@ -224,6 +242,25 @@ class SnapshotFormatTests(unittest.TestCase):
         raw = fmt.encode(config())
         self.assert_code("RESOURCE_LIMIT", fmt.parse_json,
                          raw + b" " * fmt.MAX_STORAGE_CONFIG, fmt.MAX_STORAGE_CONFIG)
+
+    def test_huge_config_value_is_rejected_before_utf8_or_json_materialization(self):
+        value = dict(config(), archive_root="/mnt/test/" + "😀" * 1_000_000)
+        original_string = fmt._string
+
+        def bounded_string(item, stage):
+            self.assertLessEqual(len(item), fmt.MAX_STORAGE_CONFIG)
+            return original_string(item, stage)
+
+        tracemalloc.start()
+        try:
+            with patch.object(fmt, "_string", side_effect=bounded_string):
+                error = self.assert_code("RESOURCE_LIMIT", fmt.capture_storage_config, value)
+            _, peak = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        self.assertEqual(error.publication_state, "not_published")
+        self.assertLess(peak, 128 * 1024)
+        self.assertNotIn("😀", error.message)
 
     def test_config_absolute_containment_and_utf8_source_bytes(self):
         for bad in ("relative", "/mnt/test\x00/dir", "/mnt/testing", "/mnt/test/../other"):

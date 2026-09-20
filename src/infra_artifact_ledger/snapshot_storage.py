@@ -75,9 +75,13 @@ def parse_mountinfo(raw: str) -> tuple[Mount, ...]:
     """Parse the kernel mountinfo format, including escaped path fields."""
     result = []
     try:
-        for line in raw.splitlines():
+        # Kernel records/fields use ASCII LF/space. Unicode whitespace may
+        # legitimately occur inside an unescaped UTF-8 mount path or source.
+        for line in raw.split("\n"):
+            if not line:
+                continue
             before, after = line.split(" - ", 1)
-            fields, tail = before.split(), after.split()
+            fields, tail = before.split(" "), after.split(" ")
             if len(fields) < 6 or len(tail) < 3:
                 raise ValueError("invalid field count")
             mount = Mount(int(fields[0]), int(fields[1]), fields[2],
@@ -172,8 +176,11 @@ def _walk_directory(target: Path) -> int:
             # A real '..' open preserves filesystem traversal semantics. Every
             # preceding component has already been opened with O_NOFOLLOW.
             child = os.open(component, _DIR_FLAGS, dir_fd=descriptor)
-            os.close(descriptor)
-            descriptor = child
+            previous, descriptor = descriptor, child
+            # close() can release the descriptor and still report an error.
+            # Transfer ownership first so cleanup never closes the old number
+            # twice and never loses the newly opened child descriptor.
+            os.close(previous)
         result, descriptor = descriptor, None
         return result
     except OSError as exc:
@@ -195,8 +202,10 @@ class Directory:
     """An open directory bound to its path, mount, and optional parent."""
 
     def __init__(self, fd: int, target: Path, budget: Budget, mount: Mount,
-                 config: dict | None, parent: Directory | None = None):
+                 config: dict | None, parent: Directory | None = None,
+                 *, walk_path: Path | None = None):
         self.fd, self.path, self.budget = fd, target, budget
+        self._walk_path = target if walk_path is None else walk_path
         self.mount, self.storage_config, self.parent = mount, config, parent
         self.identity = _identity(os.fstat(fd))
         self._closed = False
@@ -222,7 +231,7 @@ class Directory:
         try:
             if _identity(os.fstat(self.fd)) != self.identity:
                 raise _error("IO_ERROR", "Directory descriptor identity changed", stage)
-            current = _walk_directory(self.path)
+            current = _walk_directory(self._walk_path)
             if _identity(os.fstat(current)) != self.identity:
                 raise _error("IO_ERROR", "Directory path binding changed", stage)
             if _fd_mount_id(current) != self.mount.mount_id or _fd_mount_id(self.fd) != self.mount.mount_id:
@@ -318,13 +327,14 @@ def open_directory(value, *, budget: Budget, storage_config: dict | None = None)
     target = _absolute(value)
     budget.check("validate")
     fd = _walk_directory(target)
+    original_walk = target
     try:
         # Only the successful full walk permits lexical canonicalization for
         # mount lookup, later binding checks and cross-directory comparisons.
         target = Path(os.path.normpath(target))
         mount = _mount_for(target, _fd_mount_id(fd))
         _classify(target, mount, storage_config)
-        directory = Directory(fd, target, budget, mount, storage_config)
+        directory = Directory(fd, target, budget, mount, storage_config, walk_path=original_walk)
         directory.check()
         return directory
     except BaseException:
@@ -341,6 +351,8 @@ def _remove_owned_contents(directory: Directory) -> None:
         if stat.S_ISDIR(info.st_mode):
             fd = os.open(name, _DIR_FLAGS, dir_fd=directory.fd)
             try:
+                if _identity(os.fstat(fd)) != _identity(info):
+                    raise _error("IO_ERROR", "Temporary directory binding changed before cleanup")
                 if _fd_mount_id(fd) != directory.mount.mount_id:
                     raise _error("UNSUPPORTED_STORAGE", "Temporary cleanup crossed a mount boundary")
                 with Directory(fd, directory.path / name, directory.budget, directory.mount,
@@ -408,6 +420,14 @@ def _write_all(fd: int, value: bytes, budget: Budget) -> None:
         view = view[written:]
 
 
+def _sync_file(fd: int, budget: Budget) -> None:
+    budget.check("sync")
+    try:
+        os.fsync(fd)
+    except OSError as exc:
+        raise _io_error(exc, "sync") from exc
+
+
 def copy_file(src_fd: int, dest: Directory, name: str, budget: Budget, *,
               expected_size: int | None = None, expected_hash: str | None = None) -> dict:
     budget.check("copy")
@@ -442,11 +462,10 @@ def copy_file(src_fd: int, dest: Directory, name: str, budget: Budget, *,
         result = {"byte_length": total, "sha256": digest.hexdigest()}
         if expected_hash is not None and result["sha256"] != expected_hash:
             raise _error("INTEGRITY_FAILURE", "Copy source digest does not match", "copy")
-        budget.check("sync")
-        os.fsync(descriptor)
+        _sync_file(descriptor, budget)
         published_stat = os.fstat(descriptor)
-        os.close(descriptor)
-        descriptor = None
+        finished, descriptor = descriptor, None
+        os.close(finished)
         dest.check("copy")
         current = os.stat(name, dir_fd=dest.fd, follow_symlinks=False)
         if _identity(current) != _identity(published_stat) or current.st_size != total:
@@ -464,8 +483,7 @@ def write_file(dest: Directory, name: str, raw: bytes, budget: Budget) -> None:
     fd = _exclusive_file(dest, name)
     try:
         _write_all(fd, raw, budget)
-        budget.check("sync")
-        os.fsync(fd)
+        _sync_file(fd, budget)
         dest.check("copy")
     except OSError as exc:
         raise _io_error(exc, "copy") from exc

@@ -13,7 +13,7 @@ import stat
 import sys
 
 from .snapshot_common import EXIT_CODES, RecoveryError, operation_budget
-from .snapshot_format import parse_json
+from .snapshot_format import capture_storage_config, parse_json
 
 
 MAX_CONFIG = 16 * 1024
@@ -120,7 +120,11 @@ def _arguments(args, budget):
     if args.command in {"verify", "restore"}:
         kwargs["storage_config"] = args.storage_config
     if kwargs.get("storage_config") is not None:
-        kwargs["storage_config"] = _read_config(kwargs["storage_config"], budget)
+        # An explicitly supplied FILE must contain a valid configuration. In
+        # particular JSON null must not become the API's omitted-config None
+        # sentinel and silently select local storage for verify/restore.
+        kwargs["storage_config"] = capture_storage_config(
+            _read_config(kwargs["storage_config"], budget))
     return kwargs
 
 

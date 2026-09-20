@@ -63,6 +63,29 @@ class SnapshotPathSemanticsTests(unittest.TestCase):
                              (self.archives.stat().st_dev, self.archives.stat().st_ino))
             directory.check()
 
+    def test_original_parent_traversal_is_rechecked_after_initial_open(self):
+        other = self.root / "other"
+        other.mkdir()
+        (other / "step").mkdir()
+        other_archives = other / "archives"
+        other_archives.mkdir()
+        (other_archives / "unrelated").write_bytes(b"keep")
+        with storage.open_directory(self.step / ".." / "archives", budget=Budget()) as directory:
+            self.step.rmdir()
+            self.step.symlink_to(other / "step", target_is_directory=True)
+            self.assert_error("UNSUPPORTED_STORAGE", directory.check)
+            self.assert_error("UNSUPPORTED_STORAGE", lambda: directory.mkdir("must-not-exist"))
+        self.assertEqual(list(self.archives.iterdir()), [])
+        self.assertEqual({p.name for p in other_archives.iterdir()}, {"unrelated"})
+        self.assertEqual((other_archives / "unrelated").read_bytes(), b"keep")
+
+    def test_child_rechecks_original_parent_traversal_before_writing(self):
+        with storage.open_directory(self.step / ".." / "archives", budget=Budget()) as directory:
+            with directory.mkdir("child") as child:
+                self.step.rmdir()
+                self.assert_error("NOT_FOUND", lambda: storage.write_file(child, "must-not-exist", b"x", Budget()))
+                self.assertEqual(list(child.path.iterdir()), [])
+
     def test_symlink_missing_and_regular_components_cannot_be_erased(self):
         before = self.db.read_bytes()
         for name, code in (("alias", "UNSUPPORTED_STORAGE"),

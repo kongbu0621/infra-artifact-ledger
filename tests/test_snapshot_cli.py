@@ -53,6 +53,11 @@ class SnapshotCLITests(unittest.TestCase):
         return [command, *(item for option in snapshot_cli._COMMANDS[command]
                            for item in ("--" + option, values[option]))]
 
+    def storage_config(self):
+        return {"format": "infra-artifact-ledger-storage/v1", "profile": "mounted-posix-v1",
+                "storage_ref": "test", "mount_point": "/mnt/example", "mount_root": "/",
+                "mount_source": "host:/test", "fs_type": "nfs4", "archive_root": "/mnt/example/archive"}
+
     def in_process(self, argv, function, *, value=None, error=None):
         output, diagnostic = _Output(), io.StringIO()
         with patch("infra_artifact_ledger.recovery." + function, return_value=value, side_effect=error) as call:
@@ -123,7 +128,8 @@ class SnapshotCLITests(unittest.TestCase):
 
     def test_storage_file_is_read_and_parsed_once_before_api(self):
         config_file = self.root / "storage.json"
-        config_file.write_bytes(b'{"original":"captured"}')
+        original_config = self.storage_config()
+        config_file.write_text(json.dumps(original_config))
         original_parse = snapshot_cli.parse_json
 
         def replace_file_after_parse(raw, **kwargs):
@@ -137,7 +143,30 @@ class SnapshotCLITests(unittest.TestCase):
             code, _, call = self.in_process(self.valid_argv("publish"), "publish", value=value)
         self.assertEqual(code, 0)
         self.assertEqual(parse.call_count, 1)
-        self.assertEqual(call.call_args.kwargs["storage_config"], {"original": "captured"})
+        self.assertEqual(call.call_args.kwargs["storage_config"], original_config)
+
+    def test_explicit_null_or_malformed_config_cannot_select_local_mode(self):
+        config_file = self.root / "storage.json"
+        for command in ("publish", "verify", "restore"):
+            argv = self.valid_argv(command)
+            if command != "publish":
+                argv += ["--storage-config", str(config_file)]
+            for value in (None, True, 0, "local", [], {}, dict(self.storage_config(), mount_source=[])):
+                config_file.write_text(json.dumps(value))
+                with self.subTest(command=command, value=value):
+                    code, response, call = self.in_process(argv, command)
+                    self.assertEqual(code, 2)
+                    self.assertEqual(response["error"]["code"], "INVALID_INPUT")
+                    self.assertEqual(response["publication_state"],
+                                     "not_applicable" if command == "verify" else "not_published")
+                    call.assert_not_called()
+                    if value is None:
+                        # Exercise the real entry point as well: a null FILE
+                        # must fail before missing paths/storage classification.
+                        actual = self.invoke(*argv)
+                        self.assertEqual(actual["error"]["code"], "INVALID_INPUT")
+                        self.assertEqual(actual["publication_state"], response["publication_state"])
+        self.assertEqual(sorted(item.name for item in self.root.iterdir()), ["storage.json"])
 
     def test_config_invalid_bytes_duplicate_keys_and_raw_limits(self):
         config_file = self.root / "storage.json"
@@ -205,7 +234,7 @@ class SnapshotCLITests(unittest.TestCase):
 
     def test_config_and_api_share_cumulative_budget(self):
         config_file = self.root / "storage.json"
-        config_file.write_bytes(b"{}")
+        config_file.write_text(json.dumps(self.storage_config()))
         original = snapshot_cli._read_config
         seen = []
 

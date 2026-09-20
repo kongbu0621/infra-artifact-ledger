@@ -328,7 +328,9 @@ def restore(*, snapshot, target_dir, expected_manifest_sha256, scratch_parent, s
                             raise RecoveryError("INTEGRITY_FAILURE", "Restore bytes changed during verification.", "verify")
                         fd = staged.open_file("ledger.sqlite", single_link=True)
                         try:
+                            context.checkpoint("sync")
                             os.fsync(fd)
+                            context.checkpoint("sync")
                         finally:
                             os.close(fd)
                         context.link(staged, "ledger.sqlite", target, "ledger.sqlite")

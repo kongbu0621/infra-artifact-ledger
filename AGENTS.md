@@ -1,12 +1,12 @@
 # Working in this repository
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [接口提案](docs/INTERFACE_PROFILE.md)。文档均为 Candidate；不要将计划写成已实现能力。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前实现为 A1 `0.1.0a1` alpha；wire 合同仍为 `candidate`，不意味着稳定发布。实际验证、固定源提交和限制见 [验证记录](docs/A1_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)；后续阶段计划不写成已完成能力。
 
 ## Current execution boundary
 
 程序仓库文档 Gate 的本地采用关系、固定规则来源、当前状态与权限见 [Gate declaration](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)。该文件是每次执行的必读入口。当前 **CLOSED，Authorized implementation scope: A1-local-ledger-v0.1（P1–P5）**，Owner 决定见 Gate 引用记录。仅在固定范围内实现与验证；实现提交须以独立 CLOSED 记录提交为祖先。
 
-维护者使用固定的私有 companion 规则来源；本仓库不复制其正文。执行者不能读取规则、不能核实基线或 Owner 决策时，应保持 OPEN 并说明具体缺失。公开消费者理解拟议接口和将来使用软件，不需要读取该 companion。不得把规则来源不可读改写为自动获得实现授权。
+维护者使用固定的私有 companion 规则来源；本仓库不复制其正文。执行者不能读取规则、不能核实基线或 Owner 决策时，应保持 OPEN 并说明具体缺失。公开消费者理解公共接口和使用软件，不需要读取该 companion。不得把规则来源不可读改写为自动获得实现授权。
 
 ## Engineering boundaries
 

@@ -1,6 +1,6 @@
 # A1 实施与验收计划
 
-状态：Candidate，A0 文档提案；Decision Authority：Owner。拟议 scope：`A1-local-ledger-v0.1`。P1–P5 已获 Owner 授权，准确 R/A/scope 及独立 CLOSED 记录见 Gate；本文件本身不构成运行实现。需求来自 [REQUIREMENTS](REQUIREMENTS.md)，技术约束来自 [ARCHITECTURE](ARCHITECTURE.md)，字段级规范来自 [INTERFACE_PROFILE](INTERFACE_PROFILE.md)。
+状态：Owner 已批准的 A1 实施与验收计划；Decision Authority：Owner。授权 scope：`A1-local-ledger-v0.1`。当前 `0.1.0a1` alpha 已实现 P1–P5 对应代码与验收程序，实际结果以 [验证记录](A1_VALIDATION.md) 和 [兼容表](COMPATIBILITY.md) 为准；准确 R/A/scope 及独立 CLOSED 记录见 Gate。需求来自 [REQUIREMENTS](REQUIREMENTS.md)，技术约束来自 [ARCHITECTURE](ARCHITECTURE.md)，字段级规范来自 [INTERFACE_PROFILE](INTERFACE_PROFILE.md)。
 
 ## 1. 输入基线与开工顺序
 
@@ -12,9 +12,9 @@ A1 的范围包含下述 P1–P5、MIT LICENSE、本地安装与测试所需配�
 
 ## 2. 具体工程布局与依赖
 
-以下路径均为计划，A0 不创建它们：
+以下是 A1 实现布局；这些文件在独立 CLOSED 提交之后加入，不属于 A0 文档提交：
 
-| 拟新增路径 | 职责 |
+| 实现路径 | 职责 |
 |---|---|
 | `src/infra_artifact_ledger/records.py`、`validation.py` | 记录类型、strict JSON、闭包与跨记录约束 |
 | `src/infra_artifact_ledger/fingerprint.py` | 请求规范编码与 SHA-256；独立 Manifest 摘要规则 |
@@ -22,15 +22,15 @@ A1 的范围包含下述 P1–P5、MIT LICENSE、本地安装与测试所需配�
 | `src/infra_artifact_ledger/sqlite_store.py` | 本地格式版本、事务、索引和 BLOB |
 | `src/infra_artifact_ledger/portable.py` | 有界完整包与 descriptor，精确字节校验 |
 | `src/infra_artifact_ledger/cli.py`、`__init__.py` | 公共库出口与单次 JSON CLI |
-| `tests/`、`tests/fixtures/` | 操作级、故障、CLI、兼容性与独立安装验证；仅合成数据 |
+| `tests/`（输入工厂为 `acceptance_helpers.py`） | 操作级、故障、CLI、兼容性与独立安装验证；运行时生成合成数据，不提交大型 payload |
 | `pyproject.toml`、`.gitignore`、`LICENSE` | 包、命令入口、临时产物排除、Owner 已确认的 MIT 许可 |
 | `docs/COMPATIBILITY.md` | A1 实测的软件、数据格式与平台版本支持表 |
 
-A0 已提供 [USAGE.md](USAGE.md) 与 [REUSE_EXAMPLE.md](REUSE_EXAMPLE.md) 的接入设计及完整合成场景。它们不是现有可运行示例；P5 将其更新为与具体构建对应的操作指南，记录实际执行结果和未支持范围。
+A0 提供的 [USAGE.md](USAGE.md) 与 [REUSE_EXAMPLE.md](REUSE_EXAMPLE.md) 已在 P5 更新为 alpha 构建与接入指南；隔离安装的库示例及 CLI 报告闭环已经执行，源提交、实际结果与未支持范围保存在验证记录中。
 
 运行依赖使用 Python 3.11 标准库的 `sqlite3`、`json`、`hashlib`、`base64`、`argparse` 等，不需要模型 SDK。最低运行版本为 3.11，不使用 3.12 专属 API。测试使用 `unittest`；构建工具版本在 P1 固定并记录，构建依赖不进入运行依赖。外部安装验证使用离线 wheel 安装（在已准备的环境），避免测试悄悄读取私有 checkout。Linux/Python 3.11 下的编译、全部必需测试和安装闭环均为 A1 必验；只在 3.12 或更高版本通过不满足此条件。
 
-本地数据库计划含：格式头/版本；跨七类 ID 的唯一 `owned_identity`；各类 immutable record；版本父边与引用索引；按 BlobRef 关联的 BLOB；以三元幂等身份为唯一键的成功结果。记录正文与查询索引必须同事务生成，不允许两个不同 truth。数据库 schema 版本从 1 开始；A1 只初始化新库，未知版本拒绝打开，无自动 migration。无第三方迁移框架。
+本地数据库的既定设计含：格式头/版本；跨七类 ID 的唯一 `owned_identity`；各类 immutable record；版本父边与引用索引；按 BlobRef 关联的 BLOB；以三元幂等身份为唯一键的成功结果。这里的概念名不是公共 SQL 表名合同。记录正文与查询索引必须同事务生成，不允许两个不同 truth。数据库 schema 版本从 1 开始；A1 只初始化新库，未知版本拒绝打开，无自动 migration。无第三方迁移框架。
 
 API、CLI JSON、portable metadata 及包格式均按接口文档实现，不另造隐式 defaults。运行配置仅显式数据库路径和规定操作输入；上限固定在 profile，不能用环境变量悄悄改变公共语义。路径为本机 locator，不写入 portable 记录。
 

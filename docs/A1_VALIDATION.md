@@ -2,7 +2,9 @@
 
 范围：`A1-local-ledger-v0.1` 的 P1–P5；软件 `0.1.0a1`；日期 2026-09-20。只使用合成数据。
 
-当前复审修复 source J：`e69d247783acff7c228693c03856a5cff8017a8f`；tree：`5d79c2c0b4f51ff12789b601676289a1bbb9f250`。J 的验证见 §8；§2–5 是初次实现 D 的历史结果，§6 是 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）的历史结果；§7 是 H `5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`（tree `e5138d72f377d224a1df89aaaf732e12629d1b9c`）的历史结果。历史通过不能直接当作 J 的本轮实测。
+当前复审修复 source L：`55e561f9e77c0fa4e4352df1c612c97a93845af3`；tree：`0a8fb11df3081097ee19c9b482bf143a5d636394`，验证见 §9。
+
+历史结果分别保留：§8 为 J `e69d247783acff7c228693c03856a5cff8017a8f`（tree `5d79c2c0b4f51ff12789b601676289a1bbb9f250`）；§7 为 H `5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`（tree `e5138d72f377d224a1df89aaaf732e12629d1b9c`）；§6 为 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）；§2–5 为初次实现 D。历史通过不能直接当作 L 的本轮实测。
 
 初次已验实现 D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。E `fd31f87f97e6f1b5505f5266f56ba28e96547223` 仅补录 D 的文档证据；F 在 E 后追加范围内缺陷修复，保留 C/D/E 历史。
 
@@ -259,4 +261,60 @@ J 的唯一父提交为 I `9c70bb62998dd82b8e40e9911a60647b8d2c7799`。J 修改�
 
 Cloud 私有 companion 访问仍单列 BLOCKED；本轮仅验证已提交公开软件。维护工作台已经完整读取固定 R，不把 Cloud 通过转成实施授权或规则豁免。未修改测试、资源限额或已有环境配置；两个环境的 wheel 各记实际摘要，不声明 ZIP 字节可复现。真实掉电/NAS、真实消费者采用和独立第二 backend 仍未证明。
 
-J 后续的证据提交仅修改本文件和 COMPATIBILITY，源码、测试、USAGE、构建配置与 MIT 保持 J 的 Git 对象；因此上表对应实际跑过的源码及使用示例，而非未经验证的后续实现。
+J 的直接后继证据提交 K `adffa8429d32f8acc4221bf25096ad755d5cb660` 仅修改本文件和 COMPATIBILITY，源码、测试、USAGE、构建配置与 MIT 保持 J 的 Git 对象；因此上表对应实际跑过的源码及使用示例，而非未经验证的后续实现。
+
+## 9. 本次分别复审与 L 补验
+
+### PR #2：授权来源与合并链路
+
+固定 R 完整重读；Owner B 来源的创建与最后更新时间相同，决定原文仍与 C2 的 committed 副本逐字一致。C2 相对 main 仍只含 8 个 Markdown 文件；D 的直接父提交仍是 C。K 的唯一父提交为 J，只有两份证据文档变化；§8 与本地日志、Cloud 原始报告和稳定转录逐项一致。独立 `merge-tree` 模拟 main→C2→K 无冲突，最终 tree 等于 K；补验 C2→L 的结果也精确等于 L tree。累计 `git diff --check` 通过。#2 没有本轮未解决阻塞，未合并。
+
+### PR #3：库路径错误分类修复
+
+L 的唯一父提交是 K。生产源码仅在 `sqlite_store._path` 增加主机文件系统编码校验；新增 `test_library_paths.py` 的 3 个测试方法。规则、公共规范、授权、SQLite schema、JSON/内容限额及响应算法不变。
+
+修复前，Python 库收到含操作系统无法编码字符的路径时，`initialize` 返回 `INTERNAL_ERROR`，`open` 返回 `NOT_FOUND`；CLI 对同类不可表示路径已按 `INVALID_INPUT` 处理。新回归用 str、Path、PathLike 分别调用两个公共入口，修复前 6 个子案例均失败。修复后统一返回 `INVALID_INPUT/not_applicable`，在调用 SQLite 或创建暂存目录之前拒绝，目录不变。
+
+不能简单拒绝所有 Unicode surrogate：Linux 的 surrogateescape 可以合法表示非 UTF-8 文件名字节。正例覆盖中文、空格、`?`、`#` 及可表示的 surrogateescape 路径，完成创建、写入、关闭、重开与校验。没有收窄合法路径或把路径写入 portable metadata。
+
+### 独立审查覆盖
+
+- 包格式、指纹及校验器对应的 41 项既有小型测试通过；另有 1,404 个字段变异（1,362 拒绝、42 合法修改）无原始异常泄漏，12 种等价 JSON 封装收敛到原结果，9 个公共导入拒绝案例不改变完整导出状态，关闭重开后包和 bytes 保持一致。
+- CLI 另行执行 23 次真实子进程调用与 32 个参数解析反例。目录别名使 export 两个输出指向同一文件时，返回 `IO_ERROR/not_applicable` 并保留先发布的文件，符合既有双文件非原子发布边界，没有将这个允许的行为误判为新缺陷。
+- 三类写操作的 38 个小数据故障组合中，29 个确认未提交且导出状态不变，3 个未知提交状态可用原身份核对，6 个已提交后的响应失败保留 committed；事务释放、重放与 verify 均符合合同。
+- 历史 operation 与 result 的 recorded_at 没有规范要求的跨字段等时约束，因此没有新增该约束。Ledger 的内容校验不等于任意合法 metadata 的真实性或防篡改证明。
+
+上述变异与组合是本轮诊断，不增加正式 unittest 数量，也不是实际掉电或后续阶段验收。除已修复的路径分类外，未确认新的合同违例。
+
+### L 的本地验证
+
+| 检查 | 固定 L 的结果 |
+|---|---|
+| 来源与环境 | L/tree 如文首；Python 3.11.16 / SQLite 3.53.1，固定四个构建工具同 §2 |
+| 编译与普通 suite | compileall exit 0；166 项，157 通过、9 资源默认跳过，41.620s，exit 0 |
+| 新路径回归 | 3 个测试方法通过，含修复前失败的 6 个子案例与合法路径正例 |
+| 构建与隔离消费 | archive 43 个跟踪文件在构建前后逐字节等于 L；wheel 构建、新 consumer venv、离线安装及 walkthrough 均 exit 0 |
+| 复用示例 | 25 CLI=24 exit 0+1 预期冲突 exit 4；实际 USAGE Python 示例 PASS；40 字节往返一致，模块来自 consumer site-packages |
+| 安装态修复验证 | consumer Python `-I` 运行 3 个新路径测试，全部通过且无 skip；仅增加 archive/tests 用于加载测试，未增加 src，库始终来自 site-packages |
+| wheel | 36,448 字节，SHA-256 `d287c8fd36b6aa14a573f50d4a7cd7b8e0e6729f1051e755e529e381c66199ae`；10 个 Python 源与 MIT 均 L=wheel=安装文件，无 Requires-Dist |
+
+本轮仅改主机路径校验，不重复响应节点/字节及 64/256/384 MiB 资源专项；J 与 D 的对应资源记录仍是历史证据，不计为 L 新执行。
+
+### L 的 Codex Cloud 验证
+
+[实际 Cloud 任务](https://chatgpt.com/codex/cloud/tasks/task_e_6ab01d24c0a48329b83742b9fce6f412)已完成，[维护工作台转录](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751574124)保存来源与结果；不是 GitHub 自动 CI check。
+
+| 检查 | 固定 L 的 Cloud 实测 |
+|---|---|
+| 来源与环境 | HEAD/tree/parent 匹配 L；archive 43/43 跟踪文件逐字节等于 L。Python 3.11.15 / SQLite 3.45.1，Linux 6.18.44 x86_64 / glibc 2.39；四个构建工具版本同 §2 |
+| 编译与普通 suite | compileall exit 0；166 项中 157 通过、9 资源默认跳过，58.466s，exit 0 |
+| 构建、安装与复用 | 新 wheel、新 consumer 离线安装、实际文档 walkthrough 均 exit 0；25 CLI=24 exit 0+1 预期冲突 exit 4；USAGE Python 示例 PASS，40 字节往返一致 |
+| 安装态路径修复 | consumer Python `-I` 运行 3 项路径测试，全部通过、无 skip，0.030s；仅加入 archive/tests，模块确为 consumer site-packages，未加入 src |
+| wheel | 36,448 字节，SHA-256 `1a794153ba38ab2e9d217f134b425e36efbcff50f7b073c4d26c237c3f4b7a70`；10 个 Python 源和 MIT 均 L=archive=wheel=安装文件，无 Requires-Dist |
+| 原工作树 | 最终 HEAD/tree/parent 未变，status 为空、staged/unstaged diff 均 exit 0；没有实现修改、commit、push、merge 或发布 |
+
+执行过程保留：首次调用缺失的 `/usr/bin/time` 返回 127，Python 尚未启动；随后使用 subprocess/time.monotonic 完成唯一一次实际 compileall。前置失败未计为通过，未为此修改源码、测试或环境配置。
+
+Cloud 私有规则访问单列 BLOCKED，只验证公开软件；维护工作台已完整读取固定 R，不把 Cloud 通过视为实施授权或规则豁免。本轮没有重跑资源专项，也没有将历史 J/D 数据算作 L 新执行；两个环境分别保存 wheel 摘要，不宣称 ZIP 字节可复现。真实掉电/NAS、真实消费者采用和第二 backend 仍未证明。
+
+紧随 L 的本次证据提交仅修改 A1_VALIDATION 和 COMPATIBILITY；源码、测试、USAGE、构建配置及 MIT 保持已验 L 的 Git 对象。

@@ -243,7 +243,12 @@ class SQLiteStore:
             if _layout(self.connection) != _expected_layout():
                 raise LedgerError("UNSUPPORTED_VERSION", "Unknown local Ledger schema, indexes or triggers.")
         except sqlite3.DatabaseError as error:
-            raise LedgerError("INTEGRITY_FAILURE", "Cannot read the existing Ledger format.") from error
+            code = getattr(error, "sqlite_errorcode", 0) & 255
+            if code in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+                raise LedgerError("INTEGRITY_FAILURE", "Cannot read the existing Ledger format.") from error
+            # Lock contention and I/O failure do not establish corruption.
+            # Preserve their SQLite codes for the public service error mapper.
+            raise
 
     def execute(self, sql, parameters=()):
         return self.connection.execute(sql, parameters)

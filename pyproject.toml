@@ -28,4 +28,3 @@ Repository = "https://github.com/kongbu0621/infra-artifact-ledger"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

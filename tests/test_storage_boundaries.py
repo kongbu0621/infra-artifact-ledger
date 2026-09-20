@@ -71,6 +71,43 @@ class StorageBoundaryTests(unittest.TestCase):
         self.assertFalse((self.root / "missing.sqlite").exists())
         self.assert_no_staging()
 
+    def test_open_under_real_exclusive_lock_is_busy_not_corruption(self):
+        initialize(self.path).close()
+        before = self.path.read_bytes()
+        blocker = sqlite3.connect(self.path, isolation_level=None)
+        try:
+            blocker.execute("BEGIN EXCLUSIVE")
+            self.assert_error("BUSY", lambda: open_ledger(self.path))
+        finally:
+            blocker.rollback()
+            blocker.close()
+        self.assertEqual(self.path.read_bytes(), before)
+        with open_ledger(self.path) as ledger:
+            self.assertEqual(ledger.verify()["counts"]["artifacts"], 0)
+
+    def test_format_read_io_and_locked_errors_keep_their_classification(self):
+        initialize(self.path).close()
+        original = sqlite_store.SQLiteStore.execute
+        for sqlite_code, expected in ((sqlite3.SQLITE_IOERR_READ, "IO_ERROR"),
+                                      (sqlite3.SQLITE_LOCKED, "BUSY")):
+            error = sqlite3.OperationalError("injected format read failure")
+            error.sqlite_errorcode = sqlite_code
+
+            def fail_read(store, sql, parameters=()):
+                if sql == "PRAGMA user_version":
+                    raise error
+                return original(store, sql, parameters)
+
+            with self.subTest(sqlite_code=sqlite_code), \
+                    patch.object(sqlite_store.SQLiteStore, "execute", fail_read):
+                self.assert_error(expected, lambda: open_ledger(self.path))
+
+    def test_non_sqlite_bytes_still_report_integrity_failure(self):
+        contents = b"not a SQLite database" * 128
+        self.path.write_bytes(contents)
+        self.assert_error("INTEGRITY_FAILURE", lambda: open_ledger(self.path))
+        self.assertEqual(self.path.read_bytes(), contents)
+
     def test_existing_sqlite_sidecars_reserve_an_absent_database_target(self):
         for suffix in ("-journal", "-wal", "-shm"):
             with self.subTest(sidecar=suffix):

@@ -185,12 +185,22 @@ class Ledger:
                     for record in metadata.get(collection, []) for row in reference_rows(kind, record)}
         if expected != set(self._store.execute("SELECT source_id,field,target_id FROM refs")):
             raise LedgerError("INTEGRITY_FAILURE", "Stored reference indexes differ from immutable records.")
-        expected_records = {(identity, kind) for identity, (kind, _) in _record_map(metadata).items()}
-        if expected_records != set(self._store.execute("SELECT id,kind FROM records")):
-            raise LedgerError("INTEGRITY_FAILURE", "Stored owned identity indexes differ from immutable records.")
-        expected_ops = {(*_tuple(record), record["result_ref"]) for record in metadata["idempotency_records"]}
-        if expected_ops != set(self._store.execute("SELECT scope,kind,key,result_ref FROM operations")):
-            raise LedgerError("INTEGRITY_FAILURE", "Stored operation indexes differ from immutable records.")
+        # A collection-level set comparison loses the relationship between a
+        # SQL row and its own JSON: exchanging two valid record bodies leaves
+        # both sets unchanged. Check each index against the body in that row.
+        for identity, kind, raw in self._store.execute("SELECT id,kind,data FROM records"):
+            record = self._store._decode(raw)
+            if kind not in KINDS or record.get(KINDS[kind][1]) != identity:
+                raise LedgerError("INTEGRITY_FAILURE", "Stored owned identity index differs from its immutable record.")
+        for scope, kind, key, result_ref, raw in self._store.execute(
+            "SELECT scope,kind,key,result_ref,data FROM operations"
+        ):
+            record = self._store._decode(raw)
+            if (scope, kind, key, result_ref) != (
+                record.get("idempotency_scope_ref"), record.get("operation_kind"),
+                record.get("idempotency_key"), record.get("result_ref")
+            ):
+                raise LedgerError("INTEGRITY_FAILURE", "Stored operation index differs from its immutable record.")
         if {record["blob_ref"] for record in metadata["blobs"]} != {
             row[0] for row in self._store.execute("SELECT blob_ref FROM payloads")
         }:
@@ -284,10 +294,12 @@ class Ledger:
                     raise LedgerError("INVALID_INPUT", "append_version requires only a payloads mapping.")
                 # Snapshot mapping entries immediately; bytes themselves are
                 # immutable and these exact objects will be inserted.
-                supplied = dict(payloads.items())
+                supplied = {}
                 total = 0
-                for ref, data in supplied.items():
+                for ref, data in payloads.items():
                     _identity(ref)
+                    if ref in supplied:
+                        raise LedgerError("INVALID_INPUT", "Payload mapping repeats a BlobRef.")
                     if type(data) is not bytes:
                         raise LedgerError("INVALID_INPUT", "Payload values must be immutable bytes.")
                     if len(data) > MAX_BLOB:
@@ -295,6 +307,7 @@ class Ledger:
                     total += len(data)
                     if total > MAX_PAYLOAD:
                         raise LedgerError("RESOURCE_LIMIT", "Supplied payloads exceed the per-call limit.")
+                    supplied[ref] = data
                 announced = {record["blob_ref"]: record for record in request["body"]["blobs"]}
                 for ref, data in supplied.items():
                     if ref in announced:

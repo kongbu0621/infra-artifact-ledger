@@ -288,6 +288,10 @@ def _dispatch(args):
         if isinstance(error, LedgerError):
             if args.command != "write":
                 raise LedgerError(error.code, error.message, "not_applicable", error.details) from error
+            if not write_started:
+                # open() is a read/handle operation on its own, but failure to
+                # open for this write proves that execute was never started.
+                raise LedgerError(error.code, error.message, "not_committed", error.details) from error
             raise error
         if write_started:
             raise LedgerError("DURABILITY_UNKNOWN", "The write did not return a confirmed result; query its original identity.",

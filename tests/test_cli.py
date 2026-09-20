@@ -94,6 +94,34 @@ class CLITests(unittest.TestCase):
                 self.assertEqual(result["commit_state"], "not_committed")
                 self.assertFalse(Path(self.database).exists())
 
+    def test_write_open_failures_are_not_committed_and_preserve_database(self):
+        request = self.put("create.json", create())
+        missing = self.run_cli("write", "--request", request, exit_code=3)
+        self.assertEqual((missing["code"], missing["commit_state"]), ("NOT_FOUND", "not_committed"))
+        self.assertFalse(Path(self.database).exists())
+        original = b"not a SQLite database"
+        Path(self.database).write_bytes(original)
+        invalid = self.run_cli("write", "--request", request, exit_code=5)
+        self.assertEqual((invalid["code"], invalid["commit_state"]), ("INTEGRITY_FAILURE", "not_committed"))
+        self.assertEqual(Path(self.database).read_bytes(), original)
+
+    def test_real_locked_database_open_is_busy_for_read_and_write(self):
+        import sqlite3
+
+        self.initialized()
+        request = self.put("create.json", create())
+        locker = sqlite3.connect(self.database, isolation_level=None)
+        try:
+            locker.execute("BEGIN EXCLUSIVE")
+            read = self.run_cli("verify", exit_code=6)
+            self.assertEqual((read["code"], read["commit_state"]), ("BUSY", "not_applicable"))
+            write = self.run_cli("write", "--request", request, exit_code=6)
+            self.assertEqual((write["code"], write["commit_state"]), ("BUSY", "not_committed"))
+        finally:
+            locker.execute("ROLLBACK")
+            locker.close()
+        self.assertEqual(self.run_cli("verify")["data"]["counts"]["idempotency_records"], 0)
+
     def test_help_remains_text_without_executing_an_operation(self):
         for command in (None, "init", "write", "get", "history", "operation", "read-blob", "verify", "export"):
             args = ["--help"] if command is None else [command, "--help"]

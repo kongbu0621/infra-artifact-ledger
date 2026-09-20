@@ -60,9 +60,13 @@ def _record_map(metadata):
 
 def _response_size(data):
     envelope = {"status": "OK", "commit_state": "not_applicable", "data": data}
-    if len(canonical_bytes(envelope)) + 1 > MAX_JSON:
+    raw = canonical_bytes(envelope) + b"\n"
+    if len(raw) > MAX_JSON:
         raise LedgerError("RESOURCE_LIMIT", "Ordinary response exceeds the 8 MiB JSON limit.",
                           details={"limit": "response_json_bytes"})
+    # Individually valid writes can accumulate into an oversized read document.
+    # Apply the same node/depth limits to the complete public response envelope.
+    parse_json(raw, limit=MAX_JSON, label="ordinary response")
     return data
 
 
@@ -78,7 +82,15 @@ class Ledger:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+        try:
+            self.close()
+        except Exception:
+            if exc_value is None:
+                raise
+            # Cleanup must not replace the operation's known commit state or
+            # its recovery identity. This includes non-Ledger exceptions from
+            # the caller's with block, which the context manager must preserve.
+            BaseException.add_note(exc_value, "Ledger connection cleanup also failed.")
         return False
 
     def close(self):

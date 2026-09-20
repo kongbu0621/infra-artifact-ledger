@@ -6,8 +6,11 @@ exercise failures without adding any environment-controlled product hooks.
 """
 
 import os
+from contextlib import contextmanager
 from pathlib import Path
 import sqlite3
+import tempfile
+from functools import lru_cache
 
 from .errors import LedgerError
 from .fingerprint import canonical_bytes
@@ -30,6 +33,74 @@ _SCHEMA = (
     "target_id TEXT NOT NULL REFERENCES records(id), PRIMARY KEY(source_id,field,target_id))",
     "CREATE INDEX refs_target ON refs(target_id, field)",
 )
+
+
+def _layout(connection):
+    return tuple(connection.execute(
+        "SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name"
+    ))
+
+
+def _close_after_failure(connection, error):
+    try:
+        connection.close()
+    except BaseException:
+        BaseException.add_note(error, "SQLite connection cleanup also failed.")
+
+
+@contextmanager
+def _staging_directory(parent):
+    temporary = tempfile.TemporaryDirectory(prefix=".artifact-ledger-init-", dir=parent)
+    try:
+        yield Path(temporary.name)
+    except BaseException as error:
+        try:
+            temporary.cleanup()
+        except BaseException:
+            BaseException.add_note(error, "Private initialization directory cleanup also failed.")
+        raise
+    else:
+        temporary.cleanup()
+
+
+@lru_cache(maxsize=1)
+def _expected_layout():
+    # Use this SQLite build's own representation, including automatic indexes,
+    # to avoid hard-coding differences between supported SQLite versions.
+    connection = sqlite3.connect(":memory:")
+    try:
+        for statement in _SCHEMA:
+            connection.execute(statement)
+        result = _layout(connection)
+    except BaseException as error:
+        _close_after_failure(connection, error)
+        raise
+    else:
+        connection.close()
+    return result
+
+
+def _fsync_directory(path):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _same_file(path, expected):
+    current = path.stat(follow_symlinks=False)
+    if (current.st_dev, current.st_ino) != (expected.st_dev, expected.st_ino):
+        raise LedgerError("IO_ERROR", "The newly published database path was replaced.")
+
+
+def _require_new_target(target):
+    # Existing SQLite recovery files also occupy this name. Opening a newly
+    # created main file beside an old hot journal could consume or remove that
+    # unrelated recovery evidence. This initializer does not perform recovery.
+    for candidate in (target, *(Path(str(target) + suffix) for suffix in ("-journal", "-wal", "-shm"))):
+        if os.path.lexists(candidate):
+            raise LedgerError("IDENTITY_CONFLICT", "Database target or SQLite sidecar already exists; it will not be overwritten.")
 
 
 def reference_rows(kind, record):
@@ -77,17 +148,9 @@ class SQLiteStore:
     @classmethod
     def connect(cls, path, *, create=False):
         target = _path(path)
-        created_stat = None
         if create:
-            try:
-                fd = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            except FileExistsError as error:
-                raise LedgerError("IDENTITY_CONFLICT", "Database target already exists; it will not be overwritten.") from error
-            try:
-                created_stat = os.fstat(fd)
-            finally:
-                os.close(fd)
-        elif not target.exists():
+            return cls._initialize(target)
+        if not target.exists():
             raise LedgerError("NOT_FOUND", "Database path does not exist.")
         connection = None
         try:
@@ -97,7 +160,31 @@ class SQLiteStore:
             store = cls(connection)
             store.execute("PRAGMA foreign_keys=ON")
             store.execute("PRAGMA busy_timeout=5000")
-            if create:
+            store._validate_format()
+            # Do not silently change a caller's incompatible live DB mode.
+            if store.execute("PRAGMA journal_mode").fetchone()[0].lower() != "delete":
+                raise LedgerError("UNSUPPORTED_PROFILE", "Database journal mode is not the supported DELETE profile.")
+            store.execute("PRAGMA synchronous=FULL")
+            return store
+        except BaseException as error:
+            if connection is not None:
+                _close_after_failure(connection, error)
+            raise
+
+    @classmethod
+    def _initialize(cls, target):
+        # Build in an owned directory on the same filesystem. No SQLite
+        # initialization statement ever runs against the public target path.
+        _require_new_target(target)
+        with _staging_directory(target.parent) as directory:
+            staged = directory / "ledger.sqlite"
+            fd = os.open(staged, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            os.close(fd)
+            connection = sqlite3.connect(staged.as_uri() + "?mode=rw", uri=True,
+                                         timeout=5.0, isolation_level=None)
+            try:
+                store = cls(connection)
+                store.execute("PRAGMA foreign_keys=ON")
                 store.execute("PRAGMA journal_mode=DELETE")
                 store.execute("PRAGMA synchronous=FULL")
                 store.begin(write=True)
@@ -107,25 +194,34 @@ class SQLiteStore:
                 store.execute(f"PRAGMA application_id={APPLICATION_ID}")
                 store.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
                 store.commit()
+            except BaseException as error:
+                _close_after_failure(connection, error)
+                raise
             else:
-                store._validate_format()
-                # Do not silently change a caller's incompatible live DB mode.
-                if store.execute("PRAGMA journal_mode").fetchone()[0].lower() != "delete":
-                    raise LedgerError("UNSUPPORTED_PROFILE", "Database journal mode is not the supported DELETE profile.")
-                store.execute("PRAGMA synchronous=FULL")
-            return store
-        except BaseException:
-            if connection is not None:
                 connection.close()
-            # A failed initialization must never remove another actor's file.
-            if create and created_stat is not None:
-                try:
-                    current = target.stat()
-                    if (current.st_dev, current.st_ino) == (created_stat.st_dev, created_stat.st_ino):
-                        target.unlink()
-                except OSError:
-                    pass
+            fd = os.open(staged, os.O_RDONLY)
+            try:
+                os.fsync(fd)
+                published_stat = os.fstat(fd)
+            finally:
+                os.close(fd)
+            _require_new_target(target)
+            try:
+                os.link(staged, target)
+            except FileExistsError as error:
+                raise LedgerError("IDENTITY_CONFLICT", "Database target already exists; it will not be overwritten.") from error
+            # After publication the target may be complete even if fsync or
+            # reopening fails. Never unlink it as error cleanup: another actor
+            # may already have opened or replaced it.
+            _fsync_directory(target.parent)
+        _same_file(target, published_stat)
+        result = cls.connect(target)
+        try:
+            _same_file(target, published_stat)
+        except BaseException as error:
+            _close_after_failure(result, error)
             raise
+        return result
 
     def _validate_format(self):
         try:
@@ -144,6 +240,8 @@ class SQLiteStore:
             for table, columns in required.items():
                 if {row[1] for row in self.execute(f"PRAGMA table_info({table})")} != columns:
                     raise LedgerError("UNSUPPORTED_VERSION", "Unknown local Ledger table layout.")
+            if _layout(self.connection) != _expected_layout():
+                raise LedgerError("UNSUPPORTED_VERSION", "Unknown local Ledger schema, indexes or triggers.")
         except sqlite3.DatabaseError as error:
             raise LedgerError("INTEGRITY_FAILURE", "Cannot read the existing Ledger format.") from error
 

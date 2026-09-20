@@ -63,6 +63,48 @@ class CLITests(unittest.TestCase):
                 self.assertEqual(result["code"], "INVALID_INPUT")
                 self.assertFalse(Path(self.database).exists())
 
+    def test_read_and_auxiliary_argv_errors_are_not_applicable(self):
+        commands = {
+            "init": (), "get": ("--kind", "version", "--id", "version:test"),
+            "history": ("--artifact-id", "artifact:test"),
+            "operation": ("--request", "missing.json"),
+            "read-blob": ("--blob-ref", "blob:test", "--output", "output.bin"),
+            "verify": (), "export": ("--package", "package.json", "--descriptor", "descriptor.json"),
+        }
+        for command, options in commands.items():
+            valid = (command, "--db", self.database, *options)
+            cases = ((command, *options), (*valid, "--db", self.database),
+                     (*valid, "--unused", "value"), ("--unused", *valid))
+            if options:
+                cases += (valid[:-2],)
+            for args in cases:
+                with self.subTest(args=args):
+                    result = self.run_cli(*args, db=False, exit_code=2)
+                    self.assertEqual(result["code"], "INVALID_INPUT")
+                    self.assertEqual(result["commit_state"], "not_applicable")
+                    self.assertFalse(Path(self.database).exists())
+
+    def test_write_argv_errors_remain_not_committed(self):
+        valid = ("write", "--db", self.database, "--request", "missing.json")
+        for args in [("write", "--db", self.database), (*valid, "--db", self.database),
+                     (*valid, "--unused", "value"), ("--unused", *valid)]:
+            with self.subTest(args=args):
+                result = self.run_cli(*args, db=False, exit_code=2)
+                self.assertEqual(result["code"], "INVALID_INPUT")
+                self.assertEqual(result["commit_state"], "not_committed")
+                self.assertFalse(Path(self.database).exists())
+
+    def test_help_remains_text_without_executing_an_operation(self):
+        for command in (None, "init", "write", "get", "history", "operation", "read-blob", "verify", "export"):
+            args = ["--help"] if command is None else [command, "--help"]
+            with self.subTest(command=command):
+                result = subprocess.run([sys.executable, "-m", "infra_artifact_ledger", *args],
+                                        cwd=self.root, env=self.environment, capture_output=True, timeout=20)
+                self.assertEqual(result.returncode, 0)
+                self.assertEqual(result.stderr, b"")
+                self.assertTrue(result.stdout.startswith(b"usage: artifact-ledger"))
+                self.assertFalse(Path(self.database).exists())
+
     def test_operation_specific_transport_options_rejected_before_db_open(self):
         create_file = self.put("create.json", create())
         append_file = self.put("append.json", append()[0])

@@ -22,17 +22,35 @@ from .validation import (
 
 
 class _Parser(argparse.ArgumentParser):
+    def __init__(self, *args, operation=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._operation = operation
+        self._parsed_operation = None
+
+    def parse_known_args(self, args=None, namespace=None):
+        self._parsed_operation = None
+        parsed, remaining = super().parse_known_args(args, namespace)
+        # Root parse_args reports unknown options after its child has returned.
+        # Keep that parsed command too; do not infer it from arbitrary argv text.
+        self._parsed_operation = getattr(parsed, "command", None)
+        return parsed, remaining
+
+    def argument_error(self, message):
+        operation = self._operation or self._parsed_operation
+        state = "not_applicable" if operation is not None and operation != "write" else "not_committed"
+        raise LedgerError("INVALID_INPUT", message, state)
+
     def error(self, message):
         # argparse can interpolate arbitrary caller values into its messages.
         # Keep diagnostics structured, bounded and free of input file contents.
-        raise LedgerError("INVALID_INPUT", "Invalid command-line arguments; check the command and its required options.")
+        self.argument_error("Invalid command-line arguments; check the command and its required options.")
 
 
 class _Once(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         seen = getattr(namespace, "_seen", set())
         if self.dest in seen:
-            raise LedgerError("INVALID_INPUT", "An option was supplied more than once.")
+            parser.argument_error("An option was supplied more than once.")
         seen.add(self.dest)
         namespace._seen = seen
         setattr(namespace, self.dest, values)
@@ -53,7 +71,7 @@ def _parser():
         "export": ("db", "package", "descriptor"),
     }
     for command, required in options.items():
-        child = commands.add_parser(command, allow_abbrev=False)
+        child = commands.add_parser(command, allow_abbrev=False, operation=command)
         for name in required:
             child.add_argument("--" + name, required=True, action=_Once)
         if command == "write":

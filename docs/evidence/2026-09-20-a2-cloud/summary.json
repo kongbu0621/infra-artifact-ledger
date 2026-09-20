@@ -1,0 +1,285 @@
+{
+  "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+  "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35",
+  "wheel": "infra_artifact_ledger-0.2.0a1-py3-none-any.whl",
+  "wheel_sha256": "223639e788e3bb1c4c225eb278cf33ab54637be1de611e76ebaec97ec33145f2",
+  "wheel_bytes": 65155,
+  "completed_utc": "2026-09-20T22:16:42.463817+00:00",
+  "receipts": [
+    {
+      "name": "a1-resources",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests/test_resources.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 97.946,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "a1-responses",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests/test_response_boundaries.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 31.938,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "a2-resources",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "-p",
+        "test_snapshot_resources.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": true,
+      "a2_resources_enabled": true,
+      "exit_code": 0,
+      "elapsed_seconds": 61.266,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "build-environment",
+      "command": [
+        "<WORKSPACE>/ial-a2-build-env/bin/python",
+        "-I",
+        "-c",
+        "import json,platform,sqlite3,importlib.metadata; print(json.dumps(dict(python=platform.python_version(),sqlite=sqlite3.sqlite_version,platform=platform.platform(),build_tools={n:importlib.metadata.version(n) for n in (\"pip\",\"setuptools\",\"wheel\",\"packaging\")})))"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.064,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "build",
+      "command": [
+        "<WORKSPACE>/ial-a2-build-env/bin/python",
+        "-m",
+        "pip",
+        "wheel",
+        "--no-build-isolation",
+        "--no-deps",
+        "--wheel-dir",
+        "<WORKSPACE>/a2-fixed-validation/wheels",
+        "<WORKSPACE>/infra-ledger-a2-impl"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.566,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "compile311",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "<WORKSPACE>/infra-ledger-a2-impl/src",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "<WORKSPACE>/infra-ledger-a2-impl/tools/acceptance"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.032,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "compile312",
+      "command": [
+        "<WORKSPACE>/ial-a2-build-env/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "<WORKSPACE>/infra-ledger-a2-impl/src",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "<WORKSPACE>/infra-ledger-a2-impl/tools/acceptance"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.032,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87^",
+        "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87"
+      ],
+      "cwd": "<WORKSPACE>/infra-ledger-a2-impl",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.008,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "install",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "<WORKSPACE>/a2-fixed-validation/wheels/infra_artifact_ledger-0.2.0a1-py3-none-any.whl"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.315,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "installed-a1",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-I",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests/installed_walkthrough.py",
+        "--repo",
+        "<WORKSPACE>/infra-ledger-a2-impl"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 1.072,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "installed-a2-logic",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-I",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "-p",
+        "test_snapshot*.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 10.64,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "installed-unsupported-storage",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-I",
+        "-c",
+        "\nimport hashlib, json, pathlib, subprocess, sys, tempfile\nfrom infra_artifact_ledger import initialize, recovery\nfrom infra_artifact_ledger import snapshot_storage as storage\nwith tempfile.TemporaryDirectory(prefix='a2-installed-rejection-') as temporary:\n    root = pathlib.Path(temporary)\n    output = root / 'output'\n    output.mkdir()\n    source = root / 'source.sqlite'\n    with initialize(source): pass\n    before = source.read_bytes()\n    try:\n        recovery.create(db=source, output_root=output, snapshot_id='a'*32, source_commit='b'*40)\n    except recovery.RecoveryError as error:\n        assert (error.code, error.publication_state) == ('UNSUPPORTED_STORAGE', 'not_published')\n    else:\n        raise AssertionError('sandbox unexpectedly accepted as supported filesystem')\n    cli = pathlib.Path(sys.executable).parent / 'artifact-ledger'\n    result = subprocess.run([sys.executable, '-I', str(cli), 'snapshot', 'create', '--db', str(source),\n        '--output-root', str(output), '--snapshot-id', 'a'*32, '--source-commit', 'b'*40],\n        capture_output=True, check=False)\n    value = json.loads(result.stdout)\n    assert result.returncode == 3 and result.stderr == b''\n    assert value['error']['code'] == 'UNSUPPORTED_STORAGE'\n    assert value['publication_state'] == 'not_published'\n    assert source.read_bytes() == before and list(output.iterdir()) == []\n    assert set(p.name for p in root.iterdir()) == {'source.sqlite','output'}\n    print(json.dumps(dict(result='PASS', scope='installed_unsupported_filesystem_rejection',\n          module_path=recovery.__file__, cli_exit_code=result.returncode,\n          positive_supported_filesystem_lifecycle='NOT_RUN', gx10='NOT_RUN', real_nas='NOT_RUN')))\n"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.114,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "runtime",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-I",
+        "-c",
+        "import json,platform,sys,sqlite3,importlib.metadata,infra_artifact_ledger; print(json.dumps(dict(python=platform.python_version(),sqlite=sqlite3.sqlite_version,platform=platform.platform(),executable=sys.executable,prefix=sys.prefix,module_path=infra_artifact_ledger.__file__,version=importlib.metadata.version(\"infra-artifact-ledger\"))))"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.064,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "source311",
+      "command": [
+        "<WORKSPACE>/ial-a2-runtime-env/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 52.308,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    },
+    {
+      "name": "source312",
+      "command": [
+        "<WORKSPACE>/ial-a2-build-env/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-ledger-a2-impl/tests",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/a2-fixed-validation",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 53.911,
+      "source_commit": "ca17ca8b8a1a7b4e2186bb1d24d5ee662faa3c87",
+      "tree": "d51a3a3dc40c44193b4b8e592ddb4ac316b23e35"
+    }
+  ],
+  "gx10": "NOT_RUN",
+  "real_nas": "NOT_RUN",
+  "supported_fs_positive_lifecycle": "NOT_RUN",
+  "a2_overall": "PARTIAL"
+}

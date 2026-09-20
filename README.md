@@ -42,11 +42,11 @@
 | [A2 实施计划](docs/a2/IMPLEMENTATION_PLAN.md) | S1–S5 的顺序与完成条件 |
 | [A2 接口提案](docs/a2/INTERFACE_PROFILE.md) | 独立快照格式、预算、库/CLI 与失败状态 |
 | [A2 验收矩阵](docs/a2/ACCEPTANCE.md) | 故障、边界与真实 NAS 演练；当前均未运行 |
-| [A2 开工状态](docs/a2/GATE.md) | Candidate / OPEN；当前只推进设计 |
+| [A2 开工状态](docs/a2/GATE.md) | 已按固定基线授权 S1–S5；实现与验收分别记录 |
 
 后续路线：A1 本地可用 → A2 一致快照与真实存储恢复 → A3 两类真实消费者 → A4 独立第二实现验证替换。A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。
 
-A2 已进入设计提案阶段，尚无 snapshot/restore 实现或 NAS 验收结果；当前可执行能力与版本仍为 A1。新提案单独保存，不改写已批准 A1 文档或沿用 A1 开工授权。
+A2 设计已通过 PR #5 合并，并获独立开工授权；本次 CLOSED 记录时尚无 snapshot/restore 实现或 NAS 验收结果，当前可执行能力与版本仍为 A1。五份设计基线原文保留；最新授权见 A2 Gate，后续实现与实机结果分别记录。
 
 软件包名为 `infra-artifact-ledger`，版本 `0.1.0a1`；Python import 为 `infra_artifact_ledger`，CLI 为 `artifact-ledger`。使用本仓固定源码构建的 wheel；不要用未核验来源的同名 PyPI 包替代。最低运行基线为 Python 3.11，Linux/Python 3.11 是 A1 必验组合；其他版本和平台的状态以兼容表为准。公共 metadata 的 `contract_version=0.1.0` 和 `contract_status=candidate` 保持不变，不能从合同版本推断软件稳定性。
 

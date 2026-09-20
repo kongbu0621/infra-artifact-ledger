@@ -10,7 +10,7 @@
 
 ## Engineering boundaries
 
-A2 的候选需求、架构、计划、接口和验收见 [A2 Gate](docs/a2/GATE.md)。A2 当前 OPEN；用户已要求推进设计 PR，不能将该指示或 A1 closure 记作 A2 实现授权。维护 A1 时继续使用已批准范围；改变 A2 方案时同步五份文档与基线，不写运行代码、探针或测试骨架。
+A2 的需求、架构、计划、接口、验收与独立授权见 [A2 Gate](docs/a2/GATE.md)。A2 已按固定 R/A 获 Owner 明确批准，CLOSED 范围为 `A2-snapshot-nas-restore-v0.1` S1–S5；实现必须以独立 CLOSED 记录 C 为祖先。维护 A1 时继续使用已批准范围；改变 A2 规范内容须按 reopen 条件重新确认。五份设计文档保留基线原文，历史 OPEN 不覆盖后续明确授权，实际通过状态以执行证据为准。
 
 - 元数据、可用 payload 与成功幂等结果必须共同提交；禁止先宣告成功再补内容。
 - 原始 ID、版本和关系不可静默改写。不得把摘要、文件名或存储路径当作 Artifact 身份。

@@ -133,6 +133,9 @@ def _path(path):
         value = os.fspath(path)
         if not isinstance(value, str) or not value or "\x00" in value:
             raise ValueError("invalid path")
+        # Match the CLI's host-path boundary before existence checks or
+        # initialization can turn an unencodable name into an unrelated error.
+        os.fsencode(value)
         return Path(value).absolute()
     except (TypeError, ValueError, UnicodeError) as error:
         raise LedgerError("INVALID_INPUT", "Database path must be a valid local path.") from error

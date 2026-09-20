@@ -31,7 +31,7 @@
 
 对于可接受点，执行公开入口 `create → verify → restore → check_restore`，并检查：
 
-1. 每个入口返回的 summary 与独立 A1 verify 一致。
+1. create、verify、check_restore 返回的 summary 与独立 A1 verify 一致；restore 的输出数据库另外按以下完整字节与五表内容检查。
 2. 恢复文件实际 SHA-256 匹配封存数据库摘要。
 3. 原库与恢复库的 `ledger_format`、`records`、`payloads`、`operations`、`refs` 五表逐行计算精确值摘要，并逐表比较；不以计数相同替代内容相同。
 4. 源数据库文件摘要保持不变，操作暂存最终清空。

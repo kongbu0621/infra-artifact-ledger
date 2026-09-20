@@ -1,0 +1,12 @@
+Processing <WORKSPACE>/infra-ledger-a2-impl
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: infra-artifact-ledger
+  Building wheel for infra-artifact-ledger (pyproject.toml): started
+  Building wheel for infra-artifact-ledger (pyproject.toml): finished with status 'done'
+  Created wheel for infra-artifact-ledger: filename=infra_artifact_ledger-0.2.0a1-py3-none-any.whl size=65669 sha256=5ca6586124b82ed0de67e04200f9a68db8079f2720ef2c99bfc63bb2b1fea994
+  Stored in directory: /root/.cache/pip/wheels/14/4c/ed/734787cb8e3541ae7f25640a82431de41258026d7113ce7a1b
+Successfully built infra-artifact-ledger
+
+[notice] A new release of pip is available: 25.0.1 -> 26.2.1
+[notice] To update, run: python -m pip install --upgrade pip

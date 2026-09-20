@@ -1,0 +1,21 @@
+test_blob_real_64mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_blob_real_64mib_minus_one_equal_plus_one) ... {"case": "test_blob_real_64mib_minus_one_equal_plus_one", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 1.716, "process_peak_rss_kib": 287452}
+ok
+test_decoded_payload_total_256mib_minus_one_and_plus_one (__main__.ActualProfileResourceTests.test_decoded_payload_total_256mib_minus_one_and_plus_one) ... {"case": "test_decoded_payload_total_256mib_minus_one_and_plus_one", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 20.755, "process_peak_rss_kib": 1553060}
+ok
+test_descriptor_4095_4096_4097_bytes (__main__.ActualProfileResourceTests.test_descriptor_4095_4096_4097_bytes) ... {"case": "test_descriptor_4095_4096_4097_bytes", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 0.006, "process_peak_rss_kib": 1553060}
+ok
+test_incoming_total_reused_closure_and_decoded_bundle_at_256mib (__main__.ActualProfileResourceTests.test_incoming_total_reused_closure_and_decoded_bundle_at_256mib) ... {"case": "test_incoming_total_reused_closure_and_decoded_bundle_at_256mib", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 12.517, "process_peak_rss_kib": 1553060}
+ok
+test_json_container_depth_15_16_17_and_nodes_499999_500000_500001 (__main__.ActualProfileResourceTests.test_json_container_depth_15_16_17_and_nodes_499999_500000_500001) ... {"case": "test_json_container_depth_15_16_17_and_nodes_499999_500000_500001", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 0.614, "process_peak_rss_kib": 1553060}
+ok
+test_package_384mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_package_384mib_minus_one_equal_plus_one) ... {"case": "test_package_384mib_minus_one_equal_plus_one", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 46.581, "process_peak_rss_kib": 1553060}
+ok
+test_public_history_response_limit_includes_complete_envelope_and_lf (__main__.ActualProfileResourceTests.test_public_history_response_limit_includes_complete_envelope_and_lf) ... {"case": "test_public_history_response_limit_includes_complete_envelope_and_lf", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 14.926, "process_peak_rss_kib": 1553060}
+ok
+test_write_request_serialized_8mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_write_request_serialized_8mib_minus_one_equal_plus_one) ... {"case": "test_write_request_serialized_8mib_minus_one_equal_plus_one", "python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "elapsed_seconds": 0.947, "process_peak_rss_kib": 1553060}
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 98.064s
+
+OK

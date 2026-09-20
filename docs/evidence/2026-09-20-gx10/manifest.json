@@ -1,0 +1,100 @@
+{
+  "record_type": "operator-supplied-gx10-a1-execution-evidence",
+  "source_commit": "a00926dff89ae5ddc498105472899a48381b1927",
+  "source_tree": "56dca8bbe9dca627e05b89d8bb7eea109846bf0b",
+  "source_binding": "Conversation execution scripts pinned and checked the full commit; raw installation stdout contains only prefix a00926d. This is operator-supplied evidence, not a signed runtime attestation.",
+  "original_archive": {
+    "filename": "gx10-a1-evidence-20260921-031516.tar.gz",
+    "bytes": 7144,
+    "sha256": "0084f137b6ec6c4d2151e109fd5305b0ede309bbc5594b4df73f286353052422",
+    "included_in_public_repository": false
+  },
+  "copy_mode": "UTF-8 text with only the listed path/hostname substitutions; not byte-identical to original logs",
+  "files": [
+    {
+      "archive_member": "gx10-0GFHzV/run.log",
+      "original_bytes": 34285,
+      "original_sha256": "f01ae0ccb6f9c6c436a9154458771c7e9b7f0c4f52559c301df2aa0b59bd5a3a",
+      "public_copy": "installation.redacted.txt",
+      "public_bytes": 34162,
+      "public_sha256": "a362ed1afbd78e8293d44443556cfe3f4dd2fc62e9d5879565009169eaa8b595",
+      "redactions": [
+        {
+          "field": "absolute_workspace_root",
+          "replacement": "/example/works",
+          "occurrences": 8
+        },
+        {
+          "field": "pip_cache_root",
+          "replacement": "/example/cache/pip",
+          "occurrences": 1
+        },
+        {
+          "field": "relative_workspace_root",
+          "replacement": "./works",
+          "occurrences": 1
+        },
+        {
+          "field": "hostname",
+          "replacement": "gx10-node",
+          "occurrences": 1
+        }
+      ]
+    },
+    {
+      "archive_member": "resources-PgtBdF/run.log",
+      "original_bytes": 4476,
+      "original_sha256": "5bd71d2ae71337238c9bb54c8a3ca2fc21978a035f0293881b6b5b8ee84922fd",
+      "public_copy": "resources.redacted.txt",
+      "public_bytes": 4463,
+      "public_sha256": "8f191da0d0cf56d9d93706ffb5fd7f915e4de22607822ba97b75c97b6aa0579f",
+      "redactions": [
+        {
+          "field": "absolute_workspace_root",
+          "replacement": "/example/works",
+          "occurrences": 1
+        }
+      ]
+    }
+  ],
+  "environment": {
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "python": "3.12.3",
+    "sqlite": "3.45.1",
+    "filesystem": "ext4"
+  },
+  "execution": {
+    "installation_started_utc": "2026-09-20T19:10:44Z",
+    "resources_started_utc": "2026-09-20T19:13:01Z",
+    "ordinary_discovered": 166,
+    "ordinary_passed": 157,
+    "ordinary_skipped": 9,
+    "ordinary_seconds": 44.216,
+    "resource_suite_passed": 8,
+    "resource_suite_seconds": 52.35,
+    "response_suite_passed": 1,
+    "response_suite_seconds": 18.628,
+    "distinct_unittest_cases_passed": 166,
+    "cli_calls": 25,
+    "cli_exit_0": 24,
+    "cli_expected_conflict_exit_4": 1,
+    "library_guide": "PASS",
+    "verified_bytes": 40,
+    "installation_script_exit": 0,
+    "resource_script_exit": 0,
+    "resource_peak_rss_kib": 1551072,
+    "response_peak_rss_kib": 199064
+  },
+  "wheel": {
+    "filename": "infra_artifact_ledger-0.1.0a1-py3-none-any.whl",
+    "bytes_reported": 36448,
+    "sha256_reported": "904e413fcc11d6fb0d3b6044c37fe8d1e0f34c1c5a163cd2302bfcab6255ede0",
+    "digest_evidence": "pip build stdout and sha256sum stdout agree",
+    "artifact_received": false
+  },
+  "limits": [
+    "No independent full-commit or wheel-content attestation from this two-log archive.",
+    "compileall was quiet; success is inferred from the issued fail-on-error script reaching its final exit 0, not a separate compiler transcript.",
+    "No NAS recovery, power-loss test, production consumer adoption, second backend, or Local Hand admission for the ledger is established."
+  ]
+}

@@ -1,0 +1,35 @@
+Sun Sep 20 07:13:01 PM UTC 2026
+test_blob_real_64mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_blob_real_64mib_minus_one_equal_plus_one) ... {"case": "test_blob_real_64mib_minus_one_equal_plus_one", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 1.101, "process_peak_rss_kib": 285488}
+ok
+test_decoded_payload_total_256mib_minus_one_and_plus_one (__main__.ActualProfileResourceTests.test_decoded_payload_total_256mib_minus_one_and_plus_one) ... {"case": "test_decoded_payload_total_256mib_minus_one_and_plus_one", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 10.327, "process_peak_rss_kib": 1551072}
+ok
+test_descriptor_4095_4096_4097_bytes (__main__.ActualProfileResourceTests.test_descriptor_4095_4096_4097_bytes) ... {"case": "test_descriptor_4095_4096_4097_bytes", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 0.024, "process_peak_rss_kib": 1551072}
+ok
+test_incoming_total_reused_closure_and_decoded_bundle_at_256mib (__main__.ActualProfileResourceTests.test_incoming_total_reused_closure_and_decoded_bundle_at_256mib) ... {"case": "test_incoming_total_reused_closure_and_decoded_bundle_at_256mib", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 6.509, "process_peak_rss_kib": 1551072}
+ok
+test_json_container_depth_15_16_17_and_nodes_499999_500000_500001 (__main__.ActualProfileResourceTests.test_json_container_depth_15_16_17_and_nodes_499999_500000_500001) ... {"case": "test_json_container_depth_15_16_17_and_nodes_499999_500000_500001", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 0.396, "process_peak_rss_kib": 1551072}
+ok
+test_package_384mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_package_384mib_minus_one_equal_plus_one) ... {"case": "test_package_384mib_minus_one_equal_plus_one", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 25.796, "process_peak_rss_kib": 1551072}
+ok
+test_public_history_response_limit_includes_complete_envelope_and_lf (__main__.ActualProfileResourceTests.test_public_history_response_limit_includes_complete_envelope_and_lf) ... {"case": "test_public_history_response_limit_includes_complete_envelope_and_lf", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 7.634, "process_peak_rss_kib": 1551072}
+ok
+test_write_request_serialized_8mib_minus_one_equal_plus_one (__main__.ActualProfileResourceTests.test_write_request_serialized_8mib_minus_one_equal_plus_one) ... {"case": "test_write_request_serialized_8mib_minus_one_equal_plus_one", "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 0.562, "process_peak_rss_kib": 1551072}
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 52.350s
+
+OK
+test_public_history_envelope_nodes_499999_500000_500001 (__main__.ActualResponseBoundaryTests.test_public_history_envelope_nodes_499999_500000_500001) ... {"case": "test_public_history_envelope_nodes_499999_500000_500001", "response_nodes": 499999, "response_bytes": 4278324, "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 6.375, "process_peak_rss_kib": 174948}
+{"case": "test_public_history_envelope_nodes_499999_500000_500001", "response_nodes": 500000, "response_bytes": 4278333, "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 6.471, "process_peak_rss_kib": 192792}
+{"case": "test_public_history_envelope_nodes_499999_500000_500001", "response_nodes": 500001, "response_bytes": 4278342, "python": "3.12.3", "sqlite": "3.45.1", "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39", "elapsed_seconds": 5.757, "process_peak_rss_kib": 199064}
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 18.628s
+
+OK
+PASS：两组资源边界测试全部通过。
+
+退出码=0
+日志=/example/works/data/infra-artifact-ledger/acceptance/resources-PgtBdF/run.log

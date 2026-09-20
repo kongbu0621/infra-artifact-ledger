@@ -148,7 +148,7 @@ class NasExerciseSafetyTests(unittest.TestCase):
         donor = self.run.path / "disposable" / "donor.sqlite"
         expected = tool.populate(source, donor)
         counts = expected["summary"]["counts"]
-        self.assertEqual(counts["versions"], 3)
+        self.assertEqual(counts["versions"], 4)
         self.assertEqual(counts["manifests"], 1)
         self.assertEqual(counts["provenance_links"], 2)
         self.assertEqual(counts["import_receipts"], 1)

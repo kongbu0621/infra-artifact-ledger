@@ -117,10 +117,22 @@ def _stamp(info):
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
 
 
+@contextmanager
+def _owned_file(fd):
+    """Close once, preserving this operation's primary error if there is one."""
+    primary = None
+    try:
+        yield fd
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        storage._close_preserving_error(lambda: os.close(fd), primary)
+
+
 def _database_info(directory, budget):
     directory.check("verify")
-    fd = directory.open_file("ledger.sqlite", single_link=True)
-    try:
+    with _owned_file(directory.open_file("ledger.sqlite", single_link=True)) as fd:
         before = os.fstat(fd)
         if not 0 < before.st_size <= fmt.MAX_DATABASE:
             raise RecoveryError("RESOURCE_LIMIT", "Database file exceeds the snapshot budget.", "verify")
@@ -139,8 +151,6 @@ def _database_info(directory, budget):
             raise RecoveryError("INTEGRITY_FAILURE", "Database changed while being read.", "verify")
         directory.check("verify")
         return {"byte_length": size, "sha256": digest.hexdigest()}
-    finally:
-        os.close(fd)
 
 
 def _manifest(directory, expected, budget):
@@ -176,8 +186,7 @@ def _validated_snapshot(snapshot, expected, scratch, config, context, *, destina
         if source.identity == scratch.identity:
             raise RecoveryError("INVALID_INPUT", "Scratch directory aliases the read-only snapshot.")
         manifest, raw, marker_raw = _manifest(source, expected, context.budget)
-        fd = source.open_file("ledger.sqlite", single_link=True)
-        try:
+        with _owned_file(source.open_file("ledger.sqlite", single_link=True)) as fd:
             initial = os.fstat(fd)
             with storage.temporary_directory(scratch, context.budget) as private:
                 context.checkpoint("copy")
@@ -199,18 +208,13 @@ def _validated_snapshot(snapshot, expected, scratch, config, context, *, destina
                     raise RecoveryError("INTEGRITY_FAILURE", "Snapshot metadata changed during validation.", "verify")
                 # Consumers use the verified copy, never reopen the original DB.
                 yield manifest, raw, marker_raw, private
-        finally:
-            os.close(fd)
 
 
 def _copy_database(source, destination, expected, context):
     context.checkpoint("copy")
-    fd = source.open_file("ledger.sqlite", single_link=True)
-    try:
+    with _owned_file(source.open_file("ledger.sqlite", single_link=True)) as fd:
         storage.copy_file(fd, destination, "ledger.sqlite", context.budget,
                           expected_size=expected["byte_length"], expected_hash=expected["sha256"])
-    finally:
-        os.close(fd)
 
 
 def _seal_archive(parent, private, manifest, raw, marker_raw, context, *, remote=False):
@@ -334,13 +338,10 @@ def restore(*, snapshot, target_dir, expected_manifest_sha256, scratch_parent, s
                             "byte_length": manifest["database"]["byte_length"], "sha256": manifest["database"]["sha256"]
                         }:
                             raise RecoveryError("INTEGRITY_FAILURE", "Restore bytes changed during verification.", "verify")
-                        fd = staged.open_file("ledger.sqlite", single_link=True)
-                        try:
+                        with _owned_file(staged.open_file("ledger.sqlite", single_link=True)) as fd:
                             context.checkpoint("sync")
                             os.fsync(fd)
                             context.checkpoint("sync")
-                        finally:
-                            os.close(fd)
                         context.link(staged, "ledger.sqlite", target, "ledger.sqlite")
                     # Owned temporary link must be removed BEFORE final sync.
                     context.checkpoint("sync")
@@ -371,8 +372,7 @@ def check_restore(*, target_dir, expected_database_sha256, scratch_parent):
                 raise RecoveryError("INVALID_INPUT", "Scratch directory aliases the read-only target.")
             if any(_entry_exists(target, name) for name in _SIDECARS):
                 raise RecoveryError("INTEGRITY_FAILURE", "Restore target contains SQLite sidecars.", "verify")
-            fd = target.open_file("ledger.sqlite", single_link=False)
-            try:
+            with _owned_file(target.open_file("ledger.sqlite", single_link=False)) as fd:
                 initial = os.fstat(fd)
                 with storage.temporary_directory(scratch, context.budget) as private:
                     context.checkpoint("copy")
@@ -387,6 +387,4 @@ def check_restore(*, target_dir, expected_database_sha256, scratch_parent):
                     if _stamp(initial) != _stamp(current) or _stamp(initial) != _stamp(os.fstat(fd)) or any(_entry_exists(target, name) for name in _SIDECARS):
                         raise RecoveryError("INTEGRITY_FAILURE", "Restore target changed during validation.", "verify")
                 return {"database_sha256": expected, "database_path": str(target_path / "ledger.sqlite"), "summary": summary}
-            finally:
-                os.close(fd)
     return _execute("check_restore", work)

@@ -93,17 +93,37 @@ def _read_config(path, budget):
         os.fsencode(path)
         budget.check("validate")
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
-        with os.fdopen(descriptor, "rb") as stream:
-            info = os.fstat(stream.fileno())
+        primary = None
+        try:
+            info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode):
                 raise RecoveryError("INVALID_INPUT", "Storage config must be a regular file.")
             if info.st_size > MAX_CONFIG:
                 raise RecoveryError("RESOURCE_LIMIT", "Storage config exceeds its serialized byte limit.")
-            raw = stream.read(MAX_CONFIG + 1)
-            if len(raw) > MAX_CONFIG:
-                raise RecoveryError("RESOURCE_LIMIT", "Storage config exceeds its serialized byte limit.")
+            # Own the raw descriptor until close; wrapping it in fdopen can
+            # fail before ownership transfers. Short reads are not EOF, and
+            # growth after fstat must still respect the serialized limit.
+            raw = bytearray()
+            while len(raw) <= MAX_CONFIG:
+                budget.check("validate")
+                block = os.read(descriptor, MAX_CONFIG + 1 - len(raw))
+                if not block:
+                    break
+                raw.extend(block)
+                if len(raw) > MAX_CONFIG:
+                    raise RecoveryError("RESOURCE_LIMIT", "Storage config exceeds its serialized byte limit.")
+        except BaseException as error:
+            primary = error
+            raise
+        finally:
+            try:
+                os.close(descriptor)
+            except OSError:
+                if primary is None:
+                    raise
+                primary.add_note("Storage config close also failed; the earlier failure is retained.")
         budget.check("validate")
-        value = parse_json(raw, limit=MAX_CONFIG, stage="validate")
+        value = parse_json(bytes(raw), limit=MAX_CONFIG, stage="validate")
         budget.check("validate")
         return value
     except FileNotFoundError as error:

@@ -305,7 +305,7 @@ def create_request(name):
 
 
 def populate(source, donor):
-    """Self-contained synthetic branch/manifest/provenance/import fixture."""
+    """Synthetic branches, multi-parent reuse, manifest, provenance and import."""
     import infra_artifact_ledger as library
     with library.initialize(donor) as ledger:
         ledger.execute(encode(create_request("nas-seed")))
@@ -333,6 +333,18 @@ def populate(source, donor):
                 body["manifests"] = [{"manifest_ref": "manifest:nas-left", "entries": entries,
                     "digest": {"algorithm": "sha256", "value": digest(encode({"entries": entries}))}}]
             ledger.execute(encode(request("append_version", body, "append-" + label)), payloads={blob: payload})
+        # The NAS acceptance contract includes a merge and shared content, not
+        # just two independent single-parent branches. Reuse the already owned
+        # base content root without transmitting another Blob or changing IDs.
+        merged = {"version_id": "version:nas-merged", "artifact_id": "artifact:nas-seed",
+                  "content_root_ref": "root:nas-base",
+                  "parent_version_refs": ["version:nas-left", "version:nas-right"],
+                  "external_source_refs": [], "capture_refs": [], "handling_policy_refs": []}
+        ledger.execute(encode(request("append_version", {"version": merged, "content_roots": [],
+                       "blobs": [], "manifests": [], "provenance_links": []}, "append-merged")), payloads={})
+        recorded = ledger.get_record("version", "version:nas-merged")
+        require(all(recorded.get(key) == value for key, value in merged.items()),
+                "Synthetic merge parents or reused content differ.")
         bundle = ledger.export_bundle()
     with library.initialize(source) as ledger:
         ledger.execute(encode(request("import_bundle", {"import_receipt_id": "receipt:nas-seed"}, "import-seed")),
@@ -639,15 +651,39 @@ def exercise(args):
             require(replay == dict(expected["replay_result"], replayed=True), "Original request replay differs.")
             require(ledger.verify() == expected["summary"], "Replay changed the restored state.")
             require(database_image(database) == expected["image"], "Replay changed persisted rows or payloads.")
-            new_result = ledger.execute(encode(create_request("nas-after-restore")))
+            # Confirm the restored graph accepts a new version and payload;
+            # creating an unrelated Artifact alone cannot prove that property.
+            new_payload = "NAS 恢复后的新增版本\n".encode()
+            new_blob = "blob:nas-after-restore"
+            new_version = {"version_id": "version:nas-after-restore", "artifact_id": "artifact:nas-seed",
+                           "content_root_ref": "root:nas-after-restore",
+                           "parent_version_refs": ["version:nas-merged"],
+                           "external_source_refs": [], "capture_refs": [], "handling_policy_refs": []}
+            new_body = {"version": new_version,
+                        "content_roots": [{"content_root_ref": "root:nas-after-restore",
+                                           "kind": "blob", "blob_ref": new_blob}],
+                        "blobs": [{"blob_ref": new_blob, "digest": {"algorithm": "sha256", "value": digest(new_payload)},
+                                   "byte_length": len(new_payload), "payload_availability": "available"}],
+                        "manifests": [], "provenance_links": []}
+            new_result = ledger.execute(encode(request("append_version", new_body, "append-after-restore")),
+                                        payloads={new_blob: new_payload})
             require(not new_result["replayed"], "New synthetic request did not create a new operation.")
+            recorded = ledger.get_record("version", new_version["version_id"])
+            require(all(recorded.get(key) == value for key, value in new_version.items())
+                    and ledger.read_blob(new_blob) == new_payload,
+                    "New restored version or its payload differs.")
             after = ledger.verify()
             counts = dict(expected["summary"]["counts"])
-            counts["artifacts"] += 1
-            counts["idempotency_records"] += 1
-            require(after == dict(expected["summary"], counts=counts), "New synthetic request has unexpected effects.")
+            for kind in ("versions", "content_roots", "blobs", "idempotency_records"):
+                counts[kind] += 1
+            require(after == dict(expected["summary"], counts=counts,
+                                 verified_blob_count=expected["summary"]["verified_blob_count"] + 1,
+                                 verified_byte_length=expected["summary"]["verified_byte_length"] + len(new_payload)),
+                    "New synthetic request has unexpected effects.")
         report["stages"][stage] = {"all_rows_and_blobs_equal": True, "replay_preserved_state": True,
-                                   "new_synthetic_write": "PASS"}
+                                   "new_synthetic_write": "PASS", "new_version_id": new_version["version_id"],
+                                   "new_version_parent_refs": new_version["parent_version_refs"],
+                                   "new_payload_sha256": digest(new_payload), "after_write_summary": after}
         report["status"] = "PASS"
     except Exception as error:
         pending_error = error

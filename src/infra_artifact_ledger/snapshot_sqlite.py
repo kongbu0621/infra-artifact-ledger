@@ -188,10 +188,38 @@ def _assert_source_binding(path, expected, budget):
         raise _failure("IO_ERROR", "Source path or mount binding changed during snapshot.", "snapshot")
 
 
+def _cleanup_header_process(process, primary):
+    """Reap the helper and close its pipe without replacing a known failure."""
+    failure = None
+    try:
+        if process.poll() is None:
+            try:
+                process.kill()
+            except ProcessLookupError:
+                pass
+        process.wait()
+    except BaseException as error:
+        failure = error
+    try:
+        if process.stdout is not None:
+            process.stdout.close()
+    except BaseException as error:
+        if failure is None:
+            failure = error
+        else:
+            BaseException.add_note(failure, "Source inspection pipe cleanup also failed.")
+    if failure is not None:
+        if primary is not None:
+            BaseException.add_note(primary, "Source inspection process cleanup also failed.")
+        else:
+            raise failure
+
+
 def _read_header(source, budget):
     """Inspect at most 100 source bytes, with bounded child output and cleanup."""
     budget.check("validate")
     process = None
+    completed = False
     try:
         process = subprocess.Popen(
             [sys.executable, "-I", str(Path(__file__).absolute()), "--source-header", str(source)],
@@ -235,6 +263,7 @@ def _read_header(source, budget):
                     type(result[key]) is not int or result[key] < 0 for key in ("device", "inode")
                 ):
                     raise ValueError("invalid binding")
+                completed = True
                 return result["device"], result["inode"]
             if set(result) != {"ok", "code"} or result["code"] not in {
                 "INVALID_INPUT", "IO_ERROR", "NOT_FOUND", "INTEGRITY_FAILURE", "UNSUPPORTED_FORMAT"
@@ -247,14 +276,9 @@ def _read_header(source, budget):
         raise _failure("IO_ERROR", "Could not start or read the source inspection process.", "validate") from error
     finally:
         if process is not None:
-            if process.poll() is None:
-                try:
-                    process.kill()
-                except ProcessLookupError:
-                    pass
-            process.wait()
-            if process.stdout is not None:
-                process.stdout.close()
+            # sys.exception() can include a caller's already handled exception.
+            # Only a failing exit from this function supplies a primary error.
+            _cleanup_header_process(process, None if completed else sys.exception())
 
 
 @contextmanager

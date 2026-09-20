@@ -12,20 +12,20 @@
 | Decision Authority | Owner：`kongbu0621` |
 | Adoption exceptions | none |
 | Adoption change rule | 禁止自动升级、弱化、撤销或新增 exception；须有 Owner 决策 |
-| Gate state | **OPEN** |
+| Gate state | **CLOSED** for `A1-local-ledger-v0.1` |
 | Requirements | [REQUIREMENTS.md](REQUIREMENTS.md) |
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Implementation plan | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
 | Normative interface dependency | [INTERFACE_PROFILE.md](INTERFACE_PROFILE.md)，与三文档一起固定 |
 | Consumer documentation | [USAGE.md](USAGE.md)、[REUSE_EXAMPLE.md](REUSE_EXAMPLE.md)，随本轮文档一起固定；字段与语义以规范接口为准 |
-| Documentation baseline A | `a74c8f1650699b987f4f299ff95eb5006ab97130`；本次独立 bookkeeping 提交仅固定已存在的接入合同复审文档基线 |
-| Authorized implementation scope | **none** |
+| Documentation baseline A | `a74c8f1650699b987f4f299ff95eb5006ab97130`；由历史 bookkeeping 提交固定；当前 closure 提交保留该既有文档基线 |
+| Authorized implementation scope | `A1-local-ledger-v0.1`，P1–P5 及计划列明交付 |
 | Proposed scope | `A1-local-ledger-v0.1`，仅实施计划 P1–P5 与其明确列出的交付 |
-| Owner closure decision B | **none**；无批准文本、时间/event ID 或稳定决定引用 |
-| CLOSED state commit C | 不存在 |
+| Owner closure decision B | [Owner 原话副本](decisions/A1_OPENING_DECISION.md)；[稳定转录记录 5750709424](https://github.com/kongbu0621/infra-artifact-ledger/pull/1#issuecomment-5750709424)，转录时间 2026-09-20T15:22:46Z |
+| CLOSED state commit C | 包含本状态与决定副本的独立 closure 提交；完整 SHA 由 Git history 定位，后续实现必须以它为祖先 |
 | Reopen conditions | 需求、架构、计划、规范接口、scope、R/A、规则来源/完整性、Authority、mandate、exceptions 或 change rule 实质改变；无法核实原决定或读取一致规则来源 |
 
-本次仓库创建、Connector 授权和 A0 文档工作不记录为关闭决定。当前任务仅整理和评审文档。后续批准应针对既有 A 及准确 scope；状态变更需保存 Owner 可核实原话、身份、时间或 event ID 与稳定来源，而非执行者代拟已批准结论。
+仓库创建、Connector 授权和 PR #1 文档合并不记录为关闭决定。本次 CLOSED 依据上述单独 Owner 决定 B，仅覆盖指定 R/A/scope；原话与转录 event/time 已保存在独立决定记录。旧阶段的 OPEN 与未授权描述属于下述历史，不否认本次后续授权。
 
 前一文档基线 `00338602338f5d66864b33ba4783c31d5c753d18` 保留为历史，已由本轮兼容性、错误分类和接口边界修订替代，不再代表当前待批准设计。此前没有 Owner closure；本次复审请求也不构成关闭决定。
 

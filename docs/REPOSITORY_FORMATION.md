@@ -40,7 +40,7 @@
 
 公开范围是本组件独立工程文档、后续代码、合成示例和符合性测试；不包含私有推导正文、聊天记录、真实用户内容或内部配置。公共接口保留必要的格式兼容标记，字段完整说明在本仓，不以私有来源链接替代实现规格。
 
-Clean-room adoption 当前是待验证目标：没有安装包、可运行示例或真实外部使用证据，因此不声明 PASS。拟议 MIT 许可尚待 Owner 确认；发布前必须加入 LICENSE。公共用户不需要私有维护规则即可理解软件合同；维护执行者读取规则的要求见 [Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)。
+Clean-room adoption 当前是待验证目标：没有安装包、可运行示例或真实外部使用证据，因此不声明 PASS。MIT 许可方案已随 A1 开工决定获 Owner 确认；P1 加入 LICENSE 后才形成相应许可交付。公共用户不需要私有维护规则即可理解软件合同；维护执行者读取规则的要求见 [Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)。
 
 ## 4. Git 与存储接纳状态
 

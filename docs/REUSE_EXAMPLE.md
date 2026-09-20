@@ -202,6 +202,8 @@ PY
 
 正常流程预期退出 0，查询返回原幂等记录和完整 v2 记录；核对 `data.idempotency_record.result_ref` 与原结果，并按接口 §6 的规则重算原请求的语义指纹，与 `data.idempotency_record.request_fingerprint` 比较。
 
+该查询只确认历史成功记录和 metadata，不重新证明报告 bytes 完整。需要消费报告时仍执行 §5 的 read-blob 与内容比较；若提交后仅 bytes 损坏，查询到原成功与内容校验失败可以同时成立。
+
 附加故障场景：若 v2 写入响应丢失或收到 `DURABILITY_UNKNOWN`，仍用同一查询核对。`NOT_FOUND` 不证明尚在运行的旧调用永不提交；旧执行停止、连接恢复后再核对，或保留原三元组和原请求重试。`BUSY/not_committed` 可按原请求稍后重试；已确认 `committed` 的响应处理错误不能当作回滚。非零退出、断线或没有 JSON 都不能单独证明未提交。
 
 ## 7. 完整导出，再导入新的 Ledger
@@ -248,6 +250,8 @@ PY
 ```
 
 原样重放 `import-report.json`、**同一份原 package 和 descriptor**，预期返回原 Receipt、原导入时间与 `replayed=true`，计数不再增加。不要重新导出目标库再当作原 import 请求重试，也不要把导入当作增量同步：同 Artifact 的历史子集、超集或不同分支都会冲突。
+
+后续状态变化的验收反例（不在上面的固定计数主流程中）：若成功导入后，目标又合法登记同一 Artifact 的 v3，在原输入与相关持久内容仍完好的条件下，用原 key/原包重试应返回原 Receipt，不因目标历史已增长而拒绝这次重放。若换新 key 与新的 Receipt ID 导入旧包，则是一次新导入，目标多出的 v3 使完整历史不一致，应返回 IDENTITY_CONFLICT。两条分支都不得新增成功记录或覆盖已有历史；原成功重放先于新导入的历史冲突判断。
 
 ## 8. 此示例的验收边界
 

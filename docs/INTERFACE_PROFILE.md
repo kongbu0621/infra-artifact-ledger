@@ -119,11 +119,13 @@ append 的传入 bytes 与待登记内容闭包分别计量。相同 BlobRef 被
 
 下表是接口设计要求，不是可执行代码或当前可用命令。库与 CLI 使用同一语义校验与提交路径；CLI 只处理参数和文件传输。
 
+Python 包根 `infra_artifact_ledger` 必须公开导出 `initialize`、`open` 和 `LedgerError`。`initialize(path)` / `open(path)` 为包级函数，返回 Ledger handle；下表其余库操作均为该 handle 的方法。消费者无需导入内部 `service` 或 `sqlite_store` 模块，也不依赖内部 handle 类的路径。
+
 | 库操作 | CLI 候选命令 | 行为 |
 | --- | --- | --- |
 | `initialize(path)` | `artifact-ledger init --db PATH` | 仅创建新数据库；已存在目标拒绝，不覆盖或自动迁移 |
 | `open(path)` | 其他命令的 `--db PATH` | 仅打开既有且版本兼容的 Ledger；不存在时不悄悄创建 |
-| `execute(request_utf8, payloads, package, descriptor)` | `artifact-ledger write --db PATH --request FILE`，按操作附加 `--payload-map FILE` 或 `--package FILE --descriptor FILE` | 三类写操作的唯一公共提交入口；不适用的传输参数必须缺省 |
+| `execute(request_utf8, *, payloads=None, package=None, descriptor=None)` | `artifact-ledger write --db PATH --request FILE`，按操作附加 `--payload-map FILE` 或 `--package FILE --descriptor FILE` | 三类写操作的唯一公共提交入口；后三个参数仅按关键字传入，`None` 等同未提供 |
 | `get_record(kind, id)` | `artifact-ledger get --db PATH --kind KIND --id ID` | 读取七类记录之一；返回准确 metadata，不声称已检查全部 payload |
 | `get_history(artifact_id)` | `artifact-ledger history --db PATH --artifact-id ID` | 一致读取该 Artifact、全部 Version 和以这些 Version 为主体的 Provenance；超出 JSON 响应上限则拒绝 |
 | `get_operation(scope, kind, key)` | `artifact-ledger operation --db PATH --request FILE` | 查询文件恰含 `idempotency_scope_ref`、`operation_kind`、`idempotency_key`；返回成功幂等记录及可解析结果，或未找到；用于核对原写入 |
@@ -134,6 +136,12 @@ append 的传入 bytes 与待登记内容闭包分别计量。相同 BlobRef 被
 库写操作接收 UTF-8 JSON bytes，使严格解析和数字 token 规则一致；不提供可绕过校验的“信任调用者 dict”入口。payloads 是 BlobRef 到原始 bytes 的传输参数，不是 portable 记录字段。库只负责已有调用进程内的调用，不自动启动后台服务。
 
 request_utf8、package、descriptor 的库参数使用不可变 bytes；payloads 为 BlobRef 到不可变 bytes 的映射。进入调用时冻结映射项并按限额校验，后续写入必须消费同一份已验证 bytes；CLI 不能校验一次文件、再重新打开可能已变化的路径写入。未使用的参数省略，append 无需传入 bytes 时 payloads 为空映射。Ledger handle 提供 close 与关闭连接的上下文管理，不能让用户猜测连接释放方式。
+
+具体参数组合：create 只提供 request_utf8，其他参数均为 None；append 必须提供 payloads 映射（无传入 bytes 时显式 `{}`），package/descriptor 为 None；import 必须提供 package 与 descriptor bytes，payloads 为 None。空 bytes `b""` 是已提供的内容，不等同缺省；新增空 Blob 仍须有对应 BlobRef 的空 bytes，不能用 `{}` 代替。非适用参数或缺失必需参数返回 INVALID_INPUT，不触发写入。
+
+CLI 使用同一组合：append 必须提供 `--payload-map`；无传入 bytes 时该文件为 `[]`，映射成 `payloads={}`，新空 Blob 则仍需一项 input_path 指向 0 字节文件。create/import 不接受 `--payload-map`，create/append 不接受 `--package` 或 `--descriptor`；import 必须同时提供后二者。缺少必需选项或提供不适用选项均返回 INVALID_INPUT，不触发写入。
+
+handle 的上下文管理只负责资源生命周期：进入返回该 handle，退出关闭连接，不吞掉异常。每次 execute 仍是独立写事务；`with` 块中先后 create、append v1、append v2，若第三次失败，前两次已确认的提交仍然存在。close/退出上下文不把多次操作合成一个外层事务，也不撤销已确认提交；调用者保留每次原请求并逐次核对结果。
 
 `get_record` 的 kind 允许 `artifact`、`version`、`content_root`、`blob`、`manifest`、`provenance_link`、`import_receipt`，按真实类型解析。history 的集合返回顺序采用对应 owned ID 的 ASCII 升序；每条记录内的数组保持原序。这个读取展示顺序不改变写入指纹。
 
@@ -156,6 +164,8 @@ Python initialize/open 返回本地 Ledger handle，execute 返回 §6 写成功
 普通 JSON 输出采用 §6 的对象键、字符串和整数编码规则，布尔值使用 JSON 的 true/false，一行紧凑 UTF-8 JSON 加结尾 LF。响应大小包含完整 envelope 与 LF；库的对应读取在返回 data 前也按这一 envelope 计量，使限额判断与 CLI 一致。CLI 不把日志混入 stdout；诊断送 stderr。read-blob 的 bytes 进入明确输出文件，stdout 仍只输出操作结果。输出文件先完整写入并校验后再发布；失败不留下被标为成功的输出。package 与 descriptor 两个文件不是一个文件系统原子操作：任何缺件、摘要不符或不完整组合都不能导入，CLI 只有两者完成后才报成功。
 
 get_operation 未找到不自动证明并发或尚在恢复的旧调用永不提交；只有在旧执行已停止、连接恢复并核对提交状态后，才可判定未提交。调用者始终保留原请求以按原 key 重试。
+
+get_record、get_history 与 get_operation 都是 metadata 查询，不证明关联 payload 当前完整。get_operation 的成功只确认已记录的历史提交与结果引用；消费者应核对原幂等三元组及 request_fingerprint，再按需要用 read_blob 读取并校验具体内容，或用 verify 核验全库。某个 Blob 在提交后损坏时，metadata 与成功记录仍可查询到；这不改变原提交事实，也不能代替内容校验或触发自动修补。
 
 operation 查询文件适用相同 strict JSON 和 8 MiB 限额，各字段约束与写请求一致。合法幂等键可能包含 JSON 转义的 U+0000 等控制字符，操作系统 argv 无法承载其中某些值；因此查询通过 JSON 文件传递，不收窄 portable key 的语义。库/CLI 必须验证这种键的写入、查询与重放闭环。
 
@@ -296,10 +306,10 @@ SQLite 文件不是 portable package。A1 不提供 snapshot、NAS 搬运或恢�
 | 输入与边界 | 重复 key、非法 Unicode、未知字段、错误版本、整数浮点/指数 token；所有尺寸阈值的低于/等于/超过；payload-map 超限及低节点数/长路径输入；0 byte 内容；空 Ledger 与空包 |
 | 身份 | 七类 ID 跨类型碰撞；相同内容不同 ID；已有 Artifact 再 create；不可变 namespace/type 不可改 |
 | 版本与内容 | 缺失/跨 Artifact parent、分支与显式多父 merge；错误 Manifest digest；逻辑键大小写和 Unicode 差异；不可达内容；实际 bytes 缺失或被改动；复用 bytes 仍计入 Version 闭包上限；校验后输入文件被替换不能改变提交 bytes |
-| 幂等与故障 | 相同请求重放、同 key 不同请求、合法控制字符 key 经 CLI 写入/查询/重放、竞争写入、提交前回滚、COMMIT 持锁回滚、提交后响应丢失、已确认提交后的处理异常、未知状态核对；COMMITTED 始终含 replayed；不得产生重复历史 |
-| 导入 | 相同完整历史收敛；子集/超集/不同分支冲突；输入后段失败时全无部分提交；当前请求与包内历史幂等冲突；Receipt ID 冲突；erased 拒绝 |
+| 幂等与故障 | 相同请求重放、同 key 不同请求、合法控制字符 key 经 CLI 写入/查询/重放、竞争写入、提交前回滚、COMMIT 持锁回滚、提交后响应丢失、已确认提交后的处理异常、未知状态核对；COMMITTED 始终含 replayed；不得产生重复历史；同一 handle 后续写入失败不撤销此前提交 |
+| 导入 | 相同完整历史收敛；子集/超集/不同分支冲突；输入后段失败时全无部分提交；当前请求与包内历史幂等冲突；Receipt ID 冲突；erased 拒绝；导入后目标新增版本，原 key/原包重放仍收敛原 Receipt，新 key/新 Receipt 导入旧包则按完整历史差异拒绝 |
 | 封装 | metadata bytes/hash/length 不一致；重复/缺失/额外 payload；无效 Base64；全包 descriptor 不符；中断或仅生成一个输出文件不能视为可导入成果 |
-| 读取与重启 | 原进程退出后新进程仍可读出准确身份、版本、来源及 bytes；已损坏内容不能返回完整成功 |
+| 读取与重启 | 原进程退出后新进程仍可读出准确身份、版本、来源及 bytes；已损坏内容不能返回完整成功；仅 bytes 损坏时成功操作仍可查询，read_blob/verify 必须识别损坏，不能以查询成功替代内容验收 |
 | 范围诚实 | 只证明声明的本地 profile；未执行真实 NAS 恢复、两个实际消费者与独立第二实现之前，不宣称相关更高阶段已经完成 |
 
 这些是后续实现的验收要求；本 A0 文档没有执行它们，也不以静态文档校验代替它们。

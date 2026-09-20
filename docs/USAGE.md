@@ -66,7 +66,7 @@ python3.11 -m venv "$LEDGER_VENV"
 
 ## 4. Python 与跨语言调用约定
 
-Python 消费者使用公开操作，不读取 SQLite 表布局。写请求为严格 UTF-8 JSON bytes；payloads 使用 BlobRef 到不可变 bytes 的映射；不适用的传输参数省略。库 handle 在使用后关闭，并由创建它的线程使用。具体参数和返回类型沿用接口 §4，本文不重新定义签名。
+Python 消费者从包根导入 `initialize`、`open` 和需要处理的 `LedgerError`；其余操作在返回的 handle 上调用，不读取 SQLite 表布局或导入内部模块。写请求为严格 UTF-8 JSON bytes；payloads 使用 BlobRef 到不可变 bytes 的映射；不适用的传输参数省略。库 handle 在使用后关闭，并由创建它的线程使用。具体参数和返回类型沿用接口 §4，本文不重新定义签名。
 
 **待 A1 的 Python 接入示例，当前不执行。** 先按 [报告示例](REUSE_EXAMPLE.md) 准备 `create-report.json`、`append-v1.json`、`append-v2.json` 和两份 `report-v1.txt` / `report-v2.txt`。下面使用另一尚不存在的 `python-source.sqlite`，不与 CLI 示例的库混用。公开导出、handle 方法和上下文管理的调用形状须在 P5 按接口 §4 实测核对。
 
@@ -100,7 +100,11 @@ with open_ledger("python-source.sqlite") as ledger:
 
 示例保留原请求 bytes 与原 payload，不根据文件名推导读回路径；真实程序还须按 §5 保存这些输入和业务版本引用。领域失败由既有 `LedgerError` 携带 `code`、`commit_state` 和可选 `details` 抛出；上例不捕获并伪装成功，异常后的核对流程见 §6。两次上下文之间已关闭再打开连接；跨进程重启证据另按 P5 执行。
 
+`with` 只管理连接，不把块内的三次 execute 合成一个事务。如果 v2 登记失败，已经成功的 create 和 v1 仍保留；先核对各次原请求，再决定后续业务动作。不要直接重跑整个初始化块：`python-source.sqlite` 已存在时 initialize 会拒绝，应按当前状态使用 open 和原请求恢复。append 复用全部既有内容而无需传入 bytes 时仍显式传 `payloads={}`；新空 Blob 则须传对应的 `b""`，二者含义不同。
+
 非 Python 消费者先形成请求文件和需要的 payload-map，再通过进程 API 提交 CLI。可执行文件路径与操作选项由应用固定，路径和值作为独立 argv 元素传递；使用 `shell=false` 或该语言等价的直接进程启动方式，不拼接 shell 命令。payload-map 的 `input_path` 只用于读取文件，不成为制品身份。
+
+CLI append 总是提供 `--payload-map`；全部复用既有 bytes 时文件内容为 `[]`。登记新空 Blob 时仍提供对应条目，input_path 指向空文件；具体允许和必需选项以接口 §4 为准。
 
 CLI 接入应按以下顺序处理结果：
 
@@ -133,12 +137,14 @@ CLI 接入应按以下顺序处理结果：
 | `COMMITTED`，包括 `replayed=true` | 使用原成功结果；重放不会增加 Version 或 Receipt |
 | `BUSY` 且 `not_committed` | 本次已确认未提交，可稍后用原请求、原 key 重试 |
 | `DURABILITY_UNKNOWN`、无 JSON、响应通道失败 | 保留原 ID/key/输入；用 `get_operation` 核对或重试原请求，不另造身份 |
-| `IO_ERROR` / `INTERNAL_ERROR` 且 `committed` | 已确认提交，保留返回的原结果引用；核对后继续业务，不为补响应追加版本 |
+| `IO_ERROR` / `INTERNAL_ERROR` 且 `committed` | 已确认提交，保留返回的原结果引用；核对原请求后继续，消费内容前仍须读取并校验 bytes，不为补响应追加版本 |
 | 身份或幂等冲突 | 查明调用者映射、请求或历史差异；不自动改名、换 key 或覆盖历史 |
 | `INTEGRITY_FAILURE` | 停止宣称内容完整；保留错误并调查；重试不能修补已经提交的历史 |
 | 版本/profile 不支持或资源超限 | 调整明确支持的输入或兼容方案；不截断内容、伪造版本或静默降级 |
 
 `get_operation` 未找到不证明仍在运行或恢复中的旧调用永远不会提交。判定旧调用未提交前，须确认其已停止、连接已恢复并核对提交状态；整个核对过程保留原请求身份。若原成功内容后来损坏，错误可为 `commit_state=committed`，不能据此否认原成功。
+
+成功查询也有边界：get_record/get_history/get_operation 返回 metadata，查询成功不代表关联 bytes 当前完整。先匹配原幂等身份与请求指纹；业务需要使用内容时继续 read_blob，或 verify 全库。提交后仅 Blob bytes 损坏时，原成功操作仍可能查到，内容校验应失败，不能把“查到成功记录”当成“成果可用”。
 
 ## 7. 数据交换、本地与云上边界
 
@@ -176,6 +182,7 @@ A1 首个 backend 依赖本机可靠文件系统和单一受信数据域。云�
 | 独立安装 | 实际 wheel、软件/源码版本、LICENSE、独立 venv；无私有 checkout 或模型依赖 |
 | 报告完整闭环 | 库和 CLI 各自完成合成报告 create→v1→v2→指定版本读回、bytes 比较及 verify |
 | 请求状态与重试 | 原 key 重放、异输入冲突、响应丢失后核对；结果和历史计数符合合同 |
+| 库调用与查询边界 | 包根公开导出可调用；execute 参数组合正确；同一 with 后续失败保留此前提交；metadata 查询成功不能掩盖 bytes 损坏 |
 | 进程与数据边界 | 原进程结束后新进程读回；新目标不覆盖；输出 JSON、stderr、退出码符合接口 |
 | 独立实例交换 | 源库整包导出、目标新库导入；原 ID/时间/版本/bytes 保持，Receipt 增量可解释 |
 | 兼容与容量 | Linux/Python 3.11、Python/SQLite 版本、声明上限与内存证据；未验平台明确列出 |

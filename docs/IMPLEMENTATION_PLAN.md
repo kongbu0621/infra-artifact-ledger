@@ -61,6 +61,8 @@ P1–P5 属于一个已拟议 A1 范围，可分 PR 交付，不必每个局部�
 
 P5 的复用验收以一个脱离 Code Driver 的普通报告消费进程为主线，在全新项目虚拟环境中从固定 wheel 安装；分别执行 Python 公共入口与独立 CLI 进程，核对指定版本的真实内容、来源和重试结果。另行确认两个独立 Ledger 的数据不会串写。CLI 接入检查覆盖参数数组、stdout JSON/退出码和 stderr 诊断；子进程被终止或无有效响应时按未知结果核对原幂等身份。指南中的每个步骤须记录源提交、构建版本、实际命令、退出码和读回内容的比较结果；任何尚未运行的入口或平台仍标为未验证。这里验证公开接入方式，不计为 A3 的两个真实消费者或 A4 的独立第二实现。
 
+接入边界专项：P1/P5 核对包根公开导出 initialize/open/LedgerError、handle 方法与 execute 的关键字参数组合，涵盖 None、空映射及新空 Blob 的空 bytes，以及 CLI 必需/不适用选项、空 payload-map 与 0 字节文件的等价映射；P2/P4 核对同一 with 内先成功后失败，退出后此前提交仍可读；P2/P4/P5 核对仅 Blob bytes 损坏时 metadata/成功操作查询与 read_blob/verify 的不同结论；P3/P4 核对导入后目标新增版本时，原 key/原包仍重放原 Receipt，而新 key/新 Receipt 导入旧包因完整历史不同而拒绝。以上均沿用既有事务和重放语义，不新增批量事务或修复内容能力。
+
 输入边界另需检查：重复 JSON key、NaN/Infinity、浮点/指数 byte_length、超安全整数、非法 UTF-8/BOM/lone surrogate、未知字段、重复 ID/entry_key、引用不闭合、悬空成功结果，以及 import body 历史时间和 fingerprint 保留。Manifest 摘要和请求指纹不得混用。
 
 P4 分别核对四类结果：COMMIT 前失败并确认回滚 → not_committed；COMMIT 是否完成不可确认 → unknown；COMMIT 成功后仍能报告的非持久化异常 → committed 且保留原结果；输出通道失效 → 可能无 JSON，由原 key 核对。普通成功与重放成功都必须有 replayed 布尔值。读取和导出错误不声称改变 Ledger。

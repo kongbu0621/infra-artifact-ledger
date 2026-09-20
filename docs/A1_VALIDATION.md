@@ -2,7 +2,7 @@
 
 范围：`A1-local-ledger-v0.1` 的 P1–P5；软件 `0.1.0a1`；日期 2026-09-20。只使用合成数据。
 
-当前复审修复 source F：`d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`；tree：`2cac6ae79075c5e6167a12a6105e21143183a41f`。F 的验证见 §6；§2–5 保留初次实现 D 的历史结果，不能直接当作 F 的本轮实测。
+当前复审修复 source H：`5e35af7bfbe55b876cda05e8d5b5c7fd4e08f4da`；tree：`e5138d72f377d224a1df89aaaf732e12629d1b9c`。H 的验证见 §7；§2–5 是初次实现 D 的历史结果，§6 是 F `d7b4ccfec5d07a9a88d087afd379a3e682ec5b6b`（tree `2cac6ae79075c5e6167a12a6105e21143183a41f`）的历史结果，不能直接当作 H 的本轮实测。
 
 初次已验实现 D：`cbfa42bb8ded86ce81e003853847bab1d190a65f`；tree：`bfccf7cf071f53c6316afc960f8fe54319f1cfdb`。E `fd31f87f97e6f1b5505f5266f56ba28e96547223` 仅补录 D 的文档证据；F 在 E 后追加范围内缺陷修复，保留 C/D/E 历史。
 
@@ -144,6 +144,64 @@ Cloud 首次调用缺失的 `/usr/bin/time` 返回 127；另一次以 unittest �
 
 Cloud 的私有 companion 复读仍因未认证单列 BLOCKED；它仅验证公开软件。维护工作台已读取固定 R 并在 Owner B/C 后实施，未把 Cloud 公开运行结果作为新授权或规则豁免。
 
-格式检查另行记录：本轮修复与证据文档增量 `git diff --check` 通过；相对 main 的累计 diff 仍有初次 D 引入的 5 处文件末尾空行提示（`.gitignore`、`LICENSE`、`pyproject.toml`、`__init__.py`、`__main__.py`）。这是非语义格式提示，不冒充累计检查通过，也不为消除提示而重写已验 F。
+F 当时的格式检查记录：修复与证据文档增量 `git diff --check` 通过；相对 main 的累计 diff 仍有初次 D 引入的 5 处文件末尾空行提示（`.gitignore`、`LICENSE`、`pyproject.toml`、`__init__.py`、`__main__.py`）。这是非语义格式提示；随后在 H 中追加清理，原 F 未重写，见 §7。
 
 F 保持 A1/alpha 边界：未发布包或 tag，未新增 CI/网络服务，未改变 R/A/公共合同；未验证真实掉电、NAS 恢复、独立第二 backend 或真实消费者采用。初始化依赖的硬链接和目录同步要求，以及发布后失败时需 open 核对的行为，已写入 USAGE/COMPATIBILITY。
+
+## 7. 本次分别复审与 H 补验
+
+### PR #2：C2 只修格式，授权成立
+
+维护工作台再次完整读取固定 R，逐项核对 A、Owner B、原 C 和 D 的父子关系。追加 C2 `8542b90983607d768b905ad627a411060fcec854`（tree `430e721b9cd1553a3a63243791c2d478554be31a`），唯一父提交为 C；唯一文件变化是决定副本末尾删除一个 LF，1417 → 1416 字节。R/A/B、授权正文与范围没有变化，无需重开 Gate。相对 main 的累计 `git diff --check` 通过，原 C 保留为不可变证据。
+
+C2 与实现分支的共同祖先仍是 C；同样的尾部清理已在 G 中完成，两边内容一致。D 的直接父提交仍为 C。合并时先保留 C/C2 合并 #2，再将 #3 转向 main，不将授权记录与实现 squash。本次没有合并。
+
+### PR #3：四项新反例与修复
+
+H 的唯一父提交是 G `07106a83d0a440484ef00b3fc795d67cfc3b36f5`。以下是本轮新问题；§6 的六项问题属于先前 F。没有调整公共合同、资源上限或授权范围来迎合实现。
+
+| 问题 | 修复前反例 | H 的行为与回归 |
+|---|---|---|
+| SQL 行与自身 JSON 未逐行绑定 | 交换两条合法 records 或 operations 的 JSON 正文，整体身份集合仍相等，verify/export 错误通过 | 每行核对自身身份、类型或幂等三元组及 result_ref；verify/export/new write 拒绝且不修写原数据；已知成功 replay 保留 committed/原结果。新增 4 个测试方法，旧函数同组 2 FAIL，修复后全通过 |
+| 打开阶段误报损坏 | 有效库被真实 BEGIN EXCLUSIVE 锁住，open 返回 INTEGRITY_FAILURE；格式读取 I/O 故障也被归为损坏 | 仅 CORRUPT/NOTADB 归完整性错误；BUSY/LOCKED 和扩展 IOERR 保留分类。新增 3 个测试方法，包含真实锁和非 SQLite 文件 |
+| CLI write 打开失败的状态错误 | 缺失、非 SQLite 或被锁数据库返回 not_applicable，未表达写入尚未开始 | execute 未开始时返回 not_committed；读取仍为 not_applicable；不会改写 execute 已返回的 committed/unknown 证据。新增 2 个测试方法，真实 CLI 锁等待也实跑 |
+| 异常 Mapping 的重复项被覆盖 | 自定义 Mapping.items() 重复枚举同一 BlobRef，dict 转换静默保留最后值；普通 dict 不存在重复键 | 逐项检查身份与重复键，捕获同一份不可变 bytes；重复输入为 INVALID_INPUT，原有成功记录仍可查询和正常重放。新增 4 个测试方法，包含源 Mapping 随后变化与非法不可哈希键；旧实现同组有 6 个失败子场景，修复后通过 |
+
+另有只读诊断：多跳 import/export 的 53 个断言验证不透明身份、时间和缺省字段保留、摘要分层、七类 ID 冲突原子拒绝及目标增长后的幂等重放；六个真实进程同时初始化为一成功五冲突；异常退出后的真实热日志可恢复原已提交状态；get_history 与另一进程真实提交竞争时保持一致快照。返回对象修改不改变持久记录。这些诊断不是新增 unittest 数量，也不是 A2/A3/A4 的验收。
+
+H 还清理 §6 记录的五处尾部空行，每个文件仅删除一个 LF；MIT 正文及构建配置语义未变。增量和相对 main 的累计 diff 检查均通过。
+
+### H 的本地验证
+
+| 检查 | 固定 H 的结果 |
+|---|---|
+| 来源与环境 | H/tree 如文首；Python 3.11.16 / SQLite 3.53.1，Linux 6.18.44 x86_64 / glibc 2.39；固定构建工具沿用 §2 |
+| 编译 | compileall -q src tests，exit 0 |
+| 普通回归 | `Ran 148 tests in 36.246s / OK (skipped=9)`：139 项通过，9 项资源默认跳过，exit 0 |
+| 响应节点专项 | 显式脚本入口，499999/500000/500001 三阈值，1 test，31.222s，exit 0；进程峰值 238,248 KiB |
+| 响应字节专项 | 含完整 envelope/LF 的真实 8 MiB±1，1 test，14.019s，exit 0；峰值 106,996 KiB |
+| 独立构建安装 | 冻结副本的全部 40 个跟踪文件逐字节等于 H，固定工具构建，新 consumer venv 离线安装；均 exit 0 |
+| 文档复用 | 25 次 CLI：24 exit 0、1 预期冲突 exit 4；实际提取执行 USAGE Python 示例 PASS；40 字节经搬运后逐字节一致，模块来自 consumer site-packages |
+| wheel | 35,633 字节，SHA-256 `cfffbd8d863e83ec10ce038559c824cee5b138247ff54a91f448710be23172ad`；全部 10 个 Python 源与清理后的 MIT 许可证等于 H，也等于实际安装内容；Requires-Dist 为空 |
+
+逐行核验影响读取验证路径，因此在 H 上重跑两个真实响应资源专项；未重复未改动的 64/256/384 MiB 内容算法专项，D 的完整资源 suite 仍仅属历史证据。时间/RSS 为本次观测，不能当作稳定性能保证。
+
+[GitHub 独立代码审查](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751187211)在 H 上完成，未报告重大问题；这是一项代码审查结论，不替代编译、资源或安装实测。
+
+### H 的 Codex Cloud 补验
+
+[实际 Cloud 任务](https://chatgpt.com/codex/cloud/tasks/task_e_6ab00da1230083299204b9322e1ede33)在固定 H/tree 上完成，[维护工作台转录报告](https://github.com/kongbu0621/infra-artifact-ledger/pull/3#issuecomment-5751256648)保留来源与运行过程；下表只记录有实际输出和退出码的步骤。
+
+| 检查 | 固定 H 的 Cloud 实测 |
+|---|---|
+| 环境与来源 | Python 3.11.15 / SQLite 3.45.1；Linux 6.18.44 x86_64 / glibc 2.39；固定四个构建工具版本与 §2 相同；checkout 的 HEAD/tree/parent 与 H 一致，archive 中 40 个跟踪文件逐字节匹配 H |
+| 编译与普通 suite | compileall exit 0；148 项中 139 通过、9 资源按设计跳过，55.613s；过程中重复的一次为 52.968s，亦 exit 0；补验阶段未重跑普通 suite |
+| 响应节点专项 | 前台显式脚本执行，499999/500000/500001 三阈值，1 test，78.737s，exit 0；峰值 230,372 KiB |
+| 响应字节专项 | 真实 8 MiB±1 含 envelope/LF，1 test，22.844s，exit 0；峰值 101,752 KiB |
+| 构建与消费 | 固定工具构建 wheel、新 consumer venv 离线安装、25 次 CLI 与实际 USAGE Python 示例通过，合并执行 exit 0；24 次 CLI exit 0、1 次预期冲突 exit 4；40 字节往返一致 |
+| wheel | 35,633 字节，SHA-256 `c997a0b6322dc2aec59f8182f6a6190f781b4ea2c65eff310b507ef00dd58aa9`；10 个 Python 源与 MIT 许可证逐字节等于 H，Requires-Dist 为零；与本地构建各保留实际摘要，不宣称 ZIP 字节可复现 |
+| 原工作树 | 结束时 HEAD/tree 仍等于 H，原 staged/unstaged diff 为空；未实施、commit、push 或 merge |
+
+运行过程单列：初次版本探针直接同时导入 pip/setuptools 触发 distutils 断言，改用 importlib.metadata 读取安装版本后完成核对；初次 archive 内容比较使用了临时父目录，修正到 source-h 后全部 40 文件匹配；后台尝试曾没有有效资源日志且进程已退出，不能计为通过。维护工作台停止重复普通 suite，并明确仅补资源和安装，随后以前台执行取得上述有效结果。未因这些执行方式问题修改产品代码、测试上限或环境配置。
+
+Cloud 私有 companion 读取仍单列 BLOCKED，仅承担已提交公开软件的只读验证。维护工作台已重读固定 R；本轮没有改变规则、Owner 决策或公共合同，也没有将 Cloud 结果作为后续实现的权限豁免。真实掉电/NAS、真实消费者采用和独立第二 backend 仍未证明。

@@ -62,20 +62,46 @@ def mount_id(fd):
     return int(values[0])
 
 
-def open_directory(path):
-    path = Path(os.path.abspath(path))
+def _absolute_walk_path(path):
+    path = Path(path)
+    # Preserve '..': the preceding component must actually exist and must not
+    # be a symlink, even when lexical normalization would remove it.
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _close_descriptor(fd, pending=None):
+    try:
+        os.close(fd)
+    except OSError:
+        if pending is None:
+            raise
+        pending.add_note("An acceptance directory descriptor could not be closed.")
+
+
+def open_directory(path, *, bindings=None):
+    path = _absolute_walk_path(path)
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
     fd = os.open("/", flags)
+    pending = None
     try:
+        if bindings is not None:
+            bindings.append((identity(os.fstat(fd)), mount_id(fd)))
         for name in path.parts[1:]:
             next_fd = os.open(name, flags, dir_fd=fd)
-            os.close(fd)
-            fd = next_fd
+            previous, fd = fd, next_fd
+            # close() may release a number before reporting failure. Transfer
+            # ownership first; finally owns only the newly opened descriptor.
+            os.close(previous)
+            if bindings is not None:
+                bindings.append((identity(os.fstat(fd)), mount_id(fd)))
         result, fd = fd, None
         return result
+    except BaseException as error:
+        pending = error
+        raise
     finally:
         if fd is not None:
-            os.close(fd)
+            _close_descriptor(fd, pending)
 
 
 class OwnedRun:
@@ -83,15 +109,18 @@ class OwnedRun:
 
     def __init__(self, parent):
         self.run_id = "a2-nas-" + secrets.token_hex(16)
-        self.path = Path(os.path.abspath(parent)) / self.run_id
+        parent = _absolute_walk_path(parent)
+        self.path = parent / self.run_id
         self.fd = None
-        parent_fd = open_directory(parent)
+        parent_bindings = []
+        parent_fd = open_directory(parent, bindings=parent_bindings)
         try:
             os.mkdir(self.run_id, 0o700, dir_fd=parent_fd)
             self.fd = os.open(self.run_id, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
                               dir_fd=parent_fd)
             self.root_identity = identity(os.fstat(self.fd))
             self.mount = mount_id(self.fd)
+            self._path_bindings = tuple(parent_bindings) + ((self.root_identity, self.mount),)
             self.marker = encode({"format": "a2-nas-synthetic-run/v1", "run_id": self.run_id,
                                   "nonce": secrets.token_hex(32)})
             self.write_new("OWNED.json", self.marker)
@@ -101,11 +130,15 @@ class OwnedRun:
             os.mkdir("evidence", 0o700, dir_fd=self.fd)
             os.fsync(self.fd)
             os.fsync(parent_fd)
-        except BaseException:
-            self.close()
+            previous, parent_fd = parent_fd, None
+            os.close(previous)
+        except BaseException as error:
+            descriptors = self.fd, parent_fd
+            self.fd, parent_fd = None, None
+            for descriptor in descriptors:
+                if descriptor is not None:
+                    _close_descriptor(descriptor, error)
             raise
-        finally:
-            os.close(parent_fd)
 
     def close(self):
         if self.fd is not None:
@@ -127,12 +160,18 @@ class OwnedRun:
 
     def check(self):
         require(self.fd is not None, "Run directory is closed.")
-        current = open_directory(self.path)
+        current_bindings = []
+        current = open_directory(self.path, bindings=current_bindings)
+        pending = None
         try:
-            require(identity(os.fstat(current)) == self.root_identity
+            require(tuple(current_bindings) == self._path_bindings
+                    and identity(os.fstat(current)) == self.root_identity
                     and mount_id(current) == self.mount, "Run directory binding changed.")
+        except BaseException as error:
+            pending = error
+            raise
         finally:
-            os.close(current)
+            _close_descriptor(current, pending)
         marker_fd = os.open("OWNED.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
                             dir_fd=self.fd)
         try:
@@ -153,6 +192,7 @@ class OwnedRun:
         flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
         root = os.open("disposable", flags | os.O_DIRECTORY, dir_fd=self.fd)
         descriptors.append(root)
+        pending = None
         try:
             require(identity(os.fstat(root)) == self.disposable_identity,
                     "Disposable directory binding changed.")
@@ -191,8 +231,11 @@ class OwnedRun:
             require(set(inventory) == set(expected_paths), "Disposable tree is missing a generated entry.")
             self.check()
             return action(inventory, entries)
+        except BaseException as error:
+            pending = error
+            raise
         finally:
-            pending, first_error = sys.exc_info()[1], None
+            first_error = None
             for fd in reversed(descriptors):
                 try:
                     os.close(fd)
@@ -613,7 +656,11 @@ def exercise(args):
                              "code": getattr(error, "code", None), "publication_state": getattr(error, "publication_state", None)}
         error.acceptance_run_id = run.run_id
         raise
+    except BaseException as error:
+        pending_error = error
+        raise
     finally:
+        close_pending = pending_error
         try:
             run.check()
             run.write_new("report.json", encode(report))
@@ -622,18 +669,21 @@ def exercise(args):
                 pending_error.acceptance_evidence_saved = True
         except Exception as evidence_error:
             if pending_error is None:
+                close_pending = evidence_error
                 evidence_error.acceptance_run_id = run.run_id
                 evidence_error.acceptance_evidence_saved = False
                 raise
             pending_error.acceptance_evidence_saved = False
             pending_error.add_note("The owned acceptance report could not be durably recorded.")
+        except BaseException as evidence_error:
+            close_pending = evidence_error
+            raise
         finally:
-            active_error = sys.exc_info()[1]
             try:
                 run.close()
             except Exception as close_error:
-                if active_error is not None:
-                    active_error.add_note("The acceptance run directory descriptor could not be closed.")
+                if close_pending is not None:
+                    close_pending.add_note("The acceptance run directory descriptor could not be closed.")
                 else:
                     # The report was already durably written. Keep that
                     # evidence locatable when descriptor cleanup alone fails.

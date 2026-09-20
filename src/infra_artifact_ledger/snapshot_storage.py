@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import secrets
 import stat
+import sys
 from typing import Iterator
 
 from .snapshot_common import Budget, RecoveryError, path
@@ -40,6 +41,16 @@ def _io_error(exc: OSError, stage: str = "validate") -> RecoveryError:
     if exc.errno in {errno.ELOOP, errno.ENOTDIR}:
         return _error("UNSUPPORTED_STORAGE", "Directory path must not contain symbolic links", stage)
     return _error("IO_ERROR", "Filesystem operation failed", stage)
+
+
+def _close_preserving_error(close, primary: BaseException | None = None) -> None:
+    """Close once; keep an operation failure ahead of a secondary close error."""
+    try:
+        close()
+    except OSError:
+        if primary is None:
+            raise
+        primary.add_note("A filesystem close also failed; the earlier failure is retained.")
 
 
 def _name(value: str) -> str:
@@ -99,7 +110,7 @@ def parse_mountinfo(raw: str) -> tuple[Mount, ...]:
 
 def _mounts() -> tuple[Mount, ...]:
     try:
-        with open("/proc/self/mountinfo", encoding="utf-8", errors="strict") as source:
+        with open("/proc/self/mountinfo", encoding="utf-8", errors="strict", newline="") as source:
             return parse_mountinfo(source.read())
     except (OSError, UnicodeError) as exc:
         raise _error("UNSUPPORTED_STORAGE", "Linux mount metadata is unavailable") from exc
@@ -153,6 +164,7 @@ def _classify(target: Path, mount: Mount, config: dict | None) -> None:
     if not _under(target, candidate):
         raise _error("UNSUPPORTED_STORAGE", "Path is outside the configured archive root")
     archive_fd = _walk_directory(archive_path)
+    completed = False
     try:
         archive_path = candidate
         if _fd_mount_id(archive_fd) != mount.mount_id or _mount_for(archive_path, mount.mount_id) != mount:
@@ -161,8 +173,10 @@ def _classify(target: Path, mount: Mount, config: dict | None) -> None:
             raise _error("UNSUPPORTED_STORAGE", "Path is outside the configured archive root")
         if not _under(archive_path, Path(config["mount_point"])):
             raise _error("UNSUPPORTED_STORAGE", "Archive root is outside the configured mount")
+        completed = True
     finally:
-        os.close(archive_fd)
+        _close_preserving_error(lambda: os.close(archive_fd),
+                                None if completed else sys.exception())
 
 
 def _walk_directory(target: Path) -> int:
@@ -187,7 +201,8 @@ def _walk_directory(target: Path) -> int:
         raise _io_error(exc) from exc
     finally:
         if descriptor is not None:
-            os.close(descriptor)
+            # Success transferred ownership and set descriptor to None.
+            _close_preserving_error(lambda: os.close(descriptor), sys.exception())
 
 
 def _identity(info: os.stat_result) -> tuple[int, int]:
@@ -213,8 +228,8 @@ class Directory:
     def __enter__(self) -> Directory:
         return self
 
-    def __exit__(self, *_):
-        self.close()
+    def __exit__(self, error_type, error, traceback):
+        _close_preserving_error(self.close, error)
 
     def close(self) -> None:
         if not self._closed:
@@ -228,6 +243,7 @@ class Directory:
         if self.parent is not None:
             self.parent.check(stage)
         current = None
+        completed = False
         try:
             if _identity(os.fstat(self.fd)) != self.identity:
                 raise _error("IO_ERROR", "Directory descriptor identity changed", stage)
@@ -240,11 +256,18 @@ class Directory:
             if mount != self.mount:
                 raise _error("UNSUPPORTED_STORAGE", "Mounted endpoint changed", stage)
             _classify(self.path, mount, self.storage_config)
+            completed = True
+        except RecoveryError as exc:
+            # Helpers also serve initial validation and default to that stage.
+            # This check belongs to its caller's current operation stage.
+            exc.stage = stage
+            raise
         except OSError as exc:
             raise _io_error(exc, stage) from exc
         finally:
             if current is not None:
-                os.close(current)
+                _close_preserving_error(lambda: os.close(current),
+                                        None if completed else sys.exception())
         self.budget.check(stage)
 
     def mkdir(self, name: str) -> Directory:
@@ -262,8 +285,8 @@ class Directory:
             fd = None
             try:
                 child.check()
-            except BaseException:
-                child.close()
+            except BaseException as exc:
+                _close_preserving_error(child.close, exc)
                 raise
             return child
         except FileExistsError as exc:
@@ -272,7 +295,7 @@ class Directory:
             raise _io_error(exc) from exc
         finally:
             if fd is not None:
-                os.close(fd)
+                _close_preserving_error(lambda: os.close(fd), sys.exception())
 
     def open_file(self, name: str, *, single_link: bool = False) -> int:
         name = _name(name)
@@ -297,7 +320,7 @@ class Directory:
             raise _io_error(exc) from exc
         finally:
             if fd is not None:
-                os.close(fd)
+                _close_preserving_error(lambda: os.close(fd), sys.exception())
 
     def members(self, *, limit: int | None = None) -> set[str]:
         self.check()
@@ -337,8 +360,8 @@ def open_directory(value, *, budget: Budget, storage_config: dict | None = None)
         directory = Directory(fd, target, budget, mount, storage_config, walk_path=original_walk)
         directory.check()
         return directory
-    except BaseException:
-        os.close(fd)
+    except BaseException as exc:
+        _close_preserving_error(lambda: os.close(fd), exc)
         raise
 
 
@@ -365,7 +388,7 @@ def _remove_owned_contents(directory: Directory) -> None:
                 os.rmdir(name, dir_fd=directory.fd)
             finally:
                 if fd is not None:
-                    os.close(fd)
+                    _close_preserving_error(lambda: os.close(fd), sys.exception())
         else:
             os.unlink(name, dir_fd=directory.fd)
 
@@ -376,26 +399,32 @@ def temporary_directory(parent: Directory, budget: Budget) -> Iterator[Directory
     # The exclusive mkdir is the ownership proof; an existing name is never used.
     temporary = parent.mkdir(".snapshot-tmp-" + secrets.token_hex(16))
     name, identity = temporary.path.name, temporary.identity
-    failed = False
+    primary = None
     try:
         yield temporary
-    except BaseException:
-        failed = True
+    except BaseException as exc:
+        primary = exc
         raise
     finally:
+        cleanup_completed = False
         try:
             _remove_owned_contents(temporary)
             parent.check()
             if _identity(os.stat(name, dir_fd=parent.fd, follow_symlinks=False)) != identity:
                 raise _error("IO_ERROR", "Temporary directory binding changed")
             os.rmdir(name, dir_fd=parent.fd)
+            cleanup_completed = True
         except (OSError, RecoveryError) as exc:
-            if not failed:
+            if primary is None:
                 if isinstance(exc, OSError):
                     raise _io_error(exc) from exc
                 raise
         finally:
-            temporary.close()
+            # An enclosing caller's handled exception is not our failure.
+            # Consult interpreter exception state only when this cleanup did
+            # fail; otherwise use solely the explicit exception from the body.
+            closing_primary = primary if cleanup_completed or primary is not None else sys.exception()
+            _close_preserving_error(temporary.close, closing_primary)
 
 
 def _exclusive_file(directory: Directory, name: str) -> int:
@@ -475,24 +504,27 @@ def copy_file(src_fd: int, dest: Directory, name: str, budget: Budget, *,
         raise _io_error(exc, "copy") from exc
     finally:
         if descriptor is not None:
-            os.close(descriptor)
+            _close_preserving_error(lambda: os.close(descriptor), sys.exception())
 
 
 def write_file(dest: Directory, name: str, raw: bytes, budget: Budget) -> None:
     budget.check("copy")
     fd = _exclusive_file(dest, name)
+    completed = False
     try:
         _write_all(fd, raw, budget)
         _sync_file(fd, budget)
         dest.check("copy")
+        completed = True
     except OSError as exc:
         raise _io_error(exc, "copy") from exc
     finally:
-        os.close(fd)
+        _close_preserving_error(lambda: os.close(fd), None if completed else sys.exception())
 
 
 def read_file(directory: Directory, name: str, limit: int, budget: Budget) -> bytes:
     fd = directory.open_file(name)
+    completed = False
     try:
         before = os.fstat(fd)
         if before.st_size > limit:
@@ -512,11 +544,13 @@ def read_file(directory: Directory, name: str, limit: int, budget: Budget) -> by
         directory.check("verify")
         if _identity(os.stat(name, dir_fd=directory.fd, follow_symlinks=False)) != _identity(before):
             raise _error("INTEGRITY_FAILURE", "Snapshot member path binding changed", "verify")
-        return b"".join(chunks)
+        result = b"".join(chunks)
+        completed = True
+        return result
     except OSError as exc:
         raise _io_error(exc, "verify") from exc
     finally:
-        os.close(fd)
+        _close_preserving_error(lambda: os.close(fd), None if completed else sys.exception())
 
 
 def preflight(parent: Directory, budget: Budget) -> dict:

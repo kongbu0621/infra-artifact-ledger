@@ -128,9 +128,13 @@ def _translate(error, stage):
 def _mount_bindings(path):
     """Capture relevant mount records without opening the live database."""
     records = []
-    with open("/proc/self/mountinfo", encoding="utf-8", errors="strict") as stream:
-        for line in stream:
-            fields = line.split()
+    with open("/proc/self/mountinfo", encoding="utf-8", errors="strict", newline="") as stream:
+        for line in stream.read().split("\n"):
+            if not line:
+                continue
+            # The kernel separates fields with ASCII spaces. Other Unicode
+            # whitespace can occur literally inside an ordinary mount path.
+            fields = line.split(" ")
             if len(fields) < 10:
                 raise _failure("IO_ERROR", "Mount binding information is invalid.", "validate")
             point = fields[4]
@@ -142,6 +146,18 @@ def _mount_bindings(path):
     if not records:
         raise _failure("UNSUPPORTED_STORAGE", "Source mount binding is unavailable.", "validate")
     return tuple(records)
+
+
+def _no_source_wal_sidecars(path, stage):
+    # SQLite can discover a leftover WAL even when the main file's header is
+    # DELETE, then create/update SHM while opening mode=ro. Inspect only names;
+    # never open/close raw source or sidecar fds in the caller's process.
+    for suffix in ("-wal", "-shm"):
+        try:
+            os.stat(str(path) + suffix, follow_symlinks=False)
+        except FileNotFoundError:
+            continue
+        raise _failure("UNSUPPORTED_FORMAT", "Source has an unsupported SQLite WAL sidecar.", stage)
 
 
 def _source_binding(path, budget):
@@ -385,9 +401,11 @@ def preflight_source(source: Path, budget):
     """Check source without creating scratch files or opening source SQLite."""
     try:
         binding = _source_binding(source, budget)
+        _no_source_wal_sidecars(source, "validate")
         if _read_header(source, budget) != binding[0][-1]:
             raise _failure("IO_ERROR", "Source binding changed during header inspection.", "validate")
         _assert_source_binding(source, binding, budget)
+        _no_source_wal_sidecars(source, "validate")
         return binding
     except Exception as error:
         raise _translate(error, "validate") from error
@@ -400,6 +418,7 @@ def snapshot_database(source: Path, target: Path, budget, *, source_binding=None
     try:
         binding = preflight_source(source, budget) if source_binding is None else source_binding
         _assert_source_binding(source, binding, budget)
+        _no_source_wal_sidecars(source, stage)
         source_connection = _connect_readonly(source)
         _assert_source_binding(source, binding, budget)
         with _progress(source_connection, budget, stage):

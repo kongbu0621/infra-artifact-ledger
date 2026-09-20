@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 import os
 from pathlib import Path
+import sys
 import time
 
 PROTOCOL = "infra-artifact-ledger-recovery/v1"
@@ -88,6 +89,13 @@ def path(value):
         # Keep '..' until the original components have been checked with
         # descriptor-relative O_NOFOLLOW opens. Lexical abspath/normpath here
         # would erase a symlink (or missing/non-directory entry) before '..'.
-        return Path(raw).absolute()
+        result = Path(raw).absolute()
+        # Linux resolves exactly two leading slashes to the same root as one.
+        # pathlib preserves that POSIX implementation-defined spelling, which
+        # would otherwise break mount lookup and containment comparisons. Keep
+        # every remaining component, especially '..', for the no-follow walk.
+        if sys.platform.startswith("linux") and result.anchor == "//":
+            result = Path("/", *result.parts[1:])
+        return result
     except (TypeError, ValueError, UnicodeError) as error:
         raise RecoveryError("INVALID_INPUT", "A valid nonempty host path is required.") from error

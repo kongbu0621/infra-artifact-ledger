@@ -61,8 +61,13 @@ class _Operation:
 def _execute(operation, callback):
     with operation_budget() as budget:
         context = _Operation(operation, budget)
+        completed = False
         try:
             data = callback(context)
+            # A returned callback has completed publication, synchronization,
+            # final validation and owned cleanup. Reporting cannot undo that
+            # observed result or turn it into an ambiguous publication.
+            completed = True
             context.checkpoint("report")
             envelope = {"protocol": PROTOCOL, "status": "OK", "operation": operation,
                         "publication_state": "not_applicable" if context.read_only else "published",
@@ -70,19 +75,22 @@ def _execute(operation, callback):
             fmt.encode(envelope, fmt.MAX_RESPONSE - 1, stage="report")
             return envelope
         except Exception as error:
-            if context.attempted:
+            if context.attempted and not completed:
                 raise RecoveryError("PUBLICATION_UNKNOWN",
                                     "Publication was attempted; preserve the original target and verify it.",
                                     error.stage if isinstance(error, RecoveryError) else context.stage, "unknown") from error
             if isinstance(error, RecoveryError):
                 if context.read_only:
                     error.publication_state = "not_applicable"
+                elif completed:
+                    error.publication_state = "published"
                 raise
             code = "RESOURCE_LIMIT" if isinstance(error, MemoryError) else "IO_ERROR"
             if isinstance(error, FileNotFoundError):
                 code = "NOT_FOUND"
             raise RecoveryError(code, "Recovery operation could not complete.", context.stage,
-                                "not_applicable" if context.read_only else "not_published") from error
+                                "not_applicable" if context.read_only else
+                                "published" if completed else "not_published") from error
 
 
 def _entry_exists(directory, name):

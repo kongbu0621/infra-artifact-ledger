@@ -14,7 +14,7 @@
 |---|---|
 | `src/infra_artifact_ledger/recovery.py` | 五个公共函数与RecoveryError |
 | `src/infra_artifact_ledger/snapshot_format.py` | manifest/marker、严格解析、精确字节与预算 |
-| `src/infra_artifact_ledger/snapshot_sqlite.py` | 只读T0、backup、本地副本校验与恢复 |
+| `src/infra_artifact_ledger/snapshot_sqlite.py` | 独立解释器源头预检的私有入口、只读T0、backup、本地副本校验与恢复 |
 | `src/infra_artifact_ledger/snapshot_storage.py` | mountinfo/fd、mounted-posix-v1、复制、发布 |
 | `src/infra_artifact_ledger/cli.py` | 新snapshot子命令，旧命令合同保持 |
 | `sqlite_store.py` / `service.py` | 必要的内部验证/拒覆盖helper提取，不改A1可观察行为 |
@@ -28,7 +28,7 @@
 
 | 步骤 | 交付与先决条件 | 验收 |
 |---|---|---|
-| S1 本地快照 | 独立A2 CLOSED提交已存在；格式/预算、只读T0、backup、完整校验 | T01–T04、T09 |
+| S1 本地快照 | 独立A2 CLOSED提交已存在；源绑定/隔离预检、格式/预算、只读T0、backup、完整校验 | T01–T04、T09 |
 | S2 存储发布 | S1；独占generation、挂载身份、marker最后发布 | T05–T08、T10；NAS能力不足暂停该目标 |
 | S3 新目录恢复 | S1/S2；固定fd、同份暂存验证/发布、拒覆盖和核对 | T11–T13 |
 | S4 回归与安装 | S1–S3；Linux3.11 wheel独立安装，GX10附加验证 | T14，A1全部必需回归 |
@@ -41,6 +41,8 @@ NAS profile尚未确认不阻止本地S1的设计及后续获批实现；它阻�
 ## 4. 复用与验证
 
 复用A1 schema检查、Ledger.verify、错误分类、拒覆盖发布原则。A2在源视图及每份私有验证/恢复副本中先检查UTF-8编码再计量TEXT预算，不把A1格式检查当编码保证。现有open为mode=rw，不直接打开NAS归档；验证在本地私有副本进行。恢复复制完整SQLite状态，不调用import_bundle；内部重构保留A1同用例前后结果。
+
+源SQLite打开前的100字节头预检用标准库启动全新解释器，内部入口随同一wheel安装；既不让只读WAL打开创建sidecar，也不在已有A1连接的进程中raw open/close同库。预检不替代T0/格式/完整性校验；失败不回退。仅源预检隔离，不将五个公共库入口变成必须由调用者另起CLI的接口。并发DELETE事务继续按T01/T02验证，部署侧协调源路径和journal模式的稳定窗口。
 
 验证覆盖限额/limit+1、未知格式、真实错误阶段、时间预算、路径替换、已有目标/sidecar、响应丢失，必须检查原库/旧归档实际不变。分别验证确定未发布、结果不明和只读核对的状态边界；覆盖hardlink后尚未清理暂存就中断，以及入口配置固定后调用方修改dict。SQLite统计与完整性检查设progress handler检查期限；Python图遍历等长循环也应有检查点，不因backup有回调就声称整操作已限时。OS阻塞I/O仍不保证硬超时。
 

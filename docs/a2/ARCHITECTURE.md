@@ -7,7 +7,7 @@
 | 组件 | 主责任 | 不拥有的责任 |
 |---|---|---|
 | recovery 库/CLI | create/publish/verify/restore/check-restore | 调度、消费者切换、知识审核 |
-| SQLite snapshot | 固定源视图、Online Backup、格式与 Ledger 验证 | NAS 登录、跨实现转换 |
+| SQLite snapshot | 隔离源头预检、固定源视图、Online Backup、格式与 Ledger 验证 | NAS 登录、跨实现转换 |
 | Snapshot envelope | 数据文件、manifest、完成标记的字节绑定 | 来源签名、Artifact 身份 |
 | mounted-posix-v1 adapter | 挂载核对、独占目录、有界复制、同步/回读、拒覆盖 | NAS 管理、未测的服务端断电保证 |
 | 运维配置/验收 | 路径、挂载、预期摘要保管、操作窗口 | 修改不可变记录 |
@@ -27,7 +27,13 @@ flowchart TD
 
 ## 2. 一致性与源保护
 
-使用专用 SQLite 只读连接，正确转义 URI 路径；活跃源不用 immutable 模式绕过锁。查询并确认 schema/profile/journal/UTF-8编码，不改 journal、不转码、不迁移。需要 hot-journal 恢复的源拒绝本次快照，由正常 Ledger 生命周期先恢复，快照程序不修复源。
+SQLite的只读WAL连接仍可能创建sidecar，因此不能先读取schema再以journal_mode拒绝WAL。源SQLite连接创建前，按[接口源预检](INTERFACE_PROFILE.md#3-库入口与cli映射)在新的解释器子进程中只读检查100字节文件头，要求read/write format version均为1；这个检查只排除不支持格式，不证明数据库一致或属于Ledger。[SQLite只读WAL](https://www.sqlite.org/wal.html#read_only_databases)、[文件头格式](https://www.sqlite.org/fileformat2.html#the_database_header)。
+
+原始文件头读取不得放在可能已有同库连接的调用进程：在该进程关闭另一个原始fd可能解除其SQLite POSIX锁。预检使用exec后的新解释器，只做有界文件读取，不打开SQLite、不调用继承连接的方法或析构；调用进程仅用stat核对返回的dev/ino及路径绑定。所有启动、等待和读取计入同一次期限。私有验证副本不与业务连接共享，不受该源预检隔离要求影响。[SQLite锁与fork边界](https://www.sqlite.org/howtocorrupt.html#posix_advisory_locks_canceled_by_a_separate_thread_doing_close_)。
+
+调用方从预检到源连接关闭保持源文件/父目录/挂载绑定及journal模式稳定；普通DELETE事务仍可并发。前后stat仅帮助发现变化，不替代此前置，不能声称事后核对消除了模式切换或路径替换的竞态。
+
+预检通过后使用专用 SQLite mode=ro连接，正确转义 URI 路径；活跃源不用immutable模式绕过锁。查询并确认schema/profile/journal/UTF-8编码，不改journal、不转码、不迁移。需要hot-journal恢复的源拒绝本次快照，由正常Ledger生命周期先恢复，快照程序不创建、修复或清理源sidecar。
 
 显式开始只读事务并首次真实读取建立 T0，在同一视图检查格式/预算，调用标准库 Connection.backup 到本地独占暂存库。源和目标不同连接，目标无已开启事务；正数 pages 分步复制，progress 按单调时钟检查期限和目标页预算。只认 backup 完整成功，不能仅因 close/finish 未报错判成功。
 

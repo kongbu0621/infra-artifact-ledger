@@ -55,7 +55,11 @@ COMMITTED.json恰有 `format="infra-artifact-ledger-snapshot-commit/v1"`、snaps
 | `restore(*, snapshot, target_dir, expected_manifest_sha256, scratch_parent, storage_config=None)` | `restore --snapshot PATH --target-dir PATH --expected-manifest-sha256 HASH --scratch-parent PATH [--storage-config FILE]` |
 | `check_restore(*, target_dir, expected_database_sha256, scratch_parent)` | `check-restore --target-dir PATH --expected-database-sha256 HASH --scratch-parent PATH` |
 
-create在既有本地output_root下产生snapshot_id目录，package_version来自运行包；source_commit是调用方提供的实际构建来源，验收另行核实。先在output_root下专属暂存完成backup/校验，再创建generation并复制封存DB/manifest、按[发布协议](ARCHITECTURE.md#4-nas-发布与存储能力)最后发布marker。原子mkdir与marker分别防止重用身份和使用半成品；不创建不存在的output_root。
+create在既有本地output_root下产生snapshot_id目录，package_version来自运行包；source_commit是调用方提供的实际构建来源，验收另行核实。先完成下述源预检，再在output_root下专属暂存完成backup/校验，然后创建generation并复制封存DB/manifest、按[发布协议](ARCHITECTURE.md#4-nas-发布与存储能力)最后发布marker。原子mkdir与marker分别防止重用身份和使用半成品；不创建不存在的output_root。
+
+源预检在新的解释器子进程中有限读取普通源文件前100字节，不使用SQLite连接。必须匹配SQLite magic，且偏移18的write version与19的read version均为1；WAL或其他版本返回UNSUPPORTED_FORMAT，头部缺失/损坏返回INTEGRITY_FAILURE，不触发源SQLite打开。子进程返回有界的头部结论和dev/ino绑定信息；调用进程只做stat/路径绑定核对，不绕过SQLite打开再关闭活跃源原始fd。预检失败、辅助进程不可用或结果无效均不能回退为直接打开源：启动/内部结果失败为IO_ERROR，期限耗尽为TIMEOUT；均为not_published。源文件缺失、存储不支持等保持本表对应错误，不改写为内部失败。
+
+create调用方须从预检到源连接关闭保持源文件、父路径/挂载绑定及journal模式稳定；正常DELETE事务可以并发。路径绑定已变化报IO_ERROR/not_published，不打开替换后的对象；事后stat不能保证阻止违反此前置的瞬时替换。隔离预检使用同一安装包的内部入口，不增加公共命令/参数，不复用fork继承的SQLite对象，也不需要停止调用进程的既有A1连接。启动、有限输出读取和等待计入同一300秒检查点期限，辅助进程异常时由create实现负责终止/回收；仍不承诺OS阻塞I/O的硬时限。
 
 publish只从本地封存快照发布到storage_config的archive_root/snapshot_id，保持三成员bytes不变，不能输入NAS来源。已经存在的generation一律TARGET_EXISTS，不重拍/续写/覆盖；先verify原ID/摘要。返回成功前验证所复制的数据库与manifest一致。
 

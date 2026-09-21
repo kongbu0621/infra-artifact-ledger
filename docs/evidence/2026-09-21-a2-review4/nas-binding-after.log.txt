@@ -1,0 +1,11 @@
+test_replacement_after_initial_check_receives_no_child_writes (test_snapshot_probe_binding.NasProbeBindingTests.test_replacement_after_initial_check_receives_no_child_writes) ... ok
+test_second_spawn_failure_reaps_waiting_child_and_preserves_archive (test_snapshot_probe_binding.NasProbeBindingTests.test_second_spawn_failure_reaps_waiting_child_and_preserves_archive) ... ok
+test_two_children_compete_using_noninheritable_parent_descriptor (test_snapshot_probe_binding.NasProbeBindingTests.test_two_children_compete_using_noninheritable_parent_descriptor) ... ok
+test_directory_race_helper_has_one_winner_and_removes_only_probe (test_snapshot_nas_exercise.NasExerciseSafetyTests.test_directory_race_helper_has_one_winner_and_removes_only_probe) ... ok
+test_fixture_contains_multi_parent_version_and_shared_content (test_snapshot_review3_nas.NasAcceptanceCoverageReviewTests.test_fixture_contains_multi_parent_version_and_shared_content) ... ok
+test_restored_database_accepts_new_version_with_content_and_parent (test_snapshot_review3_nas.NasAcceptanceCoverageReviewTests.test_restored_database_accepts_new_version_with_content_and_parent) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.495s
+
+OK

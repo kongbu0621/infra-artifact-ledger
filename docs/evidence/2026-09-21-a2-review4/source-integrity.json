@@ -1,0 +1,674 @@
+{
+  "source_commit": "8506574083a39339cb63d472c89703b4affaf4e8",
+  "tree": "76728c8d5cdd8d5777cab01bc654652f2a9e9118",
+  "parent": "8a11030fd03f4d0bfb291786d1c557ba8fc94f89",
+  "checked_utc": "2026-09-21T00:19:10.117682+00:00",
+  "materialization": "GitHub connector at fixed source plus per-file Git blob verification; no local Git checkout",
+  "verified_file_count": 148,
+  "files": [
+    {
+      "path": ".gitignore",
+      "git_blob_sha": "8a5c34bb1c9d5d6215301b16229396883c5762be"
+    },
+    {
+      "path": "AGENTS.md",
+      "git_blob_sha": "4930bed0dd7f55ead15b2e09e76855f05ecd18f5"
+    },
+    {
+      "path": "LICENSE",
+      "git_blob_sha": "143c449bb6d31b169c1c3d573422446f85fd6f77"
+    },
+    {
+      "path": "README.md",
+      "git_blob_sha": "73567d5eb684e6a2aceeeba616d371903002871d"
+    },
+    {
+      "path": "docs/A1_VALIDATION.md",
+      "git_blob_sha": "fb78b8606d0382a64e62c6663fcfa9d6b8da97bc"
+    },
+    {
+      "path": "docs/A2_RESOURCE_BOUNDARIES.md",
+      "git_blob_sha": "b539ef6a5dd47fd89c4d0703395728fa54e964f9"
+    },
+    {
+      "path": "docs/A2_RUNBOOK.md",
+      "git_blob_sha": "53b90d2f503e6772ee244ee60003f00627639177"
+    },
+    {
+      "path": "docs/A2_USAGE.md",
+      "git_blob_sha": "07f8ec33057ab6155af86a0d42488e51ed746dad"
+    },
+    {
+      "path": "docs/A2_VALIDATION.md",
+      "git_blob_sha": "3eee2ba4f63da45611dfeb3dc91f39fd020efad9"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "git_blob_sha": "9a555699240e8e7c263515820501d20194ed8dbb"
+    },
+    {
+      "path": "docs/COMPATIBILITY.md",
+      "git_blob_sha": "e68df1daff136cd2e671702699460df496082c2b"
+    },
+    {
+      "path": "docs/IMPLEMENTATION_PLAN.md",
+      "git_blob_sha": "0f4ad5dd657486d8ffcc9f5221e1022d76b9b963"
+    },
+    {
+      "path": "docs/INTERFACE_PROFILE.md",
+      "git_blob_sha": "e099e59cd513e4542cfca0f775d1c2339501b8af"
+    },
+    {
+      "path": "docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md",
+      "git_blob_sha": "46035acc29023c7cd3d5012fa4592aab609a1031"
+    },
+    {
+      "path": "docs/REPOSITORY_FORMATION.md",
+      "git_blob_sha": "7530882fc729537453bc73e651dfeeec092725e0"
+    },
+    {
+      "path": "docs/REQUIREMENTS.md",
+      "git_blob_sha": "776b7936e15e2aa7f7fee986d205b13d70740cfd"
+    },
+    {
+      "path": "docs/REUSE_EXAMPLE.md",
+      "git_blob_sha": "eab8a6b24bf2fd879eb24a85f338bc4a60f3b566"
+    },
+    {
+      "path": "docs/USAGE.md",
+      "git_blob_sha": "0e980f14e3cdfb60914a97acf053f15800b65d69"
+    },
+    {
+      "path": "docs/a2/ACCEPTANCE.md",
+      "git_blob_sha": "b715537e9814e9a544982a66126e1df16282ffd8"
+    },
+    {
+      "path": "docs/a2/ARCHITECTURE.md",
+      "git_blob_sha": "6e60e3e0394a78cbcca66fbf1a90d5414398fc52"
+    },
+    {
+      "path": "docs/a2/GATE.md",
+      "git_blob_sha": "3f60dacdc11e8a1d0deeb0cedc02178791f6668d"
+    },
+    {
+      "path": "docs/a2/IMPLEMENTATION_PLAN.md",
+      "git_blob_sha": "40903700739c69a33f72d825a25b55db9b134845"
+    },
+    {
+      "path": "docs/a2/INTERFACE_PROFILE.md",
+      "git_blob_sha": "7dabb2d0d25d29fd39758b182cebb8464262d31a"
+    },
+    {
+      "path": "docs/a2/REQUIREMENTS.md",
+      "git_blob_sha": "16b2152586be7c944f8c29273432ded6a7916a9c"
+    },
+    {
+      "path": "docs/decisions/A1_OPENING_DECISION.md",
+      "git_blob_sha": "fb66bbc27918f272d027f5cb25d66eb626eff4c7"
+    },
+    {
+      "path": "docs/decisions/A2_OPENING_DECISION.md",
+      "git_blob_sha": "4f7d0734adf4bff1d39905d8d067aeb62e11385c"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/README.md",
+      "git_blob_sha": "8d99f1b4b49a1426fad070b502929edc9863895c"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/a1-resources.log.txt",
+      "git_blob_sha": "8e83eee47f387f85696ba3e73e8faccffa80cf85"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/a1-responses.log.txt",
+      "git_blob_sha": "90dc0fa20bc06a5418ec75c1ffcbfcc8ae6dcdf1"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/a2-resources.log.txt",
+      "git_blob_sha": "2f932bf878c0a5eb1d668d52178d10885621d4ed"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/build-environment.log.txt",
+      "git_blob_sha": "3642af4a7bd8dab70f6f1c7383abb44951d97b5f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/build.log.txt",
+      "git_blob_sha": "904932ba46882a0d945ad7ee77e4304857f3e211"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/compile311.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/compile312.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/diff-check.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/install.log.txt",
+      "git_blob_sha": "7cc44c18eba414dae92d61ce342ac3fdfabf4744"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/installed-a1.log.txt",
+      "git_blob_sha": "833e6ef9252170f1c9f451463f3eca1fea84ea52"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/installed-a2-logic.log.txt",
+      "git_blob_sha": "0dbde0f9c6bb047f8964c64080241912ebbf15ea"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/installed-unsupported-storage.log.txt",
+      "git_blob_sha": "3b471cdafd924485cd5e54b636d39053ed0866f9"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/log-index.json",
+      "git_blob_sha": "00fdd25dbaa213689b46039d61d73c988cbb1b7b"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/runtime.log.txt",
+      "git_blob_sha": "64d5457e0d6c66ece75c9c51fa8328225fd7b1c5"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/source311.log.txt",
+      "git_blob_sha": "003a33d732009027660b97ca05753554f3f9b0a6"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/source312.log.txt",
+      "git_blob_sha": "895e93e76217675b43bea2cd55fa4b28d29706d5"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/storage-profile.log.txt",
+      "git_blob_sha": "9ed73b81bc45a5c55c9c13ca175bdcc7f8119a3e"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-cloud/summary.json",
+      "git_blob_sha": "be7f90243512d4dba069529a6f2ea77c2f196759"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/README.md",
+      "git_blob_sha": "20353eebf284a06c405483cca1775f10bd5f9e3a"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/a1-resources.log.txt",
+      "git_blob_sha": "4cc0c0e0be9873600ae0e7bbf0c6d47e78422aff"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/a1-responses.log.txt",
+      "git_blob_sha": "55c5f644c7e24c7ab9003cab8cc9e1a802690291"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/a2-resources.log.txt",
+      "git_blob_sha": "484c73ee4caab0f365b1ffd99d27bcba705494da"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/a2-semantic-resources.log.txt",
+      "git_blob_sha": "3be4e789dfee7d466088f4bc1bc429bd90e7f14f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/build-environment.log.txt",
+      "git_blob_sha": "3642af4a7bd8dab70f6f1c7383abb44951d97b5f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/build.log.txt",
+      "git_blob_sha": "a34e0c53a58566d89b01763cc68bbefd26e55a5f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/compile311.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/compile312.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/diff-check.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/install.log.txt",
+      "git_blob_sha": "7cc44c18eba414dae92d61ce342ac3fdfabf4744"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/installed-a1.log.txt",
+      "git_blob_sha": "6ab45520e3f852be86da1f398990b5cb61beff1f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/installed-a2-logic.log.txt",
+      "git_blob_sha": "5bee4c3b34167000d0ba1568b7e8cf59782301b7"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/installed-unsupported-storage.log.txt",
+      "git_blob_sha": "b9018ffad41e018ea3791e748929855343460f9f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/log-index.json",
+      "git_blob_sha": "035cee55e1c5377f5ebbe6e62034cab7a7e9c050"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/runtime.log.txt",
+      "git_blob_sha": "892659530ffd760a55dc82288cbed0656708e5f2"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/source311.log.txt",
+      "git_blob_sha": "b975deeae3229172c664b5548e815277e991a0bc"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/source312.log.txt",
+      "git_blob_sha": "d9a15b8a02dcd8e6e9eb21aaf0800130f2826c2d"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/storage-profile.log.txt",
+      "git_blob_sha": "1025c5cfdda81acbec5a0f94743757012a3b2bef"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review1/summary.json",
+      "git_blob_sha": "845b08bee170a27bd6e6cbc0912d38010fd9c018"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/README.md",
+      "git_blob_sha": "fa99b28a259979ae8f1c4d491c0b777917944d10"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/a2-resources.log.txt",
+      "git_blob_sha": "18b5f10ef92320509ed3519b64daf396ca4077b9"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/a2-semantic-resources.log.txt",
+      "git_blob_sha": "6d785a76a8084903ec9800b3087270de990c67e2"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/build-environment.log.txt",
+      "git_blob_sha": "3642af4a7bd8dab70f6f1c7383abb44951d97b5f"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/build.log.txt",
+      "git_blob_sha": "33a17385f5ba5ab3622aeab90651d1013ec88921"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/compile311.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/compile312.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/diff-check.log.txt",
+      "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/install.log.txt",
+      "git_blob_sha": "7cc44c18eba414dae92d61ce342ac3fdfabf4744"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/installed-a1.log.txt",
+      "git_blob_sha": "c0888d963f238e3ec3f24cdbe90c4645c9c42f57"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/installed-a2-logic.log.txt",
+      "git_blob_sha": "327f8a033effb2463cecef858bb142d5a751e29b"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/installed-unsupported-storage.log.txt",
+      "git_blob_sha": "e81563f744856de602a637f0dd8dfd33ce0622ce"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/log-index.json",
+      "git_blob_sha": "2445075865e741624c2eb0c20a83cbf811cb8fcf"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/runtime.log.txt",
+      "git_blob_sha": "558f93f6b80683513820ae9f73e948d2c8fea258"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/source311.log.txt",
+      "git_blob_sha": "2c6d320fb91f40fc5be557e2de507dfc648b7325"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/source312.log.txt",
+      "git_blob_sha": "9461ba098a6db9953f1d3b62d38b1693c413ca48"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/storage-profile.log.txt",
+      "git_blob_sha": "1025c5cfdda81acbec5a0f94743757012a3b2bef"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-a2-review2/summary.json",
+      "git_blob_sha": "8df7b8d1e726bbf245d6c752fb358f4de3e87c01"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-gx10/README.md",
+      "git_blob_sha": "ced020926a26309a01bbd9534869b4f573ae354d"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-gx10/installation.redacted.txt",
+      "git_blob_sha": "1a5f11b2cca3124f39dd31c7d76f5e016521d6da"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-gx10/manifest.json",
+      "git_blob_sha": "aa679d8ab6414fc1e4e558d2abd358569ccf35b5"
+    },
+    {
+      "path": "docs/evidence/2026-09-20-gx10/resources.redacted.txt",
+      "git_blob_sha": "1f4e950f7d0f7f7ee12dcb4d04c8fafe5433bf1a"
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob_sha": "9063c93d208851d37f20a305b9e5ede55bfcaed1"
+    },
+    {
+      "path": "src/infra_artifact_ledger/__init__.py",
+      "git_blob_sha": "1c6eaf6c61d4dadc9597620384072269e0f0db90"
+    },
+    {
+      "path": "src/infra_artifact_ledger/__main__.py",
+      "git_blob_sha": "d6dc00c4af8d5e63bd941ca42547b659256f2257"
+    },
+    {
+      "path": "src/infra_artifact_ledger/_checkpoints.py",
+      "git_blob_sha": "4074eef3dd8d01dcea320504492b92f3acf6d194"
+    },
+    {
+      "path": "src/infra_artifact_ledger/cli.py",
+      "git_blob_sha": "21cfb47214903cf2f0c88a243b97e2fb4fb6e04d"
+    },
+    {
+      "path": "src/infra_artifact_ledger/errors.py",
+      "git_blob_sha": "f28642ac43d4729bd7cc0b72620846c16e97b8bc"
+    },
+    {
+      "path": "src/infra_artifact_ledger/fingerprint.py",
+      "git_blob_sha": "81c72458329eeed7caeb4d7918c1871a5e232ea1"
+    },
+    {
+      "path": "src/infra_artifact_ledger/portable.py",
+      "git_blob_sha": "4077fd57d624b70c215e5e482286f88c9379c511"
+    },
+    {
+      "path": "src/infra_artifact_ledger/records.py",
+      "git_blob_sha": "7ff4cbc3e7099bf7464339e8456fb3e1ffed4cfd"
+    },
+    {
+      "path": "src/infra_artifact_ledger/recovery.py",
+      "git_blob_sha": "2d691c7f13bb62a9aac900092e0309cdaa88bda8"
+    },
+    {
+      "path": "src/infra_artifact_ledger/service.py",
+      "git_blob_sha": "fea8428cac264cb9cabea0017ff5829121dc36fa"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_cli.py",
+      "git_blob_sha": "459f97568a1841de174474d270a0bd545752538c"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_common.py",
+      "git_blob_sha": "a70dfeb897f2b313fdf6c0c1580424826bbea3be"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_format.py",
+      "git_blob_sha": "8befa03444f255f804c1c4d55b9a455fc639e0f3"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_sqlite.py",
+      "git_blob_sha": "be4d7ba4ffa144977e6ad10f4e2858c3f414b4e2"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_storage.py",
+      "git_blob_sha": "fe56add3d925bd9b677151845b8c169ce67479d8"
+    },
+    {
+      "path": "src/infra_artifact_ledger/sqlite_store.py",
+      "git_blob_sha": "8c9ecd8acdd4a022280e6bac9954aebc48a1dd92"
+    },
+    {
+      "path": "src/infra_artifact_ledger/validation.py",
+      "git_blob_sha": "cb26e75a86c989bbb0d7fd6d18fa85dec1ab7b95"
+    },
+    {
+      "path": "tests/acceptance_helpers.py",
+      "git_blob_sha": "e0b6851591596341298bf9996ea302c4cb9a1814"
+    },
+    {
+      "path": "tests/installed_snapshot_walkthrough.py",
+      "git_blob_sha": "347e07b6c32042ddf10bebb0ddfab45c703c0c14"
+    },
+    {
+      "path": "tests/installed_walkthrough.py",
+      "git_blob_sha": "21ed898c857863f4b897acc92c11a41880750173"
+    },
+    {
+      "path": "tests/test_acceptance.py",
+      "git_blob_sha": "9a18411b2efc12b0fad2df46395df82cdc6acc7d"
+    },
+    {
+      "path": "tests/test_cli.py",
+      "git_blob_sha": "9bc236975fe6ac684b4fd519573f56969646b016"
+    },
+    {
+      "path": "tests/test_cli_helpers.py",
+      "git_blob_sha": "1feaef45291ee86b5b7cd747019265a19b19d089"
+    },
+    {
+      "path": "tests/test_cli_output_paths.py",
+      "git_blob_sha": "0ff9d0389b8eff8774c6eb6fdb5f0165b42c7bdb"
+    },
+    {
+      "path": "tests/test_fingerprint.py",
+      "git_blob_sha": "adcdf76aef221726b4c7a36ac4302221e35bb151"
+    },
+    {
+      "path": "tests/test_index_binding.py",
+      "git_blob_sha": "1519b2330dabe19c5b49b180be02236bd0b38082"
+    },
+    {
+      "path": "tests/test_library_paths.py",
+      "git_blob_sha": "7ace12dd52048e9a483d188588bad4a4bee949f3"
+    },
+    {
+      "path": "tests/test_payload_mapping.py",
+      "git_blob_sha": "1c5ac85b330ed5dd1ee4c29896221dd01e7ee764"
+    },
+    {
+      "path": "tests/test_portable.py",
+      "git_blob_sha": "0075f1094e6069e5502a2d87403e3d9dc594b150"
+    },
+    {
+      "path": "tests/test_read_integrity.py",
+      "git_blob_sha": "03051e2bbb57c3dddbbe6e4665708076f8a3eb84"
+    },
+    {
+      "path": "tests/test_resources.py",
+      "git_blob_sha": "532c2d5869d0f4988673d36a46a62830c3ab7996"
+    },
+    {
+      "path": "tests/test_response_boundaries.py",
+      "git_blob_sha": "3acb1d1dfbdb6ea3d1fede2a935bfcc4c1f7f3b1"
+    },
+    {
+      "path": "tests/test_service.py",
+      "git_blob_sha": "813740c9e14c6f1fc5d1bc569cf5a0debf72dab5"
+    },
+    {
+      "path": "tests/test_snapshot_cli.py",
+      "git_blob_sha": "3839ae9b971fa6409a335ae146ad2ccadab249a9"
+    },
+    {
+      "path": "tests/test_snapshot_concurrency.py",
+      "git_blob_sha": "04a29dcf9b8a390e1a968d1ae0c846f1f1efa9d4"
+    },
+    {
+      "path": "tests/test_snapshot_error_stages.py",
+      "git_blob_sha": "b59927ac40d817a3a3d6468b36f38d6364ec4c41"
+    },
+    {
+      "path": "tests/test_snapshot_failures.py",
+      "git_blob_sha": "d538e4732ed809fc493d039a239c4b41a4dd188b"
+    },
+    {
+      "path": "tests/test_snapshot_format.py",
+      "git_blob_sha": "9c41d8211e7627070c5c8213e7e2fd81c5389c38"
+    },
+    {
+      "path": "tests/test_snapshot_nas_exercise.py",
+      "git_blob_sha": "db7cc10a44ac2b6e5d30d1cc38fca13c548ac1a7"
+    },
+    {
+      "path": "tests/test_snapshot_output_channels.py",
+      "git_blob_sha": "c3cfe2639d3234a15248760cdc797d5f4e9829e3"
+    },
+    {
+      "path": "tests/test_snapshot_path_semantics.py",
+      "git_blob_sha": "43d970ddff37ef8a471c9d828cb197479c8442c9"
+    },
+    {
+      "path": "tests/test_snapshot_probe_binding.py",
+      "git_blob_sha": "b85fb3a20fbaed3021cb37b7fd87c089647931f0"
+    },
+    {
+      "path": "tests/test_snapshot_publication_review.py",
+      "git_blob_sha": "6b56c9cde7f2fe2457933e58358feb179b3e3730"
+    },
+    {
+      "path": "tests/test_snapshot_recovery.py",
+      "git_blob_sha": "86671394479599e900d20de810258398810d6be4"
+    },
+    {
+      "path": "tests/test_snapshot_resources.py",
+      "git_blob_sha": "8c28f384bd1cb827dfd72b309917e9a77d5b25cf"
+    },
+    {
+      "path": "tests/test_snapshot_review2_mount_text.py",
+      "git_blob_sha": "55df26d8340096fdd136c132822d393619c1b5d2"
+    },
+    {
+      "path": "tests/test_snapshot_review2_nas.py",
+      "git_blob_sha": "a00ac3b2601cc28dc2f985e484dce0b36b616830"
+    },
+    {
+      "path": "tests/test_snapshot_review2_protocol.py",
+      "git_blob_sha": "3c709f9cf035053151ca44f24a6408f3f8602f1b"
+    },
+    {
+      "path": "tests/test_snapshot_review2_sqlite.py",
+      "git_blob_sha": "b66bdfd96e052a85312bb16b9dd2d82060e44c5e"
+    },
+    {
+      "path": "tests/test_snapshot_review2_storage.py",
+      "git_blob_sha": "9412e1a8ff55ca892bae59ea7ca6e38297619205"
+    },
+    {
+      "path": "tests/test_snapshot_review3_cli.py",
+      "git_blob_sha": "a0cfd014d3ef233ac05cd984a802898cce372f94"
+    },
+    {
+      "path": "tests/test_snapshot_review3_nas.py",
+      "git_blob_sha": "cfda25d6f9e3544ac49acb10cb3b3312eff24301"
+    },
+    {
+      "path": "tests/test_snapshot_review3_semantics.py",
+      "git_blob_sha": "c9c191dca6130f94747ec4b8c9e98771d8955a1e"
+    },
+    {
+      "path": "tests/test_snapshot_review3_sqlite.py",
+      "git_blob_sha": "ab182728d32e7607713dcf0ae85707379adf1516"
+    },
+    {
+      "path": "tests/test_snapshot_semantic_resources.py",
+      "git_blob_sha": "f87ba26cb67941890dd3fbbde6f4fc50145fb458"
+    },
+    {
+      "path": "tests/test_snapshot_sqlite.py",
+      "git_blob_sha": "3c701afa434dafa87b7cd46fe86df93ff5bca0ce"
+    },
+    {
+      "path": "tests/test_snapshot_storage.py",
+      "git_blob_sha": "08494c7876c35f879c3e0a32878c1cf3180dc700"
+    },
+    {
+      "path": "tests/test_storage_boundaries.py",
+      "git_blob_sha": "d312d53b86ed03f9fad1a9f9fd83f0c99f138ea8"
+    },
+    {
+      "path": "tests/test_validation.py",
+      "git_blob_sha": "6506cc86ce439fc5d297272230fdb21c36fc2c4c"
+    },
+    {
+      "path": "tools/acceptance/a2_nas_exercise.py",
+      "git_blob_sha": "66e1027b54b3d0bef6706a35ab52a7c7c38b91a2"
+    }
+  ],
+  "wheel_modules_verified": 17,
+  "modules": [
+    {
+      "path": "infra_artifact_ledger/__init__.py",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1"
+    },
+    {
+      "path": "infra_artifact_ledger/__main__.py",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3"
+    },
+    {
+      "path": "infra_artifact_ledger/_checkpoints.py",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580"
+    },
+    {
+      "path": "infra_artifact_ledger/cli.py",
+      "sha256": "4c069c425888eef0c268d299042c81f3254ac0804af4d2c586bca8ae43eb7e2f"
+    },
+    {
+      "path": "infra_artifact_ledger/errors.py",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d"
+    },
+    {
+      "path": "infra_artifact_ledger/fingerprint.py",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f"
+    },
+    {
+      "path": "infra_artifact_ledger/portable.py",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab"
+    },
+    {
+      "path": "infra_artifact_ledger/records.py",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4"
+    },
+    {
+      "path": "infra_artifact_ledger/recovery.py",
+      "sha256": "d1d35f72b2434a4e9d4267843ab50ef9cda87a9fb76f4bd28ae8d04a0beac478"
+    },
+    {
+      "path": "infra_artifact_ledger/service.py",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec"
+    },
+    {
+      "path": "infra_artifact_ledger/snapshot_cli.py",
+      "sha256": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8"
+    },
+    {
+      "path": "infra_artifact_ledger/snapshot_common.py",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080"
+    },
+    {
+      "path": "infra_artifact_ledger/snapshot_format.py",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b"
+    },
+    {
+      "path": "infra_artifact_ledger/snapshot_sqlite.py",
+      "sha256": "47c5a062361db9bb7d797d38c2c6f3b07a4774fdad5098607a14d038a0d54f95"
+    },
+    {
+      "path": "infra_artifact_ledger/snapshot_storage.py",
+      "sha256": "a230cf459ed00bfeabb8374913987c6ba6602b0381218f44fb83146fd2a26c1f"
+    },
+    {
+      "path": "infra_artifact_ledger/sqlite_store.py",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190"
+    },
+    {
+      "path": "infra_artifact_ledger/validation.py",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+    }
+  ],
+  "match": "remote source tree = build input; package modules = wheel = installed package"
+}

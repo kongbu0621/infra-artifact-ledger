@@ -1,0 +1,117 @@
+test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) ... 
+  test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='stdout') ... FAIL
+  test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='stderr') ... FAIL
+  test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='wait') ... FAIL
+test_child_exit_during_kill_preserves_read_failure_and_reaps (test_snapshot_process_cleanup.ChildCleanupTests.test_child_exit_during_kill_preserves_read_failure_and_reaps) ... FAIL
+test_handled_caller_exception_does_not_hide_cleanup_error (test_snapshot_process_cleanup.ChildCleanupTests.test_handled_caller_exception_does_not_hide_cleanup_error) ... FAIL
+test_probe_releases_both_children_after_first_cleanup_fails (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_releases_both_children_after_first_cleanup_fails) ... FAIL
+test_probe_spawn_failure_survives_close_failure_and_releases_child (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_spawn_failure_survives_close_failure_and_releases_child) ... FAIL
+test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) ... 
+  test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='stdout') ... FAIL
+  test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='stderr') ... FAIL
+  test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='wait') ... FAIL
+
+======================================================================
+FAIL: test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='stdout')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 129, in test_bad_response_survives_each_cleanup_error_and_keeps_receipt
+    self.invoke(valid=False, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 117, in invoke
+    self.assertIsInstance(error, tool.ExerciseError)
+AssertionError: OSError(5, 'synthetic cleanup failure after release') is not an instance of <class 'a2_process_cleanup.ExerciseError'>
+
+======================================================================
+FAIL: test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='stderr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 129, in test_bad_response_survives_each_cleanup_error_and_keeps_receipt
+    self.invoke(valid=False, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 117, in invoke
+    self.assertIsInstance(error, tool.ExerciseError)
+AssertionError: OSError(5, 'synthetic cleanup failure after release') is not an instance of <class 'a2_process_cleanup.ExerciseError'>
+
+======================================================================
+FAIL: test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) (fault='wait')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 129, in test_bad_response_survives_each_cleanup_error_and_keeps_receipt
+    self.invoke(valid=False, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 117, in invoke
+    self.assertIsInstance(error, tool.ExerciseError)
+AssertionError: OSError(5, 'synthetic cleanup failure after release') is not an instance of <class 'a2_process_cleanup.ExerciseError'>
+
+======================================================================
+FAIL: test_child_exit_during_kill_preserves_read_failure_and_reaps (test_snapshot_process_cleanup.ChildCleanupTests.test_child_exit_during_kill_preserves_read_failure_and_reaps)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 210, in test_child_exit_during_kill_preserves_read_failure_and_reaps
+    self.assertIs(caught.exception, primary)
+AssertionError: ProcessLookupError(3, 'synthetic exit during kill') is not OSError(5, 'synthetic response read failure')
+
+======================================================================
+FAIL: test_handled_caller_exception_does_not_hide_cleanup_error (test_snapshot_process_cleanup.ChildCleanupTests.test_handled_caller_exception_does_not_hide_cleanup_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 137, in test_handled_caller_exception_does_not_hide_cleanup_error
+    self.invoke(valid=True, fault="stdout", outer_exception=True)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 120, in invoke
+    self.assert_released(child)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 68, in assert_released
+    self.assertTrue(pipe.closed, name + " leaked")
+AssertionError: False is not true : stderr leaked
+
+======================================================================
+FAIL: test_probe_releases_both_children_after_first_cleanup_fails (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_releases_both_children_after_first_cleanup_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 179, in test_probe_releases_both_children_after_first_cleanup_fails
+    self.assertIs(caught.exception, primary)
+AssertionError: OSError(5, 'synthetic stdout close failure') is not BrokenPipeError(32, 'synthetic start signal failure')
+
+======================================================================
+FAIL: test_probe_spawn_failure_survives_close_failure_and_releases_child (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_spawn_failure_survives_close_failure_and_releases_child)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 157, in test_probe_spawn_failure_survives_close_failure_and_releases_child
+    self.assertIs(caught.exception, primary)
+AssertionError: OSError(5, 'synthetic stdout close failure') is not BlockingIOError(11, 'synthetic second spawn failure')
+
+======================================================================
+FAIL: test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='stdout')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 134, in test_successful_response_does_not_hide_cleanup_error_or_lose_receipt
+    self.invoke(valid=True, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 120, in invoke
+    self.assert_released(child)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 68, in assert_released
+    self.assertTrue(pipe.closed, name + " leaked")
+AssertionError: False is not true : stderr leaked
+
+======================================================================
+FAIL: test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='stderr')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 134, in test_successful_response_does_not_hide_cleanup_error_or_lose_receipt
+    self.invoke(valid=True, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 121, in invoke
+    self.assertEqual(len(calls), 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) (fault='wait')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 134, in test_successful_response_does_not_hide_cleanup_error_or_lose_receipt
+    self.invoke(valid=True, fault=fault)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 120, in invoke
+    self.assert_released(child)
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_process_cleanup.py", line 68, in assert_released
+    self.assertTrue(pipe.closed, name + " leaked")
+AssertionError: False is not true : stdout leaked
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.105s
+
+FAILED (failures=10)

@@ -38,13 +38,13 @@ CLI 正常操作和错误使用单行 JSON；`--help` 是面向人的文本辅�
 
 ## A2 0.2.0a1 补充状态
 
-以上是 A1 0.1.0a1 历史证据；A2 当前固定修订为 D7 `4af226210586f61bfb4e4c604b23edd6194fef59`，tree `1123371884fbd6507bcb67e495e1bd9fa31db8c9`。D1–D6 历史、D7 源码与 wheel 摘要和执行日志见 [A2_VALIDATION](A2_VALIDATION.md)，不能跨提交挪用结果。D4 未单列公开的完整证据集，后续固定版本的结果不追授给它。
+以上是 A1 0.1.0a1 历史证据；A2 当前固定修订为 D8 `c9e4cb450c853578b1b4c15eab4a9a6458693d8e`，tree `5eacace3f61b81909c9b14646742d5102cd5fa00`。D1–D7 历史、D8 构建与运行证据见 [A2_VALIDATION](A2_VALIDATION.md)，不能跨提交挪用结果。
 
-本轮验证日期为 2026-09-21 UTC，环境为 Linux x86_64 / Python 3.11.16、3.12.14 / SQLite 3.53.1；195 个源文件按固定 D7 tree 逐 Git blob 核验，17 个运行模块的源码、wheel 和安装字节一致。复用已记录的 build venv，通过 `system-site-packages` 使用已有构建工具；本轮 Python 3.11 安装态 runtime venv 独立新建，补充 Python 3.12 源码/编译验证复用此前 runtime venv；安装态受测库来自已安装 wheel，测试和 NAS 工具来自固定源文件集。本轮不是本地 Git checkout；来源与隔离细节见验证记录 §2。
+本轮环境为 Linux x86_64 / Python 3.11.16、3.12.14 / SQLite 3.53.1；215 个源文件按固定 D8 tree 核验，17 个运行模块的源码、wheel、安装字节一致。复用已有 build venv，采用 system-site-packages 的构建工具；新建独立 Python 3.11 runtime venv，Python 3.12 复用此前环境。本地是经 Git blob 核验的文件集，并非 Git checkout；安装态从源码目录外以 -I 运行，测试与验收工具来自固定源码。
 
-D7 两版本源码各发现 430 项、普通 410 项通过、资源 20 项跳过；安装态 A2 264 项发现、253 项通过、11 项专项跳过。A1 普通回归、安装态文档闭环、编译、构建与安装均通过。本轮 A1 9 项及 A2 11 项资源专项均未重跑，分别保留 D2、D6 历史证据，不算作 D7 本轮执行通过；数字存在重复，不能合计为独立测试数量。
+12 条固定源码构建、安装、测试、编译和环境命令全部 exit 0。两版本 compileall、A1 安装态文档闭环、生产 API/CLI 的实际 overlay 拒绝均通过。20 项资源专项本轮未重跑：A1 的 9 项保留 D2 历史，A2 的 11 项保留 D6 历史；安装态 11 项跳过是同一批 A2 专项。历史结果不算作 D8 本轮执行，不相加不同版本和安装态的重复用例。
 
-D7 补齐本地硬链接 EDQUOT 的错误分类：create/restore 保持 IO_ERROR/publish/not_published，CLI 退出码 9；模拟远端已创建链接再报同一 errno 时仍 unknown 并保留目标。新增 1 项 CLI 回归、扩展 3 项 API/远端回归，同一最终测试的修复前后对照见 [本轮证据](evidence/2026-09-21-a2-review6/README.md)。真实文件系统配额耗尽未执行，errno 注入为 LOGIC_ONLY。D6 的最终回读 verify 阶段、源 journal nofollow stat 防护及此前首错/输出/绑定回归继续通过；普通单链接 DELETE journal 仍允许，hot journal 不获准自动恢复，未运行被阻断的锁失效重演。调用者已有损坏缓冲、管理性稳定前置等边界保持。A1 wire/schema 与 A2 公共协议字段不变。
+D8 两版本源码各 436 项发现、416 项通过、20 项跳过；安装态 A2 270 项发现、259 项通过、11 项跳过。新增 6 项子进程清理回归，覆盖首错、二次清理失败、两个子进程与退出竞态，见 [本轮证据](evidence/2026-09-21-a2-review7/README.md)。产品运行模块与 D7 相同，工具文件不在 wheel 中，复跑须同时取得 D8 工具。已有配额分类、源 journal、最终核验阶段、真实输出通道与目录绑定回归继续通过；管理性稳定前置、已有损坏缓冲等边界不变，未运行被阻断的锁失效重演。
 
 A2 本地候选文件系统为 ext4/xfs/btrfs，NAS profile 为显式核实的 nfs/nfs4/cifs；类型名称不等于兼容认证。实际 Cloud overlay（fsync=volatile）仍被生产 API/CLI 拒绝，正向模拟仅 LOGIC_ONLY。
 

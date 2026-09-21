@@ -1,6 +1,6 @@
 # A2 实现与验证记录
 
-状态：**实现已提交；Cloud 验证通过；A2 完整验收 PARTIAL**。真实 GX10、受支持本地文件系统的安装态正向闭环、真实 NAS 保存/丢失恢复均为 **NOT_RUN**。本文不把单元测试或模拟挂载写成实机通过。当前源码依据 D7（§3.7）；D1–D6 保留为各自固定版本的历史记录，后续结果不追授给旧提交。
+状态：**实现已提交；Cloud 验证通过；A2 完整验收 PARTIAL**。真实 GX10、受支持本地文件系统的安装态正向闭环、真实 NAS 保存/丢失恢复均为 **NOT_RUN**。本文不把单元测试或模拟挂载写成实机通过。当前源码依据 D8（§3.8）；D1–D7 保留为各自固定版本的历史记录，后续结果不追授给旧提交。
 
 ## 1. 授权、源码和制品链
 
@@ -28,22 +28,25 @@
 | 第五轮修复 D6（历史） | `894cab8b1d55840bbc0cf130c22d4f57d67875d3` |
 | D6 tree | `5f8bfb606ce1d9e1ef84b9f4d96c46192045f81e` |
 | D6 证据提交 | `073057c2d1a72e12c669f1c4ee5fe3d0930e701a` |
-| 本轮修复 D7 | `4af226210586f61bfb4e4c604b23edd6194fef59` |
+| 第六轮修复 D7（历史） | `4af226210586f61bfb4e4c604b23edd6194fef59` |
 | D7 tree | `1123371884fbd6507bcb67e495e1bd9fa31db8c9` |
+| D7 证据提交 | `0de4e57345f6211cbd2f22e01994ab073c9f7344` |
+| 本轮修复 D8 | `c9e4cb450c853578b1b4c15eab4a9a6458693d8e` |
+| D8 tree | `5eacace3f61b81909c9b14646742d5102cd5fa00` |
 
 Owner 授权转录见 [A2_OPENING_DECISION](decisions/A2_OPENING_DECISION.md)。C 只记录 CLOSED，D1 直接以 C 为父提交。五份批准的 A2 需求/架构/计划/接口/验收文档字节保持不变；本文补充实际证据，不将其历史 Candidate/NOT_RUN 原文当成新的权限判断。
 
-祖先链为 C → D1 → `f13d2fb` → D2 → `f564174` → D3 → `14f68c7` → D4 → D5 → `689b2d0` → D6 → `073057c` → D7 → 本轮证据文档提交。各固定源码的执行结果及 wheel 摘要分别列于下文；不把后续修复后的结果套给旧版本，也不能把后续证据文档提交 SHA 冒充 wheel 的构建来源。软件为 `0.2.0a1` alpha；A1 wire/schema 标识不变。未发布 PyPI 包，未配置 NAS 服务，未启用业务库。
+祖先链为 C → D1 → `f13d2fb` → D2 → `f564174` → D3 → `14f68c7` → D4 → D5 → `689b2d0` → D6 → `073057c` → D7 → `0de4e57` → D8 → 本轮证据文档提交。各固定源码的执行结果及 wheel 摘要分别列于下文；不把后续修复后的结果套给旧版本，也不能把后续证据文档提交 SHA 冒充 wheel 的构建来源。软件为 `0.2.0a1` alpha；A1 wire/schema 标识不变。未发布 PyPI 包，未配置 NAS 服务，未启用业务库。
 
 ## 2. 实际环境与隔离
 
-本轮执行环境为 ChatGPT Work 的 Cloud 容器，Linux 6.18.44 / x86_64 / glibc 2.39。必验 Python **3.11.16**、补充 Python **3.12.14**，两者 SQLite **3.53.1**。构建复用 D5 已记录的 build venv，使用 `system-site-packages` 继承本环境已有的构建工具，实测为 pip 25.0.1、setuptools 84.0.0、wheel 0.48.0、packaging 26.3；它不是完全隔离的依赖解析环境。Python 3.11 安装态 runtime venv 本轮独立新建；补充 Python 3.12 源码与编译验证复用此前 runtime venv。运行包只依赖标准库。实际版本见 [build-environment](evidence/2026-09-21-a2-review6/build-environment.log.txt) 与 [runtime](evidence/2026-09-21-a2-review6/runtime.log.txt)。
+本轮执行环境为 ChatGPT Work 的 Cloud 容器，Linux 6.18.44 / x86_64 / glibc 2.39。必验 Python **3.11.16**、补充 Python **3.12.14**，两者 SQLite **3.53.1**。构建复用 D5 已记录的 build venv，使用 `system-site-packages` 继承本环境已有的构建工具，实测为 pip 25.0.1、setuptools 84.0.0、wheel 0.48.0、packaging 26.3；它不是完全隔离的依赖解析环境。Python 3.11 安装态 runtime venv 本轮独立新建；补充 Python 3.12 源码与编译验证复用此前 runtime venv。运行包只依赖标准库。实际版本见 [build-environment](evidence/2026-09-21-a2-review7/build-environment.log.txt) 与 [runtime](evidence/2026-09-21-a2-review7/runtime.log.txt)。
 
-本地源文件集由固定 D6 证据提交 `073057c` 的文件集与本轮变更形成，先创建 D7 提交对象，再于构建前逐文件计算 Git blob 并与 D7 的远端 tree 对照，构建后复核同一文件集的 SHA-256；这是一份按固定 tree 核验的源文件集，**不是本地 Git checkout**。本轮核验 195 个文件，并核对 17 个运行包模块在源码、wheel 与已安装包中的字节一致；范围和逐项结果见 [source-integrity.json](evidence/2026-09-21-a2-review6/source-integrity.json)。构建和测试以这份固定内容为输入，后续证据文档修改不作为 wheel 的构建来源。
+本地源文件集由固定 D7 证据提交 `0de4e57` 的文件集与本轮变更形成，先创建 D8 提交对象，再于构建前逐文件计算 Git blob 并与 D8 的远端 tree 对照，构建后复核同一文件集的 SHA-256；这是一份按固定 tree 核验的源文件集，**不是本地 Git checkout**。本轮核验 215 个文件，并核对 17 个运行包模块在源码、wheel 与已安装包中的字节一致；范围和逐项结果见 [source-integrity.json](evidence/2026-09-21-a2-review7/source-integrity.json)。构建和测试以这份固定内容为输入，后续证据文档修改不作为 wheel 的构建来源。
 
-从固定源码以 `--no-index --no-build-isolation --no-deps` 构建 wheel，再以 `--no-index --no-deps` 安装到独立 Python 3.11 runtime venv。安装态命令在源码目录之外执行，显式 `-I` 并清除 PYTHONPATH/PYTHONHOME；被测 `infra_artifact_ledger` 来自 runtime venv 的 site-packages。测试模块和 NAS 验收工具脚本来自 D7 源文件集，**并非 wheel 自带验收脚本**；`-I` 不改变这一点。源预检辅助进程由同一解释器 `-I` 启动安装包内文件。[D5 runtime](evidence/2026-09-21-a2-review4/runtime.log.txt)、[D3 runtime](evidence/2026-09-20-a2-review2/runtime.log.txt)、[D2 runtime](evidence/2026-09-20-a2-review1/runtime.log.txt) 与 [D1 runtime](evidence/2026-09-20-a2-cloud/runtime.log.txt) 保留为历史。
+从固定源码以 `--no-index --no-build-isolation --no-deps` 构建 wheel，再以 `--no-index --no-deps` 安装到独立 Python 3.11 runtime venv。安装态命令在源码目录之外执行，显式 `-I` 并清除 PYTHONPATH/PYTHONHOME；被测 `infra_artifact_ledger` 来自 runtime venv 的 site-packages。测试模块和 NAS 验收工具脚本来自 D8 源文件集，**并非 wheel 自带验收脚本**；`-I` 不改变这一点。源预检辅助进程由同一解释器 `-I` 启动安装包内文件。[D5 runtime](evidence/2026-09-21-a2-review4/runtime.log.txt)、[D3 runtime](evidence/2026-09-20-a2-review2/runtime.log.txt)、[D2 runtime](evidence/2026-09-20-a2-review1/runtime.log.txt) 与 [D1 runtime](evidence/2026-09-20-a2-cloud/runtime.log.txt) 保留为历史。
 
-[D7 实际文件系统记录](evidence/2026-09-21-a2-review6/storage-profile.log.txt) 显示 Cloud 根文件系统是 **overlay，包含 fsync=volatile**，不属于产品支持的 ext4/xfs/btrfs 本地 profile。生产 API 和安装的 console entry 在该文件系统都返回 `UNSUPPORTED_STORAGE/not_published`，退出码 3；测试确认未创建快照、源字节/成员不变。此项是**安装态拒绝行为 PASS**，不是正向部署 PASS，见 [installed-unsupported-storage](evidence/2026-09-21-a2-review6/installed-unsupported-storage.log.txt)。此前 [D6](evidence/2026-09-21-a2-review5/storage-profile.log.txt)、[D5](evidence/2026-09-21-a2-review4/storage-profile.log.txt)、[D3](evidence/2026-09-20-a2-review2/storage-profile.log.txt) 与 [D1](evidence/2026-09-20-a2-cloud/storage-profile.log.txt) 文件系统记录保留为历史。
+[D8 实际文件系统记录](evidence/2026-09-21-a2-review7/storage-profile.log.txt) 显示 Cloud 根文件系统是 **overlay，包含 fsync=volatile**，不属于产品支持的 ext4/xfs/btrfs 本地 profile。生产 API 和安装的 console entry 在该文件系统都返回 `UNSUPPORTED_STORAGE/not_published`，退出码 3；测试确认未创建快照、源字节/成员不变。此项是**安装态拒绝行为 PASS**，不是正向部署 PASS，见 [installed-unsupported-storage](evidence/2026-09-21-a2-review7/installed-unsupported-storage.log.txt)。此前 [D7](evidence/2026-09-21-a2-review6/storage-profile.log.txt)、[D6](evidence/2026-09-21-a2-review5/storage-profile.log.txt)、[D5](evidence/2026-09-21-a2-review4/storage-profile.log.txt)、[D3](evidence/2026-09-20-a2-review2/storage-profile.log.txt) 与 [D1](evidence/2026-09-20-a2-cloud/storage-profile.log.txt) 文件系统记录保留为历史。
 
 正向逻辑测试显式模拟挂载分类，仍真实执行 SQLite、逐块读写、硬链接、fsync、独立进程及故障后的状态检查；只称 **LOGIC_ONLY**。测试中 mock 的 NFS 端点不构成真实 NAS 证据。
 
@@ -169,7 +172,7 @@ D6 新增 **5 项**回归：`test_snapshot_error_stages` 新增 2 项，`test_sn
 
 软件版本仍为 `0.2.0a1`；A1 wire/schema、A2 协议字段、五份批准规范及 R/A/scope 均未改变。GX10、可靠本地文件系统安装态正向、真实 NAS 和 T06/T08 实际部署仍 NOT_RUN，A2 完整验收保持 PARTIAL。
 
-### 3.7 D7 第六轮复审与配额错误分类
+### 3.7 D7 第六轮复审与配额错误分类（历史）
 
 固定实现 `4af226210586f61bfb4e4c604b23edd6194fef59`，tree `1123371884fbd6507bcb67e495e1bd9fa31db8c9`，父提交为 D6 证据提交 `073057c2d1a72e12c669f1c4ee5fe3d0930e701a`。本轮仅修改 `recovery.py` 的本地链接错误分类和 `test_snapshot_recovery.py`，五份批准规范保持原字节。固定源码构建、测试和日志见 [本轮证据](evidence/2026-09-21-a2-review6/README.md)、[summary.json](evidence/2026-09-21-a2-review6/summary.json)。
 
@@ -189,6 +192,26 @@ wheel `infra_artifact_ledger-0.2.0a1-py3-none-any.whl` 为 **67,832 bytes**，SH
 
 本轮重看五入口的状态优先级、journal 检查前后边界、CLI 错误输出、远端发布歧义及固定源码到安装包链路；在这些检查中确认上述一项错误分类遗漏，未另确认新缺陷。这不是穷尽所有时序或真实设备的证明。受支持本地文件系统正向、真实配额耗尽、GX10、真实 NAS 与挂载丢失/断网仍 NOT_RUN，A2 整体 PARTIAL，PR 保持 Draft。
 
+### 3.8 D8 第七轮复审与验收子进程清理
+
+固定实现 `c9e4cb450c853578b1b4c15eab4a9a6458693d8e`，tree `5eacace3f61b81909c9b14646742d5102cd5fa00`，父提交为 D7 证据提交 `0de4e57345f6211cbd2f22e01994ab073c9f7344`。只修改 `tools/acceptance/a2_nas_exercise.py` 并增加 `tests/test_snapshot_process_cleanup.py`；产品运行模块、接口、预算和五份批准规范均未改变。
+
+本轮确认 NAS 验收工具的子进程收尾缺陷：`child_cli` 和 `concurrent_directory_probe` 在原操作已失败后，wait/管道关闭等二次错误会覆盖首错、中断后续管道/其他子进程清理；`child_cli` 的命令记录也可能因此缺失。D8 统一逐项尝试终止、回收和关闭，保留首错及二次失败提示；没有首错时仍报告清理失败。处理 poll/kill 之间进程已退出的情况，不重试已经关闭的管道，并在清理出错时仍保存该次命令记录。此变更不保证操作系统本身无法完成 kill/wait/close 时资源一定释放，也不新增 OS 阻塞 I/O 硬超时承诺。
+
+新增 6 项实际合成子进程回归：异常响应叠加 stdout/stderr/wait 失败；正常响应叠加清理失败；调用者已有已处理异常；第二个子进程启动失败；两个子进程中第一个清理失败；读取失败叠加 poll/kill 退出竞态。核对原错误、进程退出、管道关闭、不重复关闭及命令记录。相同最终测试文件在 D7 工具上产生 10 个 failure 记录（含 subtest，不是 10 个独立测试方法），D8 的 6 项全部通过。故障主要在实际回收/关闭后注入，没有执行 NAS 操作或触及业务数据。 [修复前后记录](evidence/2026-09-21-a2-review7/regression-summary.json)保存最终测试/工具摘要、命令与原始日志映射。
+
+| 验证 | 发现 | 通过 | 跳过 |
+|---|---:|---:|---:|
+| Python 3.11.16 源码 | 436 | 416 | 20 |
+| Python 3.12.14 源码 | 436 | 416 | 20 |
+| 独立安装态 A2 | 270 | 259 | 11 |
+
+12 条固定源码构建、安装、测试、编译和环境命令全部 exit 0。两版本 compileall、A1 安装态文档闭环、生产 API/CLI 的实际 overlay 拒绝均通过。20 项资源专项本轮未重跑：A1 的 9 项保留 D2 历史，A2 的 11 项保留 D6 历史；安装态 11 项跳过是同一批 A2 专项。历史结果不算作 D8 本轮执行，不相加不同版本和安装态的重复用例。 逐命令结果见 [summary.json](evidence/2026-09-21-a2-review7/summary.json)。
+
+本轮 wheel `infra_artifact_ledger-0.2.0a1-py3-none-any.whl` 为 67,832 bytes，SHA-256 `c88541e1c29e9f19eb78127baee03d19f45ef4b5397b0011f302e970de583531`。构建前后 215 个固定源文件核验一致，17 个运行模块在源码、wheel、新独立 Python 3.11 runtime venv 中一致。17 个运行模块与 D7 完全相同；修复位于仓库内的验收工具，不在 wheel 中，复跑必须同时取得固定 D8 的工具文件。 见 [source-integrity.json](evidence/2026-09-21-a2-review7/source-integrity.json)。14 份公开日志的原始/脱敏摘要分开记录于 [log-index.json](evidence/2026-09-21-a2-review7/log-index.json)。
+
+本轮重看格式预算、源只读视图、发布状态、核验/清理、恢复完整状态和制品来源，未另确认新缺陷；不宣称穷尽时序。受支持本地文件系统正向、GX10、真实 NAS 与实际挂载丢失/断网仍 NOT_RUN，A2 整体 PARTIAL。
+
 ## 4. 关键边界与失败链路
 
 - 源头隔离预检在任何暂存创建之前完成；WAL、异常 journal 条目、hot journal、非 UTF-8、坏头、异常子进程和绑定变化都有拒绝/无副作用检查。D6 的 journal 检查只用 nofollow stat，非普通文件或 link count 不为 1 时在 SQLite 打开前拒绝；普通单链接 DELETE journal 仍可进入后续检查，hot journal 不因此获准自动恢复。调用进程原有 A1 未提交事务保持锁；其真实未提交 Artifact 不混入快照。T0 握手检查后续写入不混入固定读视图，backup 后释放源锁，再校验私有副本。
@@ -204,7 +227,7 @@ wheel `infra_artifact_ledger-0.2.0a1-py3-none-any.whl` 为 **67,832 bytes**，SH
 
 ## 5. 实际资源边界
 
-本节资源执行结果最近固定于 D6；D7 本轮未重跑，不将历史结果改写为 D7 执行记录。
+本节资源执行结果最近固定于 D6；D7/D8 均未重跑，不将历史结果改写为后续版本执行记录。
 
 合法业务 payload **402,653,185 bytes**（384 MiB+1），SQLite 文件 **403,103,744 bytes**。A1 `export_bundle()` 按自身预算返回 `RESOURCE_LIMIT/not_applicable`；A2 create→verify→restore→check_restore、逐 Blob 对账、幂等重放成功。
 
@@ -252,10 +275,10 @@ D6 逐用例耗时/RSS 见 [D6 A2 资源日志](evidence/2026-09-21-a2-review5/a
 
 本会话没有可调用的 GX10 shell 或已接入的 A2 Local Hand 执行通道；现有 Local Hand 信息不能自动等价为本任务已获机器访问。A2 授权保持有效，本记录不要求重复开工批准，也不新增或修改 Local Hand 准入配置。
 
-下一步按 [A2_RUNBOOK](A2_RUNBOOK.md) 固定 **D7 `4af226210586f61bfb4e4c604b23edd6194fef59`**，在 GX10 创建项目独立 build/runtime 环境，执行源码/资源/安装态验收；再提供部署侧核实的 NAS 配置，在专属合成范围运行 [a2_nas_exercise.py](../tools/acceptance/a2_nas_exercise.py)。工具先构造并关闭合成库和快照，在 NAS 操作之前冻结精确全树、inode/挂载、常规文件 nlink 与内容摘要清单；NAS 能力预检、发布和独立校验成功后，再次逐项核对，才移除归属可证明的本地可恢复副本。期间新增文件、替换或改写均阻止删除。新进程仅从 NAS 恢复并逐项核对，不能依靠已删除的本地源库或快照回退；这些仍是待实机执行的步骤。
+下一步按 [A2_RUNBOOK](A2_RUNBOOK.md) 固定 **D8 `c9e4cb450c853578b1b4c15eab4a9a6458693d8e`**，在 GX10 创建项目独立 build/runtime 环境，执行源码/资源/安装态验收；再提供部署侧核实的 NAS 配置，在专属合成范围运行 [a2_nas_exercise.py](../tools/acceptance/a2_nas_exercise.py)。工具先构造并关闭合成库和快照，在 NAS 操作之前冻结精确全树、inode/挂载、常规文件 nlink 与内容摘要清单；NAS 能力预检、发布和独立校验成功后，再次逐项核对，才移除归属可证明的本地可恢复副本。期间新增文件、替换或改写均阻止删除。新进程仅从 NAS 恢复并逐项核对，不能依靠已删除的本地源库或快照回退；这些仍是待实机执行的步骤。
 
 工具对同一打开 fd 计算 wheel 摘要并核对安装包字节，但 `--source-commit` 是调用者声明，不能凭 wheel 字节匹配证明 Git 来源；必须另存固定 checkout、构建日志、wheel 摘要、安装日志和实际模块路径的构建链。报告 `evidence_saved=false` 表示未确认报告已可靠记录，不表示操作没有副作用，也不证明报告路径不存在。完整说明见运行手册。
 
 工具不卸载共享盘、不关闭设备、不配置 NAS 服务，也不删除已有项目/业务库。真实挂载丢失/断网须在隔离测试范围留独立证据；工具的 `synthetic_nas_roundtrip` PASS 不代替这些项目。受支持本地文件系统闭环、GX10、真实 NAS、T06/T08 实际部署证据未齐前，不宣称 S1–S5 全部验收完成。
 
-没有 GitHub Actions 运行结果、硬件断电、设备缓存、生产切换、冗余备份、A3/A4 或供应商普遍兼容性声明。将来合并时保留 C→D1→`f13d2fb`→D2→`f564174`→D3→`14f68c7`→D4→D5→`689b2d0`→D6→`073057c`→D7→本轮证据提交的祖先链，不 squash 掉独立 CLOSED 记录；本轮仅提交 PR，不自动合并。
+没有 GitHub Actions 运行结果、硬件断电、设备缓存、生产切换、冗余备份、A3/A4 或供应商普遍兼容性声明。将来合并时保留 C→D1→`f13d2fb`→D2→`f564174`→D3→`14f68c7`→D4→D5→`689b2d0`→D6→`073057c`→D7→`0de4e57`→D8→本轮证据提交的祖先链，不 squash 掉独立 CLOSED 记录；本轮仅提交 PR，不自动合并。

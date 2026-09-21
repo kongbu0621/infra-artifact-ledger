@@ -1,0 +1,11 @@
+test_bad_response_survives_each_cleanup_error_and_keeps_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_bad_response_survives_each_cleanup_error_and_keeps_receipt) ... ok
+test_child_exit_during_kill_preserves_read_failure_and_reaps (test_snapshot_process_cleanup.ChildCleanupTests.test_child_exit_during_kill_preserves_read_failure_and_reaps) ... ok
+test_handled_caller_exception_does_not_hide_cleanup_error (test_snapshot_process_cleanup.ChildCleanupTests.test_handled_caller_exception_does_not_hide_cleanup_error) ... ok
+test_probe_releases_both_children_after_first_cleanup_fails (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_releases_both_children_after_first_cleanup_fails) ... ok
+test_probe_spawn_failure_survives_close_failure_and_releases_child (test_snapshot_process_cleanup.ChildCleanupTests.test_probe_spawn_failure_survives_close_failure_and_releases_child) ... ok
+test_successful_response_does_not_hide_cleanup_error_or_lose_receipt (test_snapshot_process_cleanup.ChildCleanupTests.test_successful_response_does_not_hide_cleanup_error_or_lose_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.104s
+
+OK

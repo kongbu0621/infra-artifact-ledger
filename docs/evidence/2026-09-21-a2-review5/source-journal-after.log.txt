@@ -1,0 +1,8 @@
+test_cached_preflight_does_not_bypass_journal_check (test_snapshot_source_journal.SourceJournalTests.test_cached_preflight_does_not_bypass_journal_check) ... ok
+test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) ... ok
+test_regular_single_link_journal_remains_eligible_for_preflight (test_snapshot_source_journal.SourceJournalTests.test_regular_single_link_journal_remains_eligible_for_preflight) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.071s
+
+OK

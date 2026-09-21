@@ -1,0 +1,123 @@
+test_cached_preflight_does_not_bypass_journal_check (test_snapshot_source_journal.SourceJournalTests.test_cached_preflight_does_not_bypass_journal_check) ... FAIL
+test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) ... 
+  test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='hardlink') ... FAIL
+  test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='symlink') ... FAIL
+  test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='dangling') ... FAIL
+  test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='directory') ... FAIL
+  test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='fifo') ... FAIL
+test_regular_single_link_journal_remains_eligible_for_preflight (test_snapshot_source_journal.SourceJournalTests.test_regular_single_link_journal_remains_eligible_for_preflight) ... ok
+
+======================================================================
+FAIL: test_cached_preflight_does_not_bypass_journal_check (test_snapshot_source_journal.SourceJournalTests.test_cached_preflight_does_not_bypass_journal_check)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 71, in test_cached_preflight_does_not_bypass_journal_check
+    self.assertEqual((caught.exception.code, caught.exception.stage),
+AssertionError: Tuples differ: ('IO_ERROR', 'validate') != ('INTEGRITY_FAILURE', 'snapshot')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate')
++ ('INTEGRITY_FAILURE', 'snapshot')
+
+======================================================================
+FAIL: test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='hardlink')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 46, in test_create_rejects_invalid_journal_before_header_or_sqlite_open
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('IO_ERROR', 'validate', 'not_published') != ('INTEGRITY_FAILURE', 'validate', 'not_published')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate', 'not_published')
+?    ^  ----
+
++ ('INTEGRITY_FAILURE', 'validate', 'not_published')
+?    ^^^^^^^^ ++++++
+
+
+======================================================================
+FAIL: test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='symlink')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 46, in test_create_rejects_invalid_journal_before_header_or_sqlite_open
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('IO_ERROR', 'validate', 'not_published') != ('INTEGRITY_FAILURE', 'validate', 'not_published')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate', 'not_published')
+?    ^  ----
+
++ ('INTEGRITY_FAILURE', 'validate', 'not_published')
+?    ^^^^^^^^ ++++++
+
+
+======================================================================
+FAIL: test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='dangling')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 46, in test_create_rejects_invalid_journal_before_header_or_sqlite_open
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('IO_ERROR', 'validate', 'not_published') != ('INTEGRITY_FAILURE', 'validate', 'not_published')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate', 'not_published')
+?    ^  ----
+
++ ('INTEGRITY_FAILURE', 'validate', 'not_published')
+?    ^^^^^^^^ ++++++
+
+
+======================================================================
+FAIL: test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='directory')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 46, in test_create_rejects_invalid_journal_before_header_or_sqlite_open
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('IO_ERROR', 'validate', 'not_published') != ('INTEGRITY_FAILURE', 'validate', 'not_published')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate', 'not_published')
+?    ^  ----
+
++ ('INTEGRITY_FAILURE', 'validate', 'not_published')
+?    ^^^^^^^^ ++++++
+
+
+======================================================================
+FAIL: test_create_rejects_invalid_journal_before_header_or_sqlite_open (test_snapshot_source_journal.SourceJournalTests.test_create_rejects_invalid_journal_before_header_or_sqlite_open) (kind='fifo')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_source_journal.py", line 46, in test_create_rejects_invalid_journal_before_header_or_sqlite_open
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('IO_ERROR', 'validate', 'not_published') != ('INTEGRITY_FAILURE', 'validate', 'not_published')
+
+First differing element 0:
+'IO_ERROR'
+'INTEGRITY_FAILURE'
+
+- ('IO_ERROR', 'validate', 'not_published')
+?    ^  ----
+
++ ('INTEGRITY_FAILURE', 'validate', 'not_published')
+?    ^^^^^^^^ ++++++
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.074s
+
+FAILED (failures=6)

@@ -484,6 +484,9 @@ def _cleanup_children(processes, primary):
 
 def child_cli(argv, cwd, calls=None):
     """Independent installed interpreter; bound both streams and elapsed wait."""
+    from infra_artifact_ledger.snapshot_common import RecoveryError
+    from infra_artifact_ledger.snapshot_format import MAX_RESPONSE, parse_json
+
     command = [sys.executable, "-I", "-m", "infra_artifact_ledger", "snapshot", *argv]
     started = time.monotonic()
     process = subprocess.Popen(command,
@@ -491,6 +494,21 @@ def child_cli(argv, cwd, calls=None):
     output = {"stdout": bytearray(), "stderr": bytearray()}
     deadline = time.monotonic() + 360
     primary = None
+    response, decode_attempted = None, False
+
+    def decode_response():
+        nonlocal response, decode_attempted
+        if not decode_attempted:
+            # Cache both success and rejection. Recording must never repeat a
+            # failed parse, lose its receipt, or replace the original error.
+            decode_attempted = True
+            try:
+                response = parse_json(bytes(output["stdout"]), MAX_RESPONSE, stage="report")
+            except RecoveryError as error:
+                # Parser failure says nothing about a child's publication.
+                raise ExerciseError("Independent recovery response violates A2 JSON limits or encoding.") from error
+        return response
+
     try:
         with selectors.DefaultSelector() as selector:
             for label, pipe in (("stdout", process.stdout), ("stderr", process.stderr)):
@@ -504,12 +522,12 @@ def child_cli(argv, cwd, calls=None):
                         selector.unregister(key.fileobj)
                     else:
                         output[key.data].extend(block)
-                        require(len(output[key.data]) <= 65536, "Independent recovery output exceeded its bound.")
+                        require(len(output[key.data]) <= MAX_RESPONSE, "Independent recovery output exceeded its bound.")
             process.wait(timeout=max(0.1, deadline - time.monotonic()))
         raw = bytes(output["stdout"])
         require(process.returncode == 0 and not output["stderr"], "Independent recovery command failed.")
         require(raw.endswith(b"\n") and raw.count(b"\n") == 1, "Independent recovery response is malformed.")
-        response = json.loads(raw)
+        response = decode_response()
         operation = argv[0].replace("-", "_")
         require(type(response) is dict and set(response) == {
             "protocol", "status", "operation", "publication_state", "data"}
@@ -531,8 +549,8 @@ def child_cli(argv, cwd, calls=None):
                           "stdout_sha256": digest(bytes(output["stdout"])),
                           "stderr_sha256": digest(bytes(output["stderr"]))}
                 try:
-                    record["response"] = json.loads(output["stdout"])
-                except (ValueError, UnicodeError):
+                    record["response"] = decode_response()
+                except ExerciseError:
                     record["response"] = None
                 calls.append(record)
 

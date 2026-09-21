@@ -1,0 +1,122 @@
+{
+  "source_commit": "6bd6acfbe5c35d581891eb87275e1173e17848fc",
+  "runtime_revision": "D9",
+  "confirmed_new_defects": 0,
+  "code_changes": false,
+  "scope": "Manual source/contract review plus existing regressions; not exhaustive proof or live NAS certification",
+  "areas": [
+    {
+      "area": "严格输入和协议",
+      "requirements": [
+        "T03",
+        "T14"
+      ],
+      "evidence": [
+        "test_snapshot_format",
+        "test_snapshot_cli",
+        "test_snapshot_child_protocol"
+      ],
+      "check": "JSON 字节/节点/深度、编码、重复字段、命令与配置边界；保留子进程首错和记录。"
+    },
+    {
+      "area": "源保护与固定视图",
+      "requirements": [
+        "T01",
+        "T02"
+      ],
+      "evidence": [
+        "test_snapshot_sqlite",
+        "test_snapshot_source_journal",
+        "test_snapshot_review2_sqlite"
+      ],
+      "check": "WAL/异常 journal 提前拒绝、T0 握手、现有连接与只读预检、备份期限；不重演被阻断的锁失效探针。"
+    },
+    {
+      "area": "目录与挂载绑定",
+      "requirements": [
+        "T05",
+        "T07",
+        "T10"
+      ],
+      "evidence": [
+        "test_snapshot_storage",
+        "test_snapshot_path_semantics",
+        "test_snapshot_probe_binding",
+        "test_snapshot_concurrency"
+      ],
+      "check": "原始路径组件逐个检查；固定 fd、路径替换与两个独立进程竞争。"
+    },
+    {
+      "area": "发布状态与失败时序",
+      "requirements": [
+        "T06",
+        "T08",
+        "T12"
+      ],
+      "evidence": [
+        "test_snapshot_failures",
+        "test_snapshot_review2_protocol",
+        "test_snapshot_error_stages",
+        "test_snapshot_publication_review"
+      ],
+      "check": "公开前失败、确定未公开、远端先公开再报错、公开后同步/回读失败、响应完全丢失；不把核对通过当成过去发布成功。"
+    },
+    {
+      "area": "恢复完整状态",
+      "requirements": [
+        "T04",
+        "T11",
+        "T13"
+      ],
+      "evidence": [
+        "test_snapshot_recovery",
+        "test_snapshot_review3_semantics"
+      ],
+      "check": "拒覆盖、完整库校验、其他目标成员保留、幂等重放与后续新写；副本变化必须拒绝。"
+    },
+    {
+      "area": "验收工具的所有权和清理",
+      "requirements": [
+        "T14",
+        "T15"
+      ],
+      "evidence": [
+        "test_snapshot_nas_exercise",
+        "test_snapshot_review2_nas",
+        "test_snapshot_review3_nas",
+        "test_snapshot_process_cleanup"
+      ],
+      "check": "冻结归属、变化时停止删除、首错与二次清理失败；合成进程通过不计为真实 NAS。"
+    },
+    {
+      "area": "实际资源边界",
+      "requirements": [
+        "T09"
+      ],
+      "evidence": [
+        "test_snapshot_resources",
+        "test_snapshot_semantic_resources"
+      ],
+      "check": "原常量 7+4 项专跑；1 GiB 合法 SQLite、超过 portable 上限的累计 payload、元数据/引用合法边界；记录 RSS/耗时。"
+    },
+    {
+      "area": "编译安装与证据链",
+      "requirements": [
+        "T14"
+      ],
+      "evidence": [
+        "source311",
+        "source312",
+        "compile311",
+        "compile312",
+        "build",
+        "install",
+        "installed-a1",
+        "installed-a2-logic",
+        "installed-unsupported-storage",
+        "source-integrity.json"
+      ],
+      "check": "双解释器、独立 wheel、新 runtime、实际拒绝不支持存储；固定 R/A/B/C、254 文件、17 模块和公开日志摘要。"
+    }
+  ]
+}

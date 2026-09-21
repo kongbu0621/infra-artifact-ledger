@@ -1,0 +1,285 @@
+{
+  "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+  "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+  "parent": "073057c2d1a72e12c669f1c4ee5fe3d0930e701a",
+  "completed_utc": "2026-09-21T01:04:24.728644+00:00",
+  "wheel": {
+    "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+    "filename": "infra_artifact_ledger-0.2.0a1-py3-none-any.whl",
+    "sha256": "a54bd1b75238a3a75184001c33e6b46dd021c50e0f0a00b8e0118b455e73a181",
+    "bytes": 67832
+  },
+  "suite_counts": {
+    "source311": {
+      "discovered": 430,
+      "passed": 410,
+      "skipped": 20
+    },
+    "source312": {
+      "discovered": 430,
+      "passed": 410,
+      "skipped": 20
+    },
+    "installed-a2-logic": {
+      "discovered": 264,
+      "passed": 253,
+      "skipped": 11
+    }
+  },
+  "receipts": [
+    {
+      "name": "build-environment",
+      "command": [
+        "<WORKSPACE>/pr6-fix-envs/build/bin/python",
+        "-I",
+        "-c",
+        "import json,platform,sqlite3,importlib.metadata; print(json.dumps(dict(python=platform.python_version(),sqlite=sqlite3.sqlite_version,platform=platform.platform(),build_tools={n:importlib.metadata.version(n) for n in (\"pip\",\"setuptools\",\"wheel\",\"packaging\")})))"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.068,
+      "log_sha256": "b019cbb39e29a71164b6337eca13bae6bd9c9cb66b17efb11239a5ff8c6b6a40",
+      "log_bytes": 191
+    },
+    {
+      "name": "build",
+      "command": [
+        "<WORKSPACE>/pr6-fix-envs/build/bin/python",
+        "-m",
+        "pip",
+        "wheel",
+        "--no-index",
+        "--no-build-isolation",
+        "--no-deps",
+        "--wheel-dir",
+        "<WORKSPACE>/pr6-review6-validation/wheels",
+        "<WORKSPACE>/infra-artifact-ledger"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.654,
+      "log_sha256": "a35c74583eb666892ed7a02648e063e93f90d7bba205d4a8844670589b5cbfb7",
+      "log_bytes": 729
+    },
+    {
+      "name": "compile311",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "<WORKSPACE>/infra-artifact-ledger/src",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "<WORKSPACE>/infra-artifact-ledger/tools"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.027,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "log_bytes": 0
+    },
+    {
+      "name": "compile312",
+      "command": [
+        "<WORKSPACE>/pr6-fix-envs/runtime312/bin/python",
+        "-m",
+        "compileall",
+        "-q",
+        "<WORKSPACE>/infra-artifact-ledger/src",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "<WORKSPACE>/infra-artifact-ledger/tools"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.031,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "log_bytes": 0
+    },
+    {
+      "name": "install",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-m",
+        "pip",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "<WORKSPACE>/pr6-review6-validation/wheels/infra_artifact_ledger-0.2.0a1-py3-none-any.whl"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.329,
+      "log_sha256": "b5ed14e77840ca3d42e66a9c69c9d7f614584d389c11ca2919b0953bed760e81",
+      "log_bytes": 173
+    },
+    {
+      "name": "installed-a1",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-I",
+        "<WORKSPACE>/infra-artifact-ledger/tests/installed_walkthrough.py",
+        "--repo",
+        "<WORKSPACE>/infra-artifact-ledger"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.943,
+      "log_sha256": "e64687508034348b482902283f18d1b63e551b74762443a544f69f3d0c7e65b1",
+      "log_bytes": 3805
+    },
+    {
+      "name": "installed-a2-logic",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-I",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-p",
+        "test_snapshot*.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 17.94,
+      "log_sha256": "b7d2b046046b8544185949d7402f3b889ade503328843eacfe9150d6c65193b1",
+      "log_bytes": 46811
+    },
+    {
+      "name": "installed-unsupported-storage",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-I",
+        "-c",
+        "\nimport hashlib, json, pathlib, subprocess, sys, tempfile\nfrom infra_artifact_ledger import initialize, recovery\nfrom infra_artifact_ledger import snapshot_storage as storage\nwith tempfile.TemporaryDirectory(prefix='a2-installed-rejection-') as temporary:\n    root = pathlib.Path(temporary)\n    output = root / 'output'\n    output.mkdir()\n    source = root / 'source.sqlite'\n    with initialize(source): pass\n    before = source.read_bytes()\n    try:\n        recovery.create(db=source, output_root=output, snapshot_id='a'*32, source_commit='b'*40)\n    except recovery.RecoveryError as error:\n        assert (error.code, error.publication_state) == ('UNSUPPORTED_STORAGE', 'not_published')\n    else:\n        raise AssertionError('sandbox unexpectedly accepted as supported filesystem')\n    cli = pathlib.Path(sys.executable).parent / 'artifact-ledger'\n    result = subprocess.run([sys.executable, '-I', str(cli), 'snapshot', 'create', '--db', str(source),\n        '--output-root', str(output), '--snapshot-id', 'a'*32, '--source-commit', 'b'*40],\n        capture_output=True, check=False)\n    value = json.loads(result.stdout)\n    assert result.returncode == 3 and result.stderr == b''\n    assert value['error']['code'] == 'UNSUPPORTED_STORAGE'\n    assert value['publication_state'] == 'not_published'\n    assert source.read_bytes() == before and list(output.iterdir()) == []\n    assert set(p.name for p in root.iterdir()) == {'source.sqlite','output'}\n    print(json.dumps(dict(result='PASS', scope='installed_unsupported_filesystem_rejection',\n          module_path=recovery.__file__, cli_exit_code=result.returncode,\n          positive_supported_filesystem_lifecycle='NOT_RUN', gx10='NOT_RUN', real_nas='NOT_RUN')))\n"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.122,
+      "log_sha256": "bdf0a951c16e3dcbf18f41f9f48fa0975fb6c17a06ec1dcb0496c297ab8e9dc7",
+      "log_bytes": 331
+    },
+    {
+      "name": "runtime",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-I",
+        "-c",
+        "import json,platform,sys,sqlite3,importlib.metadata,infra_artifact_ledger; print(json.dumps(dict(python=platform.python_version(),sqlite=sqlite3.sqlite_version,platform=platform.platform(),executable=sys.executable,prefix=sys.prefix,module_path=infra_artifact_ledger.__file__,version=importlib.metadata.version(\"infra-artifact-ledger\"))))"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.049,
+      "log_sha256": "888be38d7bebbfb4b794a7332f6693fb5b50744cbc88f857f52c8e79b1333f4d",
+      "log_bytes": 417
+    },
+    {
+      "name": "source311",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 59.95,
+      "log_sha256": "8c0188cc100b97a9ec605b434cfc48e6e0554f8dee06b0cf7ee3d677fe6aa0b9",
+      "log_bytes": 74506
+    },
+    {
+      "name": "source312",
+      "command": [
+        "<WORKSPACE>/pr6-fix-envs/runtime312/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": true,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 62.496,
+      "log_sha256": "8d13c965b31166474c5703431cd92a19e0ae270d7e9b3e0c288c483a6ba6849f",
+      "log_bytes": 74506
+    },
+    {
+      "name": "storage-profile",
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-I",
+        "-c",
+        "\nimport json, os\nfrom pathlib import Path\nfrom infra_artifact_ledger import snapshot_storage as storage\nfd = os.open('.', os.O_RDONLY | os.O_DIRECTORY)\ntry:\n    mount_id = storage._fd_mount_id(fd)\n    mount = storage._mount_for(Path.cwd(), mount_id)\n    line = next(line for line in Path('/proc/self/mountinfo').read_text().split('\\n')\n                if line.partition(' ')[0] == str(mount_id))\n    print(json.dumps(dict(fs_type=mount.fs_type, mount_point=mount.point,\n                         fsync_volatile='fsync=volatile' in line,\n                         supported_local=mount.fs_type in storage.LOCAL_FILESYSTEMS)))\nfinally:\n    os.close(fd)\n"
+      ],
+      "cwd": "<WORKSPACE>/pr6-review6-validation",
+      "source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+      "tree": "1123371884fbd6507bcb67e495e1bd9fa31db8c9",
+      "source_pythonpath": false,
+      "a2_resources_enabled": false,
+      "exit_code": 0,
+      "elapsed_seconds": 0.037,
+      "log_sha256": "506df16a629acfb3618d6db82f75a048c41e319740f29937e89b102f12cc66d0",
+      "log_bytes": 93
+    }
+  ],
+  "log_receipt_hashes": "Receipts hash original logs; log-index.json binds originals and public redacted bytes.",
+  "a1_resource_suite_this_run": "NOT_RERUN; unchanged A1 source, D2 history retained",
+  "a2_resource_suite_this_run": "NOT_RERUN; D6 fixed-source results remain historical, not D7 executions",
+  "a2_resource_prior_evidence": "../2026-09-21-a2-review5/summary.json",
+  "actual_filesystem_quota_exhaustion": "NOT_RUN; errno injection is LOGIC_ONLY",
+  "supported_fs_positive_lifecycle": "NOT_RUN",
+  "gx10": "NOT_RUN",
+  "real_nas": "NOT_RUN",
+  "real_nas_mount_loss_or_disconnect": "NOT_RUN",
+  "a2_overall": "PARTIAL"
+}

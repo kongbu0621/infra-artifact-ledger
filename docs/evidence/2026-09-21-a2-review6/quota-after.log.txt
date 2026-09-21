@@ -1,0 +1,9 @@
+test_local_marker_link_known_no_effect_and_unsupported_are_not_published (test_snapshot_recovery.SnapshotRecoveryTests.test_local_marker_link_known_no_effect_and_unsupported_are_not_published) ... ok
+test_restore_link_known_no_effect_is_not_published (test_snapshot_recovery.SnapshotRecoveryTests.test_restore_link_known_no_effect_is_not_published) ... ok
+test_local_quota_failure_cli_retains_unpublished_state_and_exit_code (test_snapshot_recovery.SnapshotRecoveryTests.test_local_quota_failure_cli_retains_unpublished_state_and_exit_code) ... ok
+test_remote_link_created_but_error_remains_unknown_and_archive_usable (test_snapshot_recovery.SnapshotRecoveryTests.test_remote_link_created_but_error_remains_unknown_and_archive_usable) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.869s
+
+OK

@@ -1,0 +1,11 @@
+test_invalid_json_encodings_and_values_are_rejected (test_snapshot_child_protocol.ChildProtocolTests.test_invalid_json_encodings_and_values_are_rejected) ... ok
+test_invalid_json_survives_cleanup_failure_with_record (test_snapshot_child_protocol.ChildProtocolTests.test_invalid_json_survives_cleanup_failure_with_record) ... ok
+test_json_depth_and_node_budgets_reject_before_recursive_allocation (test_snapshot_child_protocol.ChildProtocolTests.test_json_depth_and_node_budgets_reject_before_recursive_allocation) ... ok
+test_malformed_output_does_not_replace_command_failure_or_lose_record (test_snapshot_child_protocol.ChildProtocolTests.test_malformed_output_does_not_replace_command_failure_or_lose_record) ... ok
+test_valid_error_envelope_is_preserved_in_failed_command_record (test_snapshot_child_protocol.ChildProtocolTests.test_valid_error_envelope_is_preserved_in_failed_command_record) ... ok
+test_valid_json_boundaries_remain_accepted (test_snapshot_child_protocol.ChildProtocolTests.test_valid_json_boundaries_remain_accepted) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.163s
+
+OK

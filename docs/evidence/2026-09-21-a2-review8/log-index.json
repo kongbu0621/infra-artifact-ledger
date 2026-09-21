@@ -1,0 +1,114 @@
+[
+  {
+    "name": "build-environment.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/build-environment.log",
+    "raw_sha256": "b019cbb39e29a71164b6337eca13bae6bd9c9cb66b17efb11239a5ff8c6b6a40",
+    "public_sha256": "b019cbb39e29a71164b6337eca13bae6bd9c9cb66b17efb11239a5ff8c6b6a40",
+    "raw_bytes": 191,
+    "public_bytes": 191
+  },
+  {
+    "name": "build.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/build.log",
+    "raw_sha256": "035dd7370bc43b1fe215005a0491320c7616161ca313d6f824a93dc86a2ff043",
+    "public_sha256": "3757fbe72551a25e1e7f34b01cfc3c4068fb147d165b259b88dc5ba01dcf5d38",
+    "raw_bytes": 729,
+    "public_bytes": 704
+  },
+  {
+    "name": "compile311.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/compile311.log",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "public_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "public_bytes": 0
+  },
+  {
+    "name": "compile312.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/compile312.log",
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "public_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw_bytes": 0,
+    "public_bytes": 0
+  },
+  {
+    "name": "install.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/install.log",
+    "raw_sha256": "b5ed14e77840ca3d42e66a9c69c9d7f614584d389c11ca2919b0953bed760e81",
+    "public_sha256": "b5ed14e77840ca3d42e66a9c69c9d7f614584d389c11ca2919b0953bed760e81",
+    "raw_bytes": 173,
+    "public_bytes": 173
+  },
+  {
+    "name": "installed-a1.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/installed-a1.log",
+    "raw_sha256": "b2eadca938766bf46705782b325b73e4a9a55dcad4a8109132e5c721551d2a2f",
+    "public_sha256": "0e1394739237d111cd97dbf55ec97285ffeb32121ae62194519119138aa66ac0",
+    "raw_bytes": 3805,
+    "public_bytes": 3785
+  },
+  {
+    "name": "installed-a2-logic.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/installed-a2-logic.log",
+    "raw_sha256": "47cf17cb1bf5a7f7beb48e7ee129a9ae5f8f276d0c8a5573a099f4cd2d38870d",
+    "public_sha256": "47cf17cb1bf5a7f7beb48e7ee129a9ae5f8f276d0c8a5573a099f4cd2d38870d",
+    "raw_bytes": 48957,
+    "public_bytes": 48957
+  },
+  {
+    "name": "installed-unsupported-storage.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/installed-unsupported-storage.log",
+    "raw_sha256": "a4a29b70527fae5fb16d21462362a3286277295058e4bfe559723efdfe88012a",
+    "public_sha256": "2acef960c6ae27022dbce439ceb4142a30ef969a50e097cb9901b55e65812395",
+    "raw_bytes": 331,
+    "public_bytes": 311
+  },
+  {
+    "name": "runtime.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/runtime.log",
+    "raw_sha256": "0d5a2c2a2ad81b2def1c1b7080679e780807b3d6a2d3fca3ee35a95930efb8c1",
+    "public_sha256": "afb97e8671b020a31f83c6fbe7d5bed1ea848cd10d01589c3c6ff5e23e58ade3",
+    "raw_bytes": 417,
+    "public_bytes": 357
+  },
+  {
+    "name": "source311.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/source311.log",
+    "raw_sha256": "db023f210a65c76cf67ab50144b33ad07965654d35dfd95ce8f823657c4a23cc",
+    "public_sha256": "db023f210a65c76cf67ab50144b33ad07965654d35dfd95ce8f823657c4a23cc",
+    "raw_bytes": 76652,
+    "public_bytes": 76652
+  },
+  {
+    "name": "source312.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/source312.log",
+    "raw_sha256": "5b37cef3e6bb4c0881b1c14c13e5b5da139c026e7801295689cb4ab2e2adc38a",
+    "public_sha256": "5b37cef3e6bb4c0881b1c14c13e5b5da139c026e7801295689cb4ab2e2adc38a",
+    "raw_bytes": 76652,
+    "public_bytes": 76652
+  },
+  {
+    "name": "storage-profile.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/storage-profile.log",
+    "raw_sha256": "506df16a629acfb3618d6db82f75a048c41e319740f29937e89b102f12cc66d0",
+    "public_sha256": "506df16a629acfb3618d6db82f75a048c41e319740f29937e89b102f12cc66d0",
+    "raw_bytes": 93,
+    "public_bytes": 93
+  },
+  {
+    "name": "child-protocol-before.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/child-protocol-before.log",
+    "raw_sha256": "ea2ea36fee0edb4c0ce52c147ec87fc678de44168990570d89f0cba454053841",
+    "public_sha256": "643e981e4ce2115d75257771dd1356e3db03b63161260c97e66c1b377a915f9f",
+    "raw_bytes": 17735,
+    "public_bytes": 17155
+  },
+  {
+    "name": "child-protocol-after.log.txt",
+    "raw_log": "<WORKSPACE>/pr6-review8-validation/child-protocol-after.log",
+    "raw_sha256": "b98400622f8d57dcd0c09eb47ac19d1f120d3682e6a5aef3692ad5b7dfd8999b",
+    "public_sha256": "b98400622f8d57dcd0c09eb47ac19d1f120d3682e6a5aef3692ad5b7dfd8999b",
+    "raw_bytes": 1144,
+    "public_bytes": 1144
+  }
+]

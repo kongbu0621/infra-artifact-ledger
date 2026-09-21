@@ -2,6 +2,8 @@
 
 状态：**A1 `0.1.0a1` alpha 的独立接入指南**。可以从固定源码构建 wheel，在独立环境安装并运行库或 CLI；当前没有 PyPI 发布。本文不增加公共字段、方法或实现范围，字段与行为以 [公共接口](INTERFACE_PROFILE.md) 为准。实际源提交、构建和运行结果见 [验证记录](A1_VALIDATION.md)，支持矩阵见 [兼容表](COMPATIBILITY.md)。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 已为 A1 的 P1–P5 记录 CLOSED。
 
+A1 的读写用法继续适用于 A2 软件；`0.2.0a1` 的一致快照、NAS 保存及新目录恢复见 [A2 使用指南](A2_USAGE.md)，新版本的构建与部署验收见 [A2 运行手册](A2_RUNBOOK.md)。本文下方 `0.1.0a1` 安装命令保留为 A1 历史版本示例，不用于安装本次 A2 wheel。
+
 ## 1. 什么情况下复用
 
 “制品”是需要保留精确内容和版本的数字成果，例如报告、数据集、工作流 JSON 或模型输出。Ledger 负责回答：它是哪一个对象、哪一个版本，内容是否完整，以及记录了哪些来源关系。消费者通过独立安装的库或 CLI 使用它，不必接入 Code Driver、模型账号或私有仓库。

@@ -1,0 +1,8 @@
+test_create_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_create_final_hash_read_failure_is_verify_after_publication) ... ok
+test_restore_final_file_sync_failure_is_sync_before_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_restore_final_file_sync_failure_is_sync_before_publication) ... ok
+test_restore_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_restore_final_hash_read_failure_is_verify_after_publication) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.493s
+
+OK

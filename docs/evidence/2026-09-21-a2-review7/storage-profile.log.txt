@@ -1,0 +1,1 @@
+{"fs_type": "overlay", "mount_point": "/", "fsync_volatile": true, "supported_local": false}

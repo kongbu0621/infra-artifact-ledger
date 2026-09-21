@@ -1,0 +1,9 @@
+Processing <WORKSPACE>/infra-artifact-ledger
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: infra-artifact-ledger
+  Building wheel for infra-artifact-ledger (pyproject.toml): started
+  Building wheel for infra-artifact-ledger (pyproject.toml): finished with status 'done'
+  Created wheel for infra-artifact-ledger: filename=infra_artifact_ledger-0.2.0a1-py3-none-any.whl size=67832 sha256=8a76cdb3163796327858ba3c54680ee83c095500135c3d159373b06567c46e99
+  Stored in directory: <PIP_CACHE>/wheels/48/86/a4/0eb506213bbbd60ee70782536ea718a7169a106cf2fcacc915
+Successfully built infra-artifact-ledger

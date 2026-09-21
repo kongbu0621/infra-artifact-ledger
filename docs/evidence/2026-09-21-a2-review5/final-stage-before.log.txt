@@ -1,0 +1,50 @@
+test_create_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_create_final_hash_read_failure_is_verify_after_publication) ... FAIL
+test_restore_final_file_sync_failure_is_sync_before_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_restore_final_file_sync_failure_is_sync_before_publication) ... ok
+test_restore_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_restore_final_hash_read_failure_is_verify_after_publication) ... FAIL
+
+======================================================================
+FAIL: test_create_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_create_final_hash_read_failure_is_verify_after_publication)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_error_stages.py", line 72, in test_create_final_hash_read_failure_is_verify_after_publication
+    self.final_hash_read_failure("create")
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_error_stages.py", line 67, in final_hash_read_failure
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('PUBLICATION_UNKNOWN', 'sync', 'unknown') != ('PUBLICATION_UNKNOWN', 'verify', 'unknown')
+
+First differing element 1:
+'sync'
+'verify'
+
+- ('PUBLICATION_UNKNOWN', 'sync', 'unknown')
+?                          ^ --
+
++ ('PUBLICATION_UNKNOWN', 'verify', 'unknown')
+?                          ^^^^^
+
+
+======================================================================
+FAIL: test_restore_final_hash_read_failure_is_verify_after_publication (test_snapshot_error_stages.SnapshotErrorStageTests.test_restore_final_hash_read_failure_is_verify_after_publication)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_error_stages.py", line 75, in test_restore_final_hash_read_failure_is_verify_after_publication
+    self.final_hash_read_failure("restore")
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_error_stages.py", line 67, in final_hash_read_failure
+    self.assertEqual((caught.exception.code, caught.exception.stage,
+AssertionError: Tuples differ: ('PUBLICATION_UNKNOWN', 'sync', 'unknown') != ('PUBLICATION_UNKNOWN', 'verify', 'unknown')
+
+First differing element 1:
+'sync'
+'verify'
+
+- ('PUBLICATION_UNKNOWN', 'sync', 'unknown')
+?                          ^ --
+
++ ('PUBLICATION_UNKNOWN', 'verify', 'unknown')
+?                          ^^^^^
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.510s
+
+FAILED (failures=2)

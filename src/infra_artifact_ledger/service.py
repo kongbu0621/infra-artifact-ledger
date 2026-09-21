@@ -7,6 +7,7 @@ import re
 import sqlite3
 
 from .errors import LedgerError
+from ._checkpoints import CheckpointInterrupted, checkpoint
 from .fingerprint import canonical_bytes, request_fingerprint
 from .portable import decode_bundle, encode_bundle
 from .records import KINDS
@@ -31,6 +32,8 @@ def _identity(value):
 
 
 def _error(error, state):
+    if isinstance(error, CheckpointInterrupted):
+        raise error
     if isinstance(error, LedgerError):
         return LedgerError(error.code, error.message, state, error.details)
     if isinstance(error, sqlite3.Error):
@@ -181,20 +184,25 @@ class Ledger:
             return self._blob(self._record("blob", blob_ref))
 
     def _verify_indexes(self, metadata):
-        expected = {row for kind, (collection, _) in KINDS.items()
-                    for record in metadata.get(collection, []) for row in reference_rows(kind, record)}
+        expected = set()
+        for kind, (collection, _) in KINDS.items():
+            for record in metadata.get(collection, []):
+                checkpoint()
+                expected.update(reference_rows(kind, record))
         if expected != set(self._store.execute("SELECT source_id,field,target_id FROM refs")):
             raise LedgerError("INTEGRITY_FAILURE", "Stored reference indexes differ from immutable records.")
         # A collection-level set comparison loses the relationship between a
         # SQL row and its own JSON: exchanging two valid record bodies leaves
         # both sets unchanged. Check each index against the body in that row.
         for identity, kind, raw in self._store.execute("SELECT id,kind,data FROM records"):
+            checkpoint()
             record = self._store._decode(raw)
             if kind not in KINDS or record.get(KINDS[kind][1]) != identity:
                 raise LedgerError("INTEGRITY_FAILURE", "Stored owned identity index differs from its immutable record.")
         for scope, kind, key, result_ref, raw in self._store.execute(
             "SELECT scope,kind,key,result_ref,data FROM operations"
         ):
+            checkpoint()
             record = self._store._decode(raw)
             if (scope, kind, key, result_ref) != (
                 record.get("idempotency_scope_ref"), record.get("operation_kind"),
@@ -241,6 +249,7 @@ class Ledger:
                 fail_integrity("indexes", error)
             verified_count = verified_length = 0
             for record in metadata["blobs"]:
+                checkpoint()
                 location = str(record.get("blob_ref", "blob"))
                 try:
                     validate_record("blob", record)
@@ -251,6 +260,7 @@ class Ledger:
                     continue
                 try:
                     data = self._blob(record)
+                    checkpoint()
                     verified_count += 1
                     verified_length += len(data)
                     del data

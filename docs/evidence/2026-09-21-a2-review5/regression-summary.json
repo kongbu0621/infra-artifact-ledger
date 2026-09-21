@@ -1,0 +1,62 @@
+{
+  "fixed_source_commit": "894cab8b1d55840bbc0cf130c22d4f57d67875d3",
+  "baseline_component_commit": "689b2d0e82f2d15b4e2bb49c91a0cf7047e6f296",
+  "scope": "Precommit component RED/GREEN; immutable full-source build and suites are recorded separately in summary.json.",
+  "final_stage": {
+    "test_file": "tests/test_snapshot_error_stages.py",
+    "tests": 3,
+    "new_tests": 2,
+    "baseline_result": "3 tests, 2 failed",
+    "fixed_result": "3 passed",
+    "python_version": "3.12.14",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_snapshot_error_stages.py",
+      "-v"
+    ],
+    "cwd": "<WORKSPACE>/infra-artifact-ledger",
+    "PYTHONPATH": "src",
+    "baseline_log": "final-stage-before.log.txt",
+    "fixed_log": "final-stage-after.log.txt",
+    "assertions": "Final read EIO reports verify/unknown; published bytes and source are preserved and later verify/check_restore succeed.",
+    "test_sha256": "b0ff9177a5205f8b2707ee24850a00fceeb52e6732ad0df6616538c5626d1d38",
+    "fixed_code_sha256": "c8c8b6326486d80e44552c13ee29565e433e5cd00dbc4e0d0c555ebf7e4f68f4",
+    "baseline_code_sha256": "d1d35f72b2434a4e9d4267843ab50ef9cda87a9fb76f4bd28ae8d04a0beac478"
+  },
+  "source_journal": {
+    "test_file": "tests/test_snapshot_source_journal.py",
+    "tests": 3,
+    "new_tests": 3,
+    "baseline_result": "3 tests; failures=6 includes five subtests, not six independent cases",
+    "fixed_result": "3 passed",
+    "python_version": "3.11.16",
+    "command": [
+      "<WORKSPACE>/pr6-fix-envs/runtime311/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_snapshot_source_journal.py",
+      "-v"
+    ],
+    "cwd": "<WORKSPACE>/infra-artifact-ledger",
+    "PYTHONPATH": "src",
+    "baseline_log": "source-journal-before.log.txt",
+    "fixed_log": "source-journal-after.log.txt",
+    "baseline_method": "Final test module against unchanged baseline snapshot_sqlite.py; the independent recovery stage patch was not the subject of this component comparison.",
+    "assertions": "Reject hardlink/symlink/dangling/directory/FIFO before helper or SQLite connection; recheck cached preflight; accept an ordinary single-link journal.",
+    "safety_boundary": "The source SQLite connection boundary is blocked in both RED and GREEN. No linked journal is opened by SQLite and no lock-loss replay is performed.",
+    "test_sha256": "1c794707e4e9d4493e86bb8b86c1a2b3fc47058baeda2619068c32218f449a8a",
+    "fixed_code_sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c",
+    "baseline_code_sha256": "47c5a062361db9bb7d797d38c2c6f3b07a4774fdad5098607a14d038a0d54f95"
+  },
+  "limitations": "Filesystem classification mock is LOGIC_ONLY. Journal guard does not remove arbitrary stat-to-open administrative replacement races; the frozen stable-management precondition remains."
+}

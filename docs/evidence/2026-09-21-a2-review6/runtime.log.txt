@@ -1,0 +1,1 @@
+{"python": "3.11.16", "sqlite": "3.53.1", "platform": "Linux-6.18.44-x86_64-with-glibc2.39", "executable": "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python", "prefix": "<WORKSPACE>/pr6-review6-envs/runtime311", "module_path": "<WORKSPACE>/pr6-review6-envs/runtime311/lib/python3.11/site-packages/infra_artifact_ledger/__init__.py", "version": "0.2.0a1"}

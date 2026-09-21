@@ -1,0 +1,3 @@
+Processing ./wheels/infra_artifact_ledger-0.2.0a1-py3-none-any.whl
+Installing collected packages: infra-artifact-ledger
+Successfully installed infra-artifact-ledger-0.2.0a1

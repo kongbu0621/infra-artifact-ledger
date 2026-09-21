@@ -34,3 +34,20 @@
 CLI 正常操作和错误使用单行 JSON；`--help` 是面向人的文本辅助入口。没有有效响应时使用原请求身份核对结果。export 的 package 与 descriptor 分别拒覆盖发布，不构成两个输出文件的原子提交；任一输出失败应按错误语义检查已有输出。
 
 本轮进程终止和故障注入证明的是已测试失败模型下的结果；没有真实断电、设备缓存或硬件故障耐久性证据。A2 一致快照/恢复、A3 两类真实消费者、A4 独立第二实现分别需要后续验证。
+
+
+## A2 0.2.0a1 补充状态
+
+以上是 A1 0.1.0a1 历史证据；A2 运行修订仍为 D9 `928b3e0338e7460b9916bf27fc832ce5697b1b7a`。最新第九轮固定输入 `6bd6acfbe5c35d581891eb87275e1173e17848fc`，tree `6dd4da925cb97c22eca78a0a3f2165310e048db9`，包含 D9 与第八轮证据；本轮未修改产品代码、测试、工具和构建配置，未确认新缺陷。历史与当前来源见 [A2_VALIDATION](A2_VALIDATION.md)。
+
+本轮环境 Linux x86_64 / Python 3.11.16、3.12.14 / SQLite 3.53.1；254 个输入文件在构建前后按固定 tree 核验，17 个运行模块的源码、wheel、安装字节一致。复用已有 build venv 及 system-site-packages 构建工具；Python 3.11 runtime venv 独立新建，3.12 复用此前环境。安装态从源码目录外以 -I 运行，库来自 site-packages，测试/验收工具来自固定输入；工具不在 wheel 内。本地是核验后的文件集，并非 Git checkout。
+
+两版本源码各 442 项发现、422 项通过、20 项跳过；安装态 A2 276 项发现、265 项通过、11 项跳过；A2 两组资源专项 7+4 项全部通过。14 条固定源码构建、安装、测试、编译和环境命令全部 exit 0。两版本 compileall、A1 安装态闭环与生产 API/CLI 对实际 overlay 的拒绝通过。常规源码的 20 项跳过由 A1 9 项与 A2 11 项组成；本轮另以原始常量显式执行并通过 A2 全部 11 项资源专项，A1 9 项仍保留 D2 历史。安装态 11 项为同一批 A2 专项，专项在源码态执行，不冒称安装态专项。跨版本/安装态结果不相加。
+
+本轮复核严格 JSON、源保护、发布错误状态、固定读取与恢复完整状态、目录/挂载绑定和验收清理；D9 子进程解析与记录回归继续通过。资源专项按原常量重跑，合法 1 GiB 数据库与超过 portable 上限的累计 payload 完成恢复链，metadata/refs 四组合法边界通过。见 [本轮证据](evidence/2026-09-21-a2-review9/README.md)。未执行被阻断的锁失效重演；管理性稳定前置等边界不变。
+
+A2 本地候选文件系统为 ext4/xfs/btrfs，NAS profile 为显式核实的 nfs/nfs4/cifs；类型名称不等于兼容认证。实际 Cloud overlay（fsync=volatile）仍被生产 API/CLI 拒绝，正向模拟仅 LOGIC_ONLY。
+
+GX10、受支持本地文件系统安装态正向、真实 NAS 及 T06/T08 实际部署演练仍 NOT_RUN，整体 PARTIAL。资源可达性证明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)，不替代部署资源或耐久性认证。上文 Windows/macOS/其他未验组合边界保留。
+
+A2 封存文件上限 1 GiB，其他预算与合作式 300 秒期限见 [A2 接口](a2/INTERFACE_PROFILE.md)。读回核对不能证明过去发布同步或设备断电耐久性。构建/部署见 [A2_RUNBOOK](A2_RUNBOOK.md)。

@@ -1,0 +1,1 @@
+{"result": "PASS", "scope": "installed_unsupported_filesystem_rejection", "module_path": "<WORKSPACE>/pr6-fix-envs/runtime311/lib/python3.11/site-packages/infra_artifact_ledger/recovery.py", "cli_exit_code": 3, "positive_supported_filesystem_lifecycle": "NOT_RUN", "gx10": "NOT_RUN", "real_nas": "NOT_RUN"}

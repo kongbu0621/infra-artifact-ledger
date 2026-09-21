@@ -1,0 +1,27 @@
+test_replacement_after_initial_check_receives_no_child_writes (test_snapshot_probe_binding.NasProbeBindingTests.test_replacement_after_initial_check_receives_no_child_writes) ... FAIL
+test_second_spawn_failure_reaps_waiting_child_and_preserves_archive (test_snapshot_probe_binding.NasProbeBindingTests.test_second_spawn_failure_reaps_waiting_child_and_preserves_archive) ... ok
+test_two_children_compete_using_noninheritable_parent_descriptor (test_snapshot_probe_binding.NasProbeBindingTests.test_two_children_compete_using_noninheritable_parent_descriptor) ... ok
+
+======================================================================
+FAIL: test_replacement_after_initial_check_receives_no_child_writes (test_snapshot_probe_binding.NasProbeBindingTests.test_replacement_after_initial_check_receives_no_child_writes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<WORKSPACE>/infra-artifact-ledger/tests/test_snapshot_probe_binding.py", line 82, in test_replacement_after_initial_check_receives_no_child_writes
+    self.assertEqual(os.listdir(self.archive_path), ["unrelated"])
+AssertionError: Lists differ: ['mkdir-race-e94881b9fd833dc465c9f01ccd20bf5d', 'unrelated'] != ['unrelated']
+
+First differing element 0:
+'mkdir-race-e94881b9fd833dc465c9f01ccd20bf5d'
+'unrelated'
+
+First list contains 1 additional elements.
+First extra element 1:
+'unrelated'
+
+- ['mkdir-race-e94881b9fd833dc465c9f01ccd20bf5d', 'unrelated']
++ ['unrelated']
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.057s
+
+FAILED (failures=1)

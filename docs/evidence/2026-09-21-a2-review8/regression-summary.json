@@ -1,0 +1,60 @@
+{
+  "fixed_source_commit": "928b3e0338e7460b9916bf27fc832ce5697b1b7a",
+  "baseline_component_commit": "a7f7b278160d5a9951dbaa2944421b99464e7d87",
+  "test_file": "tests/test_snapshot_child_protocol.py",
+  "test_sha256": "a8f5793f386daf101d826b121a027c882b522358ba82c082733c2ced4ba4d51d",
+  "tests_selected": 6,
+  "new_tests": 6,
+  "baseline_result": "6 tests; failures=8 and errors=3 include subtests, not eleven independent test methods",
+  "fixed_result": "6 tests passed",
+  "baseline_code_sha256": "3ddfc1857c5b2ec9afc8347fa805c9c420a619b391462ee62d9d5ee6ed1646e6",
+  "fixed_code_sha256": "3644ca35185531a13035d7b3a518110c531562b20dbbfd8052325e2be1daf6fc",
+  "runs": {
+    "before": {
+      "command": [
+        "<WORKSPACE>/pr6-review7-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-p",
+        "test_snapshot_child_protocol.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src",
+      "exit_code": 1,
+      "elapsed_seconds": 0.263,
+      "test_sha256": "a8f5793f386daf101d826b121a027c882b522358ba82c082733c2ced4ba4d51d",
+      "code_sha256": "3ddfc1857c5b2ec9afc8347fa805c9c420a619b391462ee62d9d5ee6ed1646e6",
+      "log_sha256": "ea2ea36fee0edb4c0ce52c147ec87fc678de44168990570d89f0cba454053841"
+    },
+    "after": {
+      "command": [
+        "<WORKSPACE>/pr6-review7-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-p",
+        "test_snapshot_child_protocol.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src",
+      "exit_code": 0,
+      "elapsed_seconds": 0.246,
+      "test_sha256": "a8f5793f386daf101d826b121a027c882b522358ba82c082733c2ced4ba4d51d",
+      "code_sha256": "3644ca35185531a13035d7b3a518110c531562b20dbbfd8052325e2be1daf6fc",
+      "log_sha256": "b98400622f8d57dcd0c09eb47ac19d1f120d3682e6a5aef3692ad5b7dfd8999b"
+    }
+  },
+  "log_mapping": {
+    "before": "child-protocol-before.log.txt",
+    "after": "child-protocol-after.log.txt"
+  },
+  "assertions": "Strict UTF-8/BOM/duplicate/nonfinite/surrogate rejection; depth/node overlimits and deep JSON reject without losing receipts. Depth 8, 1024 nodes and exactly 65536 bytes including LF remain accepted at the JSON/envelope boundary. Original nonzero command failures survive malformed output; valid error envelopes remain recorded; decoder failure does not classify publication; cleanup compounds retain evidence.",
+  "limitations": "Synthetic local child stdout is tested. This validates the existing A2 JSON/envelope boundary, not semantic correctness of arbitrary operation data or actual NAS behavior. No product runtime module or protocol budget changed."
+}

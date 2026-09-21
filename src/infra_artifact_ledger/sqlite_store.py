@@ -13,6 +13,7 @@ import tempfile
 from functools import lru_cache
 
 from .errors import LedgerError
+from ._checkpoints import checkpoint
 from .fingerprint import canonical_bytes
 from .records import KINDS, PROFILE, empty_metadata
 from .validation import MAX_JSON, parse_json
@@ -320,6 +321,7 @@ class SQLiteStore:
     def metadata(self):
         metadata = empty_metadata()
         for identity, kind, raw in self.execute("SELECT id,kind,data FROM records ORDER BY id"):
+            checkpoint()
             if kind not in KINDS:
                 raise LedgerError("INTEGRITY_FAILURE", "Stored record has an unknown kind.")
             record = self._decode(raw)
@@ -330,6 +332,7 @@ class SQLiteStore:
         for scope, kind, key, result_ref, raw in self.execute(
             "SELECT scope,kind,key,result_ref,data FROM operations"
         ):
+            checkpoint()
             record = self._decode(raw)
             if (scope, kind, key, result_ref) != (
                 record.get("idempotency_scope_ref"), record.get("operation_kind"),

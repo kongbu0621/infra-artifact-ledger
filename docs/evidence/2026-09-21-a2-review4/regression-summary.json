@@ -1,0 +1,61 @@
+{
+  "fixed_source_commit": "8506574083a39339cb63d472c89703b4affaf4e8",
+  "baseline_source_commit": "8a11030fd03f4d0bfb291786d1c557ba8fc94f89",
+  "python": "3.12.14",
+  "scope": "Targeted precommit red/green experiments; final immutable-source suites are in summary.json",
+  "cli": {
+    "test_file": "tests/test_snapshot_output_channels.py",
+    "tests": 11,
+    "baseline_result": "FAILED (failures=9, errors=1); includes subtest records, not 10 independent cases",
+    "fixed_result": "11 passed",
+    "baseline_method": "The same final test module ran with PYTHONPATH pointing to the preserved baseline src; child processes derive that module location.",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_snapshot_output_channels.py",
+      "-v"
+    ],
+    "cwd": "<WORKSPACE>/infra-artifact-ledger",
+    "resolved_python_version": "3.12.14",
+    "baseline_pythonpath": "<WORKSPACE>/pr6-fix-baseline/src",
+    "fixed_pythonpath": "src",
+    "test_sha256": "beab14404731b519518d59806e1cadecf8090b6cd3852af00c9d119c3f618e73",
+    "code_sha256": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8"
+  },
+  "nas": {
+    "test_file": "tests/test_snapshot_probe_binding.py",
+    "tests": 3,
+    "baseline_result": "3 tests, 2 passed, 1 failed",
+    "fixed_result": "3 new tests plus 3 associated existing tests passed (6 total)",
+    "baseline_method": "New test file was first run against the unchanged tool before its patch; then the tool was fixed and rerun.",
+    "fixed_receipt": {
+      "scope": "LOGIC_ONLY; no real NAS or mount-loss test",
+      "command": [
+        "<PRIMARY_PYTHON>",
+        "-m",
+        "unittest",
+        "test_snapshot_probe_binding",
+        "test_snapshot_nas_exercise.NasExerciseSafetyTests.test_directory_race_helper_has_one_winner_and_removes_only_probe",
+        "test_snapshot_review3_nas",
+        "-v"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.59,
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "log_sha256": "29e79ac1f3497d18855a2300aaeb9f35646be835759c93ad1db0fb7082890808",
+      "files": {
+        "tools/acceptance/a2_nas_exercise.py": "afda31e86b938a64c3b7f13ab1f963028b7bcd34572049c979a004cd6c5999d7",
+        "tests/test_snapshot_probe_binding.py": "fc878f8694afa0fb20a2756b727bb5cfde8102f28df54483f2d2e42960027a9f"
+      },
+      "red_test_log": "probe-binding-before.log",
+      "red_test_outcome": "3 tests: 2 passed, replacement-path test failed before fix"
+    }
+  },
+  "source_binding": "Fixed code/test SHA-256 values and source-integrity.json bind precommit experiments to final content; full build/source/install results are separately recorded at the immutable source commit.",
+  "limitations": "CLI does not own pre-existing broken caller buffers. NAS probe tests mock filesystem classification and replace disposable local paths; no real NAS acceptance."
+}

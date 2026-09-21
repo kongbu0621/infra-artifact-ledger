@@ -1,0 +1,63 @@
+{
+  "fixed_source_commit": "4af226210586f61bfb4e4c604b23edd6194fef59",
+  "baseline_component_commit": "073057c2d1a72e12c669f1c4ee5fe3d0930e701a",
+  "test_file": "tests/test_snapshot_recovery.py",
+  "test_sha256": "046dbd12c7a6e64c3d9b0c2bc0f121e525f8449ea436875470c82075d20296eb",
+  "tests_selected": 4,
+  "new_tests": 1,
+  "expanded_existing_tests": 3,
+  "baseline_result": "4 selected tests; failures=4 includes two CLI subtests, not four independent failing tests",
+  "fixed_result": "4 selected tests passed",
+  "baseline_code_sha256": "c8c8b6326486d80e44552c13ee29565e433e5cd00dbc4e0d0c555ebf7e4f68f4",
+  "fixed_code_sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2",
+  "runs": {
+    "before": {
+      "command": [
+        "<WORKSPACE>/pr6-review5-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "-v",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_local_marker_link_known_no_effect_and_unsupported_are_not_published",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_restore_link_known_no_effect_is_not_published",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_local_quota_failure_cli_retains_unpublished_state_and_exit_code",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_remote_link_created_but_error_remains_unknown_and_archive_usable"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src:<WORKSPACE>/infra-artifact-ledger/tests",
+      "exit_code": 1,
+      "elapsed_seconds": 0.853,
+      "test_sha256": "046dbd12c7a6e64c3d9b0c2bc0f121e525f8449ea436875470c82075d20296eb",
+      "code_sha256": "c8c8b6326486d80e44552c13ee29565e433e5cd00dbc4e0d0c555ebf7e4f68f4",
+      "log_sha256": "da7022a7a90c90508e5eef1daceb43b77fc7beae7efa14fb5c3cadc9224e2bd8"
+    },
+    "after": {
+      "command": [
+        "<WORKSPACE>/pr6-review5-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "-v",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_local_marker_link_known_no_effect_and_unsupported_are_not_published",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_restore_link_known_no_effect_is_not_published",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_local_quota_failure_cli_retains_unpublished_state_and_exit_code",
+        "test_snapshot_recovery.SnapshotRecoveryTests.test_remote_link_created_but_error_remains_unknown_and_archive_usable"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src:<WORKSPACE>/infra-artifact-ledger/tests",
+      "exit_code": 0,
+      "elapsed_seconds": 0.958,
+      "test_sha256": "046dbd12c7a6e64c3d9b0c2bc0f121e525f8449ea436875470c82075d20296eb",
+      "code_sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2",
+      "log_sha256": "75ec27230eb2949766b6e9b505de4a7d985235f00d3580bcc1c354a1925e9faf"
+    }
+  },
+  "log_mapping": {
+    "before": "quota-before.log.txt",
+    "after": "quota-after.log.txt"
+  },
+  "assertions": "Local create/restore EDQUOT returns IO_ERROR/publish/not_published; source bytes preserved; no public marker/restore file. CLI uses the real API, reports one envelope and exit 9. Simulated remote link succeeds then raises EDQUOT: unknown, target preserved and readonly verify succeeds.",
+  "limitations": "Filesystem classification and errno injection are LOGIC_ONLY. No real quota administration or NAS test performed.",
+  "semantics_sources": [
+    "https://man7.org/linux/man-pages/man2/link.2.html",
+    "https://man7.org/linux/man-pages/man3/link.3p.html"
+  ]
+}

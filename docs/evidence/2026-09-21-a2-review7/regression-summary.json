@@ -1,0 +1,60 @@
+{
+  "fixed_source_commit": "c9e4cb450c853578b1b4c15eab4a9a6458693d8e",
+  "baseline_component_commit": "0de4e57345f6211cbd2f22e01994ab073c9f7344",
+  "test_file": "tests/test_snapshot_process_cleanup.py",
+  "test_sha256": "12f6560c521e26e6df0d9fb849314665c5c09c494376b284e749434d5ffd5659",
+  "tests_selected": 6,
+  "new_tests": 6,
+  "baseline_result": "6 tests; failures=10 includes subtests, not ten independent test methods",
+  "fixed_result": "6 tests passed",
+  "baseline_code_sha256": "afda31e86b938a64c3b7f13ab1f963028b7bcd34572049c979a004cd6c5999d7",
+  "fixed_code_sha256": "3ddfc1857c5b2ec9afc8347fa805c9c420a619b391462ee62d9d5ee6ed1646e6",
+  "runs": {
+    "before": {
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-p",
+        "test_snapshot_process_cleanup.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src",
+      "exit_code": 1,
+      "elapsed_seconds": 0.207,
+      "test_sha256": "12f6560c521e26e6df0d9fb849314665c5c09c494376b284e749434d5ffd5659",
+      "code_sha256": "afda31e86b938a64c3b7f13ab1f963028b7bcd34572049c979a004cd6c5999d7",
+      "log_sha256": "d694b106167159935f721c3ec65f16be4af1bf5f01d7dea9bedf92ce5807e8d0"
+    },
+    "after": {
+      "command": [
+        "<WORKSPACE>/pr6-review6-envs/runtime311/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "<WORKSPACE>/infra-artifact-ledger/tests",
+        "-p",
+        "test_snapshot_process_cleanup.py",
+        "-v"
+      ],
+      "cwd": "<WORKSPACE>/infra-artifact-ledger",
+      "PYTHONPATH": "<WORKSPACE>/infra-artifact-ledger/src",
+      "exit_code": 0,
+      "elapsed_seconds": 0.193,
+      "test_sha256": "12f6560c521e26e6df0d9fb849314665c5c09c494376b284e749434d5ffd5659",
+      "code_sha256": "3ddfc1857c5b2ec9afc8347fa805c9c420a619b391462ee62d9d5ee6ed1646e6",
+      "log_sha256": "673a052087f9bcf2d10b86568d82deba629a275548d50d90b9e9dbf365d8d39e"
+    }
+  },
+  "log_mapping": {
+    "before": "process-before.log.txt",
+    "after": "process-after.log.txt"
+  },
+  "assertions": "Original operation failure survives cleanup failures; all child processes are reaped and pipes closed; valid response plus cleanup failure still fails; caller handled exception cannot hide cleanup errors; command receipts persist; two-child and poll/kill exit-race paths are checked.",
+  "limitations": "Real synthetic local processes with controlled failure injection. No NAS mount or actual NAS recovery is exercised. The helper attempts all cleanup operations; it does not guarantee resource release if OS kill/wait/close itself cannot complete."
+}

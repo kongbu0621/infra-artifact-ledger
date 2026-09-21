@@ -446,6 +446,42 @@ def installed_identity(wheel):
             "sqlite": sqlite3.sqlite_version, "platform": platform.platform(), "machine": platform.machine()}
 
 
+def _cleanup_children(processes, primary):
+    """Attempt every reap/pipe close once, preserving the operation failure."""
+    failure = None
+
+    def remember(error):
+        nonlocal failure
+        if primary is not None:
+            primary.add_note("Child process cleanup also failed.")
+        elif failure is None:
+            failure = error
+        else:
+            failure.add_note("Additional child process cleanup also failed.")
+
+    for process in processes:
+        try:
+            if process.poll() is None:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass  # It exited between poll and kill; still reap it.
+        except BaseException as error:
+            remember(error)
+        try:
+            process.wait()
+        except BaseException as error:
+            remember(error)
+        for pipe in (process.stdin, process.stdout, process.stderr):
+            if pipe is not None and not pipe.closed:
+                try:
+                    pipe.close()
+                except BaseException as error:
+                    remember(error)
+    if failure is not None:
+        raise failure
+
+
 def child_cli(argv, cwd, calls=None):
     """Independent installed interpreter; bound both streams and elapsed wait."""
     command = [sys.executable, "-I", "-m", "infra_artifact_ledger", "snapshot", *argv]
@@ -454,6 +490,7 @@ def child_cli(argv, cwd, calls=None):
                                cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = {"stdout": bytearray(), "stderr": bytearray()}
     deadline = time.monotonic() + 360
+    primary = None
     try:
         with selectors.DefaultSelector() as selector:
             for label, pipe in (("stdout", process.stdout), ("stderr", process.stderr)):
@@ -481,22 +518,23 @@ def child_cli(argv, cwd, calls=None):
             and response["publication_state"] == ("not_applicable" if operation in {"verify", "check_restore"} else "published")
             and type(response["data"]) is dict, "Independent recovery command returned a mismatched envelope.")
         return response
+    except BaseException as error:
+        primary = error
+        raise
     finally:
-        if process.poll() is None:
-            process.kill()
-        process.wait()
-        process.stdout.close()
-        process.stderr.close()
-        if calls is not None:
-            record = {"argv": command, "exit_code": process.returncode,
-                      "elapsed_seconds": round(time.monotonic() - started, 3),
-                      "stdout_sha256": digest(bytes(output["stdout"])),
-                      "stderr_sha256": digest(bytes(output["stderr"]))}
-            try:
-                record["response"] = json.loads(output["stdout"])
-            except (ValueError, UnicodeError):
-                record["response"] = None
-            calls.append(record)
+        try:
+            _cleanup_children((process,), primary)
+        finally:
+            if calls is not None:
+                record = {"argv": command, "exit_code": process.returncode,
+                          "elapsed_seconds": round(time.monotonic() - started, 3),
+                          "stdout_sha256": digest(bytes(output["stdout"])),
+                          "stderr_sha256": digest(bytes(output["stderr"]))}
+                try:
+                    record["response"] = json.loads(output["stdout"])
+                except (ValueError, UnicodeError):
+                    record["response"] = None
+                calls.append(record)
 
 
 def concurrent_directory_probe(archive):
@@ -516,6 +554,7 @@ else:
 """
     archive.check()
     processes = []
+    primary = None
     try:
         for _ in range(2):
             # Children retain this already checked directory binding. A later
@@ -545,11 +584,11 @@ else:
         os.rmdir(name, dir_fd=archive.fd)
         archive.fsync()
         return {"processes": 2, "created": 1, "already_exists": 1}
+    except BaseException as error:
+        primary = error
+        raise
     finally:
-        for process in processes:
-            if process.poll() is None:
-                process.kill()
-            process.communicate()
+        _cleanup_children(processes, primary)
 
 
 def exercise(args):

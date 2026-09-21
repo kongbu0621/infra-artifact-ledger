@@ -238,6 +238,7 @@ def _seal_archive(parent, private, manifest, raw, marker_raw, context, *, remote
         context.checkpoint("sync")
         generation.fsync()
         parent.fsync()
+        context.checkpoint("verify")
         digest = hashlib.sha256(raw).hexdigest()
         actual, actual_raw, actual_marker = _manifest(generation, digest, context.budget)
         if actual != manifest or actual_raw != raw or actual_marker != marker_raw or _database_info(generation, context.budget) != {
@@ -347,6 +348,7 @@ def restore(*, snapshot, target_dir, expected_manifest_sha256, scratch_parent, s
                     context.checkpoint("sync")
                     target.fsync()
                     parent.fsync()
+                    context.checkpoint("verify")
                     if target.members(limit=1) != {"ledger.sqlite"} or _database_info(target, context.budget) != {
                         "byte_length": manifest["database"]["byte_length"], "sha256": manifest["database"]["sha256"]
                     }:

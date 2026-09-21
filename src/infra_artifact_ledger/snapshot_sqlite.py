@@ -148,7 +148,7 @@ def _mount_bindings(path):
     return tuple(records)
 
 
-def _no_source_wal_sidecars(path, stage):
+def _check_source_sidecars(path, stage):
     # SQLite can discover a leftover WAL even when the main file's header is
     # DELETE, then create/update SHM while opening mode=ro. Inspect only names;
     # never open/close raw source or sidecar fds in the caller's process.
@@ -158,6 +158,16 @@ def _no_source_wal_sidecars(path, stage):
         except FileNotFoundError:
             continue
         raise _failure("UNSUPPORTED_FORMAT", "Source has an unsupported SQLite WAL sidecar.", stage)
+    # A DELETE journal can legitimately appear/disappear during a transaction.
+    # Inspect only its directory entry, without opening it or freezing its
+    # identity. Links or nonregular entries must not reach SQLite: they could
+    # refer to another open database or an unsupported file type.
+    try:
+        journal = os.stat(str(path) + "-journal", follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    if not stat.S_ISREG(journal.st_mode) or journal.st_nlink != 1:
+        raise _failure("INTEGRITY_FAILURE", "Source journal must be an ordinary single-link file.", stage)
 
 
 def _source_binding(path, budget):
@@ -425,11 +435,11 @@ def preflight_source(source: Path, budget):
     """Check source without creating scratch files or opening source SQLite."""
     try:
         binding = _source_binding(source, budget)
-        _no_source_wal_sidecars(source, "validate")
+        _check_source_sidecars(source, "validate")
         if _read_header(source, budget) != binding[0][-1]:
             raise _failure("IO_ERROR", "Source binding changed during header inspection.", "validate")
         _assert_source_binding(source, binding, budget)
-        _no_source_wal_sidecars(source, "validate")
+        _check_source_sidecars(source, "validate")
         return binding
     except Exception as error:
         raise _translate(error, "validate") from error
@@ -442,7 +452,7 @@ def snapshot_database(source: Path, target: Path, budget, *, source_binding=None
     try:
         binding = preflight_source(source, budget) if source_binding is None else source_binding
         _assert_source_binding(source, binding, budget)
-        _no_source_wal_sidecars(source, stage)
+        _check_source_sidecars(source, stage)
         source_connection = _connect_readonly(source)
         _assert_source_binding(source, binding, budget)
         with _progress(source_connection, budget, stage):

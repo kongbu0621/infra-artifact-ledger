@@ -503,20 +503,27 @@ def concurrent_directory_probe(archive):
     """Two independent processes contend for one new synthetic NAS directory."""
     name = "mkdir-race-" + secrets.token_hex(16)
     command = """import json,os,sys
+parent_fd=int(sys.argv[1])
+name=sys.argv[2]
 sys.stdin.buffer.read(1)
 try:
-    os.mkdir(sys.argv[1],0o700)
+    os.mkdir(name,0o700,dir_fd=parent_fd)
 except FileExistsError:
     print(json.dumps({'result':'exists'}))
 else:
-    s=os.stat(sys.argv[1],follow_symlinks=False)
+    s=os.stat(name,dir_fd=parent_fd,follow_symlinks=False)
     print(json.dumps({'result':'created','identity':[s.st_dev,s.st_ino]}))
 """
     archive.check()
     processes = []
     try:
         for _ in range(2):
-            processes.append(subprocess.Popen([sys.executable, "-I", "-c", command, str(archive.path / name)],
+            # Children retain this already checked directory binding. A later
+            # pathname replacement must not redirect their mkdir/stat calls.
+            # The final archive.check still stops success and cleanup if the
+            # visible pathname or mount no longer matches the held descriptor.
+            processes.append(subprocess.Popen([sys.executable, "-I", "-c", command, str(archive.fd), name],
+                             pass_fds=(archive.fd,),
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
         for process in processes:
             process.stdin.write(b"x")

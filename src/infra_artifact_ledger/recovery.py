@@ -20,7 +20,7 @@ _MEMBERS = {"ledger.sqlite", "manifest.json", "COMMITTED.json"}
 _SIDECARS = {"ledger.sqlite-journal", "ledger.sqlite-wal", "ledger.sqlite-shm"}
 _LOCAL_LINK_NO_EFFECT = {
     errno.EEXIST, errno.EACCES, errno.EPERM, errno.ENOENT, errno.ENOTDIR,
-    errno.EXDEV, errno.ENOSPC, errno.EROFS, errno.EMLINK, errno.ENAMETOOLONG,
+    errno.EXDEV, errno.ENOSPC, errno.EDQUOT, errno.EROFS, errno.EMLINK, errno.ENAMETOOLONG,
     errno.EOPNOTSUPP, errno.ENOSYS, errno.EINVAL,
 }
 

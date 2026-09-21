@@ -7,6 +7,7 @@ These tests do not certify overlay, tmpfs, NFS or any deployed NAS profile.
 
 import errno
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,7 @@ from infra_artifact_ledger import initialize, open as open_ledger
 from infra_artifact_ledger import recovery
 from infra_artifact_ledger import snapshot_storage as storage
 from infra_artifact_ledger import snapshot_format as fmt
+from infra_artifact_ledger import snapshot_cli
 from infra_artifact_ledger.fingerprint import manifest_digest
 
 try:
@@ -358,25 +360,65 @@ class SnapshotRecoveryTests(unittest.TestCase):
                 entry.unlink()
 
     def test_local_marker_link_known_no_effect_and_unsupported_are_not_published(self):
-        for index, (number, code) in enumerate(((errno.ENOSPC, "IO_ERROR"), (errno.EXDEV, "UNSUPPORTED_STORAGE"))):
+        before = file_hash(self.database)
+        for index, (number, code) in enumerate(((errno.ENOSPC, "IO_ERROR"), (errno.EDQUOT, "IO_ERROR"),
+                                               (errno.EXDEV, "UNSUPPORTED_STORAGE"))):
             identity = f"{index + 60:032x}"
-            with patch.object(recovery.os, "link", side_effect=OSError(number, "injected")):
-                self.assert_error(code, "not_published", recovery.create, db=self.database,
-                                  output_root=self.output, snapshot_id=identity, source_commit=SOURCE_COMMIT)
-            target = self.output / identity
-            self.assertFalse((target / "COMMITTED.json").exists())
-            self.assertEqual({p.name for p in target.iterdir()}, {"ledger.sqlite", "manifest.json"})
+            with self.subTest(errno=number):
+                with patch.object(recovery.os, "link", side_effect=OSError(number, "injected")) as link:
+                    error = self.assert_error(code, "not_published", recovery.create, db=self.database,
+                                              output_root=self.output, snapshot_id=identity, source_commit=SOURCE_COMMIT)
+                link.assert_called_once()
+                self.assertEqual(error.stage, "publish")
+                target = self.output / identity
+                self.assertFalse(os.path.lexists(target / "COMMITTED.json"))
+                self.assertEqual({p.name for p in target.iterdir()}, {"ledger.sqlite", "manifest.json"})
+                self.assertEqual(file_hash(self.database), before)
 
     def test_restore_link_known_no_effect_is_not_published(self):
         created = self.create_snapshot()
-        target = self.root / "restored"
-        with patch.object(recovery.os, "link", side_effect=OSError(errno.ENOSPC, "injected")):
-            self.assert_error("IO_ERROR", "not_published", recovery.restore,
-                              snapshot=created["data"]["snapshot_path"],
-                              expected_manifest_sha256=created["data"]["manifest_sha256"],
-                              target_dir=target, scratch_parent=self.scratch)
-        self.assertTrue(target.is_dir())
-        self.assertEqual(list(target.iterdir()), [])
+        snapshot = Path(created["data"]["snapshot_path"])
+        before = {p.name: file_hash(p) for p in snapshot.iterdir()}
+        for number in (errno.ENOSPC, errno.EDQUOT):
+            with self.subTest(errno=number):
+                target = self.root / f"restored-{number}"
+                with patch.object(recovery.os, "link", side_effect=OSError(number, "injected")) as link:
+                    error = self.assert_error("IO_ERROR", "not_published", recovery.restore,
+                                              snapshot=snapshot,
+                                              expected_manifest_sha256=created["data"]["manifest_sha256"],
+                                              target_dir=target, scratch_parent=self.scratch)
+                link.assert_called_once()
+                self.assertEqual(error.stage, "publish")
+                self.assertTrue(target.is_dir())
+                self.assertEqual(list(target.iterdir()), [])
+                self.assertEqual({p.name: file_hash(p) for p in snapshot.iterdir()}, before)
+
+    def test_local_quota_failure_cli_retains_unpublished_state_and_exit_code(self):
+        created = self.create_snapshot()
+        argv_by_operation = {
+            "create": ["--db", str(self.database), "--output-root", str(self.output),
+                       "--snapshot-id", "f" * 32, "--source-commit", SOURCE_COMMIT],
+            "restore": ["--snapshot", created["data"]["snapshot_path"],
+                        "--expected-manifest-sha256", created["data"]["manifest_sha256"],
+                        "--target-dir", str(self.root / "cli-restored"), "--scratch-parent", str(self.scratch)],
+        }
+        for operation, argv in argv_by_operation.items():
+            with self.subTest(operation=operation):
+                output_bytes, diagnostic = io.BytesIO(), io.StringIO()
+                output = io.TextIOWrapper(output_bytes, encoding="utf-8")
+                self.addCleanup(output.close)
+                with patch.object(recovery.os, "link", side_effect=OSError(errno.EDQUOT, "injected")) as link:
+                    with patch.object(snapshot_cli.sys, "stdout", output), patch.object(snapshot_cli.sys, "stderr", diagnostic):
+                        code = snapshot_cli.main([operation, *argv])
+                link.assert_called_once()
+                self.assertEqual(code, 9)
+                self.assertEqual(diagnostic.getvalue(), "")
+                self.assertEqual(output_bytes.getvalue().count(b"\n"), 1)
+                response = json.loads(output_bytes.getvalue())
+                self.assertEqual(response["operation"], operation)
+                self.assertEqual(response["error"]["code"], "IO_ERROR")
+                self.assertEqual(response["error"]["stage"], "publish")
+                self.assertEqual(response["publication_state"], "not_published")
 
     def test_marker_postlink_sync_failure_unknown_but_readonly_verify_possible(self):
         original = storage.Directory.fsync
@@ -452,20 +494,24 @@ class SnapshotRecoveryTests(unittest.TestCase):
         self.assertTrue(all(names == {"ledger.sqlite"} for names in checked))
 
     def test_remote_link_created_but_error_remains_unknown_and_archive_usable(self):
-        created = self.create_snapshot()
         original = os.link
-        def created_but_error(*args, **kwargs):
-            original(*args, **kwargs)
-            raise OSError(errno.EIO, "synthetic server committed but client lost acknowledgement")
-        with patch.object(recovery.os, "link", created_but_error):
-            self.assert_error("PUBLICATION_UNKNOWN", "unknown", recovery.publish,
-                              snapshot=created["data"]["snapshot_path"], storage_config=self.storage_config(),
-                              expected_manifest_sha256=created["data"]["manifest_sha256"], scratch_parent=self.scratch)
-        destination = self.archive / SNAPSHOT_ID
-        self.assertEqual({p.name for p in destination.iterdir()}, {"ledger.sqlite", "manifest.json", "COMMITTED.json"})
-        result = recovery.verify(snapshot=destination, storage_config=self.storage_config(),
-                                 expected_manifest_sha256=created["data"]["manifest_sha256"], scratch_parent=self.scratch)
-        self.assertEqual(result["publication_state"], "not_applicable")
+        for number in (errno.EIO, errno.EDQUOT):
+            with self.subTest(errno=number):
+                identity = f"{number:032x}"
+                created = self.create_snapshot(identity)
+                def created_but_error(*args, **kwargs):
+                    original(*args, **kwargs)
+                    raise OSError(number, "synthetic server committed but client lost acknowledgement")
+                with patch.object(recovery.os, "link", created_but_error):
+                    error = self.assert_error("PUBLICATION_UNKNOWN", "unknown", recovery.publish,
+                                              snapshot=created["data"]["snapshot_path"], storage_config=self.storage_config(),
+                                              expected_manifest_sha256=created["data"]["manifest_sha256"], scratch_parent=self.scratch)
+                self.assertEqual(error.stage, "publish")
+                destination = self.archive / identity
+                self.assertEqual({p.name for p in destination.iterdir()}, {"ledger.sqlite", "manifest.json", "COMMITTED.json"})
+                result = recovery.verify(snapshot=destination, storage_config=self.storage_config(),
+                                         expected_manifest_sha256=created["data"]["manifest_sha256"], scratch_parent=self.scratch)
+                self.assertEqual(result["publication_state"], "not_applicable")
 
     def test_source_metadata_change_after_validation_cannot_change_published_copy(self):
         created = self.create_snapshot()

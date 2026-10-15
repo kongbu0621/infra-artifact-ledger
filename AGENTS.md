@@ -2,11 +2,25 @@
 
 本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，本次 Cloud 验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。A2 的 GX10、真实 NAS 验收尚未执行，整个 A2 尚未完成；实现存在和模拟测试通过不得改写为实机通过。
 
+## 当前任务接续（2026-10-15）
+
+新会话先读取 [README 的当前主任务与接续点](README.md#当前主任务与接续点2026-10-15)。
+Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞，才回头建设 Local Hand；
+现在应从本仓中断处继续。主任务仍是已批准的 A2 未完成项，Local Hand 为它提供所需能力，
+不再要求用户另选示例项目，不把 Local Hand 阶段收尾当成本仓 A2 完成。
+
+沿用原任务范围和授权，复用仍有效的结果，只补实际缺口；已有写入结果未知时先核对原记录。
+下文固定设计、授权和历史记录用于定位原范围，不构成重做已完成验证的要求。复用结果时核对
+其源码或安装包、机器、解释器与文件系统是否覆盖本次目标，不把历史 A1 或模拟结果当作 A2 实机通过。
+本次任务顺序纠正不改变公共接口、支持范围、部署权限或历史通过状态。
+
 ## Current execution boundary
 
-程序仓库文档 Gate 的本地采用关系、固定规则来源、当前状态与权限见 [Gate declaration](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)。该文件是每次执行的必读入口。当前 **CLOSED，Authorized implementation scope: A1-local-ledger-v0.1（P1–P5）**，Owner 决定见 Gate 引用记录。仅在固定范围内实现与验证；实现提交须以独立 CLOSED 记录提交为祖先。
+当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前接续目标是 A2 未完成项。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
 
-维护者使用固定的私有 companion 规则来源；本仓库不复制其正文。执行者不能读取规则、不能核实基线或 Owner 决策时，应保持 OPEN 并说明具体缺失。公开消费者理解公共接口和使用软件，不需要读取该 companion。不得把规则来源不可读改写为自动获得实现授权。
+本次已批准范围内的接续按上节 Owner 决定和本节执行；历史 Gate 中与此冲突的通用重开要求不作为重复开工前置。已有公开授权记录足以核实原范围时，不得仅因私有 companion 暂不可读而把整个任务退回 OPEN。某个动作所需的基线或授权确实不能核实，或动作超出原范围时，暂停该动作及依赖它的后续步骤并说明具体缺失，不受影响的已授权工作继续。
+
+固定 companion 规则来源及历史记录保留，不复制私有正文，不自动升级上游规则，也不因来源不可读而新增权限。公开消费者理解公共接口和使用软件，不需要读取该 companion。
 
 ## Engineering boundaries
 

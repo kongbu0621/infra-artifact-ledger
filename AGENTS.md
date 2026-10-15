@@ -10,14 +10,17 @@ Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞�
 不再要求用户另选示例项目，不把 Local Hand 阶段收尾当成本仓 A2 完成。
 
 沿用原任务范围和授权，复用仍有效的结果，只补实际缺口；已有写入结果未知时先核对原记录。
-下文固定设计、授权和历史记录用于定位原范围，不构成重做已完成验证的要求。
+下文固定设计、授权和历史记录用于定位原范围，不构成重做已完成验证的要求。复用结果时核对
+其源码或安装包、机器、解释器与文件系统是否覆盖本次目标，不把历史 A1 或模拟结果当作 A2 实机通过。
 本次任务顺序纠正不改变公共接口、支持范围、部署权限或历史通过状态。
 
 ## Current execution boundary
 
-程序仓库文档 Gate 的本地采用关系、固定规则来源、当前状态与权限见 [Gate declaration](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)。该文件是每次执行的必读入口。当前 **CLOSED，Authorized implementation scope: A1-local-ledger-v0.1（P1–P5）**，Owner 决定见 Gate 引用记录。仅在固定范围内实现与验证；实现提交须以独立 CLOSED 记录提交为祖先。
+当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前接续目标是 A2 未完成项。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
 
-维护者使用固定的私有 companion 规则来源；本仓库不复制其正文。执行者不能读取规则、不能核实基线或 Owner 决策时，应保持 OPEN 并说明具体缺失。公开消费者理解公共接口和使用软件，不需要读取该 companion。不得把规则来源不可读改写为自动获得实现授权。
+本次已批准范围内的接续按上节 Owner 决定和本节执行；历史 Gate 中与此冲突的通用重开要求不作为重复开工前置。已有公开授权记录足以核实原范围时，不仅因私有 companion 暂不可读而把整个任务退回 OPEN。某个动作所需的基线或授权确实不能核实，或动作超出原范围时，只暂停该动作并说明具体缺失，其余已授权工作继续。
+
+固定 companion 规则来源及历史记录保留，不复制私有正文，不自动升级上游规则，也不因来源不可读而新增权限。公开消费者理解公共接口和使用软件，不需要读取该 companion。
 
 ## Engineering boundaries
 

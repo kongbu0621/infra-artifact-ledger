@@ -19,6 +19,13 @@ Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞�
 API/CLI 操作。优先复用该结果，继续真实 NAS、GX10 和尚未覆盖的部署故障项。
 Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 接续的统一前置。
 
+接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
+`${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。
+这是操作者的接续约定，产品 CLI 不自动读取，也不新增授权或执行门槛。沿用已有登记位置，
+不为满足文件名重复登记。记录缺失时，由执行者先沿原配置、部署产物和历史执行端恢复实际绑定，
+不要直接要求 Owner 重新查找机器、共享或凭据路径。具体内容与核验边界见
+[运行手册的部署接续](docs/A2_RUNBOOK.md#0-接续现有部署)。
+
 ## Current execution boundary
 
 当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前接续目标是 A2 未完成项。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。

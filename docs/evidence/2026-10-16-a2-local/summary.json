@@ -1,0 +1,57 @@
+{
+  "scope": "INSTALLED_LOCAL_A2_SYNTHETIC",
+  "recorded_on": "2026-10-16",
+  "result": "PASS",
+  "overall_a2_status": "PARTIAL",
+  "cases": [
+    {
+      "record": "python311.json",
+      "python": "3.11.15",
+      "sqlite": "3.37.2",
+      "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+      "result": "PASS",
+      "api_cli_operations": 8
+    },
+    {
+      "record": "python312.json",
+      "python": "3.12.14",
+      "sqlite": "3.37.2",
+      "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+      "result": "PASS",
+      "api_cli_operations": 8
+    }
+  ],
+  "reused_artifact_source_commit": "6707a1b521c9c4718674620e6c584656bd434e4c",
+  "wheel_sha256": "d1924a346effe83a100860a5f00f4c3eafa12fa51b63529f0a788cef94b4dc8a",
+  "no_business_reexecution_for_documentation": true,
+  "not_run": [
+    "GX10_A2",
+    "REAL_NAS_CAPABILITY_AND_ROUNDTRIP",
+    "T06_T08_DEPLOYMENT_FAULT_EXERCISES",
+    "MOUNT_LOSS_OR_NETWORK_DISCONNECTION"
+  ],
+  "provenance_limit": "The walkthrough source_commit is caller asserted. Separate checks bind the 17 source/wheel/installed modules and checkout script to the stated Git commit; the retained wheel was not rebuilt in this run.",
+  "not_run_is_exhaustive_acceptance_matrix": false,
+  "outside_ledger_a2_acceptance": [
+    "POWER_LOSS_DURABILITY",
+    "RESIDENT_A2_END_TO_END",
+    "SYSTEMD_CONTAINMENT"
+  ],
+  "readonly_recheck": {
+    "record": "readonly-recheck.json",
+    "sha256": "b3d4b60c06330d65487cedf21f352ae37a24131d8d4f4de42be1340008a8cad6",
+    "original_business_replayed": false,
+    "comparison_scope": "WITHIN_EACH_EXECUTION_CASE",
+    "file_preservation_scope": {
+      "entries": "DESCENDANTS_OF_EACH_RETAINED_RUN_DIRECTORY",
+      "file_content": "sha256",
+      "stat_fields": [
+        "st_mode",
+        "st_ino",
+        "st_size",
+        "st_mtime_ns"
+      ],
+      "other_metadata_attested": false
+    }
+  }
+}

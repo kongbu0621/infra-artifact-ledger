@@ -1,6 +1,6 @@
 # A2 实现与验证记录
 
-状态：**实现已提交；Cloud 验证通过；A2 完整验收 PARTIAL**。真实 GX10、受支持本地文件系统的安装态正向闭环、真实 NAS 保存/丢失恢复均为 **NOT_RUN**。本文不把单元测试或模拟挂载写成实机通过。当前运行代码仍为 D9（§3.9）；最新第九轮复核见 §3.10，固定输入包含 D9 及第八轮证据。D1–D8 保留为各自固定版本的历史记录，后续结果不追授给旧提交。
+状态：**实现已提交；Cloud 验证通过；真实 ext4 上的 Linux x86_64 / Python 3.11、3.12 安装态本地合成闭环 PASS；A2 完整验收仍为 PARTIAL**。2026-10-16 的来源与结果见 §8。GX10、真实 NAS 保存/丢失恢复、T06/T08 实际部署故障项仍为 **NOT_RUN**。§1–§5、§7 保留此前 Cloud 复核与移交记录，§6 是更新至本次的累计证据映射。D9 运行代码见 §3.9，第九轮固定输入见 §3.10。历史记录中的环境与 NOT_RUN 描述属于相应轮次，后续结果不追授给旧提交。
 
 ## 1. 授权、源码和制品链
 
@@ -296,7 +296,7 @@ D2 另以 A1 公共 API 构造四组完整合法库，共 **12 个 limit−1/= /
 
 本轮逐用例耗时/RSS 见 [第九轮 A2 资源日志](evidence/2026-09-21-a2-review9/a2-resources.log.txt)和 [合法大库边界日志](evidence/2026-09-21-a2-review9/a2-semantic-resources.log.txt)。D6 历史逐用例耗时/RSS 见 [D6 A2 资源日志](evidence/2026-09-21-a2-review5/a2-resources.log.txt)及上述 D6 语义资源日志；[D5](evidence/2026-09-21-a2-review4/a2-resources.log.txt)、[D3](evidence/2026-09-20-a2-review2/a2-resources.log.txt)、[D2](evidence/2026-09-20-a2-review1/a2-resources.log.txt) 与 [D1](evidence/2026-09-20-a2-cloud/a2-resources.log.txt) 资源日志保留为历史。RSS 为测试进程累计峰值 KiB，非单个调用峰值或部署内存保证。文件预算 1 GiB 不是 RSS 上限。不同 suite 并行运行，耗时不应作为独占机器性能基准。
 
-## 6. T01–T15 证据映射
+## 6. T01–T15 累计证据映射（更新至 2026-10-16）
 
 以下“逻辑通过”只指列出的 Cloud 用例，不表示整行实机验收全部完成；规范中的全部正反例仍需逐项对照。
 
@@ -314,11 +314,13 @@ D2 另以 A1 公共 API 构造四组完整合法库，共 **12 个 limit−1/= /
 | T10 | 同 fd 复制、字节/hash/路径/挂载变化检查 | 逻辑通过 |
 | T11 | 既有目标拒覆盖，内容不同的双进程恢复竞争 | 逻辑通过 |
 | T12 | 复制/链接/清理/同步/最终回读失败，真实进程终止后 nlink=2 只读核对 | 逻辑通过；真实 NAS 失败模型未验 |
-| T13 | 全表/全 Blob、多父合并与内容复用、旧 key 重放、恢复后追加版本及 payload | 合成数据逻辑通过 |
-| T14 | 五入口、CLI/错误/配置、真实进程输出失败退出码、独立 wheel、辅助子进程、A1 回归 | PARTIAL；受支持本地 FS 安装态正向与 GX10 NOT_RUN |
+| T13 | Cloud：全表/全 Blob、多父合并与内容复用、旧 key 重放、恢复后追加版本及 payload；§8 本地：单版本/单 Blob、原 append key 重放、保留库全表比较 | Cloud 合成数据逻辑通过；本地仅覆盖所列小型 fixture，不代表全部 T13 实机通过 |
+| T14 | 五入口、CLI/错误/配置、真实进程输出失败退出码、独立 wheel、辅助子进程、A1 回归；§8 补本地 API/CLI 各四项安装态正向操作 | PARTIAL；所列 Linux x86_64 / ext4 / Python 3.11、3.12 本地正向 PASS；GX10 与 NAS publish 仍 NOT_RUN |
 | T15 | NAS 丢失恢复工具及归属清单、wheel、错误保留、竞争探针目录绑定和追加版本回归 | 工具已交付并有逻辑回归；真实演练 NOT_RUN |
 
-## 7. 实机移交与完成条件
+## 7. 第九轮实机移交与完成条件（历史）
+
+以下保留 2026-09-21 第九轮的移交原记录。当前已完成项和下一接续点见 §8；不因这段历史流程重复构建或重跑已有适用结果。
 
 本会话没有可调用的 GX10 shell 或已接入的 A2 Local Hand 执行通道；现有 Local Hand 信息不能自动等价为本任务已获机器访问。A2 授权保持有效，本记录不要求重复开工批准，也不新增或修改 Local Hand 准入配置。
 
@@ -329,3 +331,35 @@ D2 另以 A1 公共 API 构造四组完整合法库，共 **12 个 limit−1/= /
 工具不卸载共享盘、不关闭设备、不配置 NAS 服务，也不删除已有项目/业务库。真实挂载丢失/断网须在隔离测试范围留独立证据；工具的 `synthetic_nas_roundtrip` PASS 不代替这些项目。受支持本地文件系统闭环、GX10、真实 NAS、T06/T08 实际部署证据未齐前，不宣称 S1–S5 全部验收完成。
 
 没有 GitHub Actions 运行结果、硬件断电、设备缓存、生产切换、冗余备份、A3/A4 或供应商普遍兼容性声明。将来合并时保留 C→D1→`f13d2fb`→D2→`f564174`→D3→`14f68c7`→D4→D5→`689b2d0`→D6→`073057c`→D7→`0de4e57`→D8→`a7f7b27`→D9→`6bd6acf`→本轮复核证据提交的祖先链，不 squash 掉独立 CLOSED 记录；本轮仅提交 PR，不自动合并。
+
+## 8. 2026-10-16：真实本地安装态闭环
+
+本次登记复用已经完成并保留的两个独立合成数据运行，没有为补文档重放业务。Linux x86_64、kernel 6.8.0-124-generic、glibc 2.35、真实 ext4；Python **3.11.15** 和 **3.12.14**，两者 SQLite **3.37.2**。这不是 GX10。两个 runtime 分别新建，从已有 wheel 离线安装，执行时只读；业务脚本从源码目录之外以 `-I -B` 启动，CLI 子进程使用同一安装解释器和 console entry。未替换文件系统分类、SQLite 或恢复 API。
+
+| 绑定 | 本次值 |
+|---|---|
+| 固定 Ledger 输入 | `6707a1b521c9c4718674620e6c584656bd434e4c` |
+| wheel | `infra_artifact_ledger-0.2.0a1-py3-none-any.whl` |
+| wheel SHA-256 | `d1924a346effe83a100860a5f00f4c3eafa12fa51b63529f0a788cef94b4dc8a` |
+| 固定脚本 Git blob | `347e07b6c32042ddf10bebb0ddfab45c703c0c14` |
+| 执行包装器 | 独立安装的 Local Hand `d04fcf51c51df5942d8a2c00c71f12d0c9214b12`；其源码随后通过 PR #44 合并，包装器不构成 Ledger 运行依赖 |
+| 文档 PR 基线 | `37ed2eaa1c7f12504723de23b856b892d419d8a3`；所核对的 17 个模块和脚本与固定输入一致 |
+
+已有 wheel 本次没有重新构建。17 个模块逐一核对固定 Git blob、源码、wheel 和两份安装包字节；脚本绑定单列，因为它来自 checkout，不在 wheel 内。`--source-commit` 仍是调用者声明，独立字节核对不改写原报告的 `CALLER_ASSERTED_NOT_GIT_ATTESTED` 和 wheel 证据限定。逐文件记录见 [source-integrity.json](evidence/2026-10-16-a2-local/source-integrity.json)。
+
+| 运行 | API / CLI 操作 | 实际结果 |
+|---|---|---|
+| Python 3.11.15 | 各执行 create → verify → restore → check_restore | 八项 PASS；恢复 Blob、原幂等记录、summary 一致，原合成库不变 |
+| Python 3.12.14 | 同上，使用另一独立 runtime 与新合成目录 | 八项 PASS；同样的完整性检查通过 |
+
+两轮实际 runtime 探针、匿名临时文件检查、业务进程均退出 0，stderr 为空，双流采集无截断或未排空。固定程序要求完整八项报告，包装器再次校验报告与输入字节；不是仅依据零退出码判成功。运行前后完整 runtime 清单、所选源码和 wheel 保持不变。首次登记以只读 immutable SQLite 连接比较保留的源库、两份快照及 API/CLI 恢复库的全部 SQL 表行；当时读取前后摘要仅保存了源库和两份恢复库。
+
+PR #8 复核另补[只读核对记录](evidence/2026-10-16-a2-local/readonly-recheck.json)：两轮各五个数据库均完成读取前后摘要、完整性、外键、结构及全部表行比较；一致性比较在每轮内部进行，两轮记录的生成时间不同。四份快照的 marker → manifest → 数据库摘要绑定一致；运行目录内条目的集合、文件内容及已核对的 mode、inode、size、mtime 未变，不对其他文件元数据作不变声明。该核对只证明当前保留内容一致，不追认历史发布同步或断电耐久性。17 个模块和固定脚本在两版解释器中各进行一次内存编译，未执行或重放业务。
+
+每轮实际数据为 1 个 Artifact、1 个 Version、1 个 ContentRoot、1 个 39 字节 Blob 和 2 条成功幂等记录；没有 Manifest、ProvenanceLink、ImportReceipt、多父版本或恢复后新增版本。各数据库为 49,152 字节。全表比较仅针对该 fixture，不能把缺席的记录类型或 T13 全部场景解释为已经通过。
+
+公开[证据说明](evidence/2026-10-16-a2-local/README.md)、[汇总](evidence/2026-10-16-a2-local/summary.json)和两份执行记录保留版本、结果、退出和原始摘要；机器路径已替换为占位符，未上传原始配置或合成数据库。pip 安装日志中的不可写缓存警告保留于私有原件，安装成功；业务 stderr 为空。没有把安装日志说成全程无警告。
+
+本轮只补所列本地安装态正向缺口，未重跑已有 Cloud 全量/资源专项，未测量资源峰值，也没有补齐所有 T01–T15 反例。GX10、真实 NAS 能力/发布/仅从 NAS 恢复、实际挂载丢失/断网、T06/T08 部署故障仍未完成；整体 A2 保持 PARTIAL。systemd 限额/隔离、Local Hand 常驻服务端到端及硬件断电耐久性均未验证，但不属于本轮 Ledger A2 完成的新增前置；A2 原验收范围仍以固定[验收矩阵](a2/ACCEPTANCE.md)为准。
+
+下一步复用上述本地结果和已核实安装，核对部署侧真实 NAS 挂载与专属合成目录，再按运行手册执行剩余现场项。NAS 条件未具备时保留 NOT_RUN；不以本地替身或 Local Hand 功能完成替代 NAS 验收。

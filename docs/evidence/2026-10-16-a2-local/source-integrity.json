@@ -1,0 +1,123 @@
+{
+  "source_commit": "6707a1b521c9c4718674620e6c584656bd434e4c",
+  "publication_base_commit": "37ed2eaa1c7f12504723de23b856b892d419d8a3",
+  "wheel": {
+    "filename": "infra_artifact_ledger-0.2.0a1-py3-none-any.whl",
+    "bytes": 67832,
+    "sha256": "d1924a346effe83a100860a5f00f4c3eafa12fa51b63529f0a788cef94b4dc8a",
+    "reused_existing_artifact": true,
+    "rebuilt_for_this_run": false
+  },
+  "module_count": 17,
+  "checked_out_script_count": 1,
+  "files": [
+    {
+      "path": "src/infra_artifact_ledger/__init__.py",
+      "git_blob": "1c6eaf6c61d4dadc9597620384072269e0f0db90",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/__main__.py",
+      "git_blob": "d6dc00c4af8d5e63bd941ca42547b659256f2257",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/_checkpoints.py",
+      "git_blob": "4074eef3dd8d01dcea320504492b92f3acf6d194",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/cli.py",
+      "git_blob": "21cfb47214903cf2f0c88a243b97e2fb4fb6e04d",
+      "sha256": "4c069c425888eef0c268d299042c81f3254ac0804af4d2c586bca8ae43eb7e2f",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/errors.py",
+      "git_blob": "f28642ac43d4729bd7cc0b72620846c16e97b8bc",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/fingerprint.py",
+      "git_blob": "81c72458329eeed7caeb4d7918c1871a5e232ea1",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/portable.py",
+      "git_blob": "4077fd57d624b70c215e5e482286f88c9379c511",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/records.py",
+      "git_blob": "7ff4cbc3e7099bf7464339e8456fb3e1ffed4cfd",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/recovery.py",
+      "git_blob": "46d90e74150f069dbcdfc115d8fb157bba1fcca7",
+      "sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/service.py",
+      "git_blob": "fea8428cac264cb9cabea0017ff5829121dc36fa",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_cli.py",
+      "git_blob": "459f97568a1841de174474d270a0bd545752538c",
+      "sha256": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_common.py",
+      "git_blob": "a70dfeb897f2b313fdf6c0c1580424826bbea3be",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_format.py",
+      "git_blob": "8befa03444f255f804c1c4d55b9a455fc639e0f3",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_sqlite.py",
+      "git_blob": "baaad0f552bc4f3895c47879ffc910ae0aa42333",
+      "sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_storage.py",
+      "git_blob": "fe56add3d925bd9b677151845b8c169ce67479d8",
+      "sha256": "a230cf459ed00bfeabb8374913987c6ba6602b0381218f44fb83146fd2a26c1f",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/sqlite_store.py",
+      "git_blob": "8c9ecd8acdd4a022280e6bac9954aebc48a1dd92",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "src/infra_artifact_ledger/validation.py",
+      "git_blob": "cb26e75a86c989bbb0d7fd6d18fa85dec1ab7b95",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155",
+      "source_wheel_installed_equal": true
+    },
+    {
+      "path": "tests/installed_snapshot_walkthrough.py",
+      "git_blob": "347e07b6c32042ddf10bebb0ddfab45c703c0c14",
+      "sha256": "1023b33a1492f879266bf320ecd3979a114da71cd699915afa0d5f034249675d",
+      "role": "fixed_checkout_walkthrough_not_wheel_member"
+    }
+  ]
+}

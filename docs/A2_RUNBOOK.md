@@ -4,24 +4,59 @@
 
 操作语义与失败处理见 [A2_USAGE](A2_USAGE.md)，规范验收项见 [A2 验收矩阵](a2/ACCEPTANCE.md)。五份设计基线不因编写此手册改变。
 
+## 0. 接续现有部署
+
+执行者先读取原部署的私有接续记录。已有登记沿用原位置；新记录默认保存在
+`${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`，目录仅操作者可访问。
+这是部署侧记录约定，不是产品配置 schema；CLI 不自动读取它，也不据此授予权限。
+不要求为历史有效结果补造新记录或重新执行；逐步补入本次确认的事实即可。
+
+记录至少应让下一位执行者找到：
+
+- 抽象计算/存储角色对应的实际主机和访问入口，以及这些绑定的来源与核对时间。
+- 已安装实现的源提交、wheel 摘要、运行环境及可持久取回的安装包和证据位置。
+- NAS 文件访问的凭据引用、真实挂载配置和专属合成归档范围；未知项明确保留未知。
+- 已完成任务、可能已写入的原身份和结果、未完成项及下一条可执行步骤。
+
+凭据引用只记录现有配置或密钥的定位信息，不保存密码、私钥正文或会话令牌。实际端点、
+机器路径和原始检查输出保持私有；公开仓库只提供接续规则和经核对的非敏感结果。
+私有记录与必要交付物不应只留在临时目录；引用仍在临时目录的运行环境时，明确其位置，
+并保留可重建该环境的固定包与来源证据，不把可重建误报成环境始终存在。
+原报告、日志、合成数据与核对程序也要能由持久索引取回；仅保存一份指向临时目录的 JSON
+不等于保存了证据。迁移时按清单核对文件内容摘要，保留原件和旧索引；更新当前入口前先保存
+上一版，并将新入口完整写入后替换，避免中断留下半份接续记录。
+
+每项结果分别绑定实际运行版本、机器、时间和范围。固定源码、已安装版本、PR head 和已合并
+版本可能不同；后来的实测追加新记录，不改写旧报告，也不把旧报告的 NOT_RUN 当作永久状态。
+临时登录会话还应记录有效期和再次连接方式；一次登录成功不等于已有持久凭据配置。
+
+记录缺失、过期或当前主机无法访问时，执行者应先在已有授权范围内查原配置、部署产物和
+历史执行端，区分“未接续到既有配置”与“尚未配置”。当前机器没有挂载不能证明其他机器
+也没有；抽象节点设计不能替代部署绑定。确实缺少必须由 Owner 完成的登录或授权时，先准备
+具体目标、最小操作与验收方法，再说明这一项缺什么，不让 Owner 重新定位整套技术环境。
+
+NAS 在线、Git 仓库可读、普通文件服务可访问和 Ledger 的合成恢复通过是不同事实。
+只证明 Git 权限的凭据不能据此推断普通文件访问权限。已有记录也不能替代写入前对实际目标和
+挂载身份的核对；第 4–5 节继续适用，未执行的恢复保持 `NOT_RUN`。
+
 ## 1. 机器和目录约定
 
-每台机器、每个项目独立虚拟环境；本阶段另建 build/runtime 两个环境，避免替换现有 A1 环境。代码、环境和数据分开。GX10 当前工作根为 `$HOME/xxj/works`，其他机器自行替换；不要把 GX10 的绝对路径用于 PRO6000 或 Windows。
+每台机器、每个项目独立虚拟环境；新建时分开 build/runtime，已有且核实适用的 A2 安装按 §2.1 复用。代码、环境和数据分开，原 A1 安装保留。`LEDGER_BASE` 从当前执行节点的私有部署绑定取得；抽象节点名不决定实际目录，也不要把一台机器的路径套用到其他机器。以下命令使用 Bash。
 
-| 类别 | GX10 示例 |
+| 类别 | 新部署的目录布局示例；已有部署沿用实际绑定 |
 |---|---|
-| 已有仓库 | `$HOME/xxj/works/projects/infra-artifact-ledger` |
+| 已有仓库 | `$LEDGER_BASE/projects/infra-artifact-ledger` |
 | 固定提交验收 checkout | 同级新建 `infra-artifact-ledger-a2-<完整SHA>` |
-| A2 构建环境 | `$HOME/xxj/works/venvs/infra_artifact_ledger_a2_build_env` |
-| A2 运行环境 | `$HOME/xxj/works/venvs/infra_artifact_ledger_a2_runtime_env` |
-| 本地证据根 | `$HOME/xxj/works/data/infra-artifact-ledger/acceptance` |
-| 每次运行 | 证据根下新的 `a2-...` 子目录；不要复用上次目录 |
+| A2 构建环境 | `$LEDGER_BASE/venvs/infra_artifact_ledger_a2_build_env` |
+| A2 运行环境 | `$LEDGER_BASE/venvs/infra_artifact_ledger_a2_runtime_env` |
+| 本地证据根 | `$LEDGER_BASE/data/infra-artifact-ledger/acceptance` |
+| 新业务演练 | 证据根下新的 `a2-...` 子目录；先核对原结果，不重放已完成业务 |
 
 本地数据库、输出、暂存和恢复父目录须在已存在的 ext4/xfs/btrfs 目录上。下面命令先查看挂载；若实际为 overlay、tmpfs、网络文件系统或未知类型，应选另一可靠本地目录，不通过参数或修改分类函数把它伪装为已支持。
 
-```sh
-LEDGER_BASE="$HOME/xxj/works"
-LEDGER_LOCAL_ACCEPTANCE_PARENT="$LEDGER_BASE/data/infra-artifact-ledger/acceptance"
+```bash
+LEDGER_BASE='/替换为当前节点已核实的工作根'
+LEDGER_LOCAL_ACCEPTANCE_PARENT='/替换为已核实的本地验收父目录'
 findmnt -T "$LEDGER_LOCAL_ACCEPTANCE_PARENT" -o TARGET,SOURCE,FSTYPE,FSROOT
 hostname
 uname -m
@@ -32,11 +67,50 @@ python3 -c 'import sys, sqlite3; print(sys.version); print(sys.executable); prin
 
 ## 2. 固定源码，构建与安装
 
-将 `LEDGER_SOURCE_SHA` 替换为本次交付的完整源码 SHA，并与 PR、A2 验证记录核对。不要使用设计提交或 CLOSED 记账提交作为实现来源，也不要仅用随时间变化的 `main` 作证据。下例使用 GX10 的 `python3`；单独验证 3.11 时将 `LEDGER_PYTHON` 设置为该机实际的 `python3.11`，并为其选择不同的 build/runtime 环境目录。
+将 `LEDGER_SOURCE_SHA` 替换为所选实现的完整源码 SHA，并与对应实测、PR 和安装来源核对。不要使用设计提交或 CLOSED 记账提交作为实现来源，也不要仅用随时间变化的 `main` 作证据。§2.1 与 §2.2 按实际需要选择，不要顺序执行两套安装准备。
 
-```sh
+### 2.1 复用已核实的安装
+
+先核对私有记录中的源码/脚本、wheel 与安装模块字节、解释器和当前目标是否仍匹配。来源可以是固定 checkout，也可以是按固定 Git tree 导出并核对摘要的源码；不能仅凭参数中的 SHA 或同名 `0.2.0a1` 判断版本。下面填写的是核实后的绑定，不执行旧 JSON 中保存的命令。它只检查必要文件、复核 wheel 摘要和新建本次日志目录，不构建、安装或执行业务，也不代替源码到安装字节的核对。
+
+```bash
 set -euo pipefail
-LEDGER_BASE="$HOME/xxj/works"
+set -o noclobber
+umask 0077
+LEDGER_SOURCE_SHA='<已核实的完整40位小写源码SHA>'
+LEDGER_A2_SRC='/替换为已核实的固定源码目录'
+LEDGER_A2_RUNTIME_VENV='/替换为已核实的现有A2运行环境'
+LEDGER_A2_WHEEL='/替换为已核实的保留wheel绝对路径'
+LEDGER_WHEEL_SHA256='<该wheel的64位小写SHA256>'
+LEDGER_LOCAL_ACCEPTANCE_PARENT='/替换为已核实的本地验收父目录'
+
+[[ "$LEDGER_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+[[ "$LEDGER_WHEEL_SHA256" =~ ^[0-9a-f]{64}$ ]]
+test -f "$LEDGER_A2_SRC/tests/installed_snapshot_walkthrough.py"
+test -f "$LEDGER_A2_SRC/tools/acceptance/a2_nas_exercise.py"
+test -x "$LEDGER_A2_RUNTIME_VENV/bin/python"
+test -f "$LEDGER_A2_WHEEL"
+test -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT"
+LEDGER_ACTUAL_WHEEL_SHA256=$(sha256sum < "$LEDGER_A2_WHEEL")
+[[ "$LEDGER_ACTUAL_WHEEL_SHA256" == "$LEDGER_WHEEL_SHA256  -" ]]
+LEDGER_A2_RUN=$(mktemp -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT/a2-resume-XXXXXXXX")
+printf '%s\n' "$LEDGER_SOURCE_SHA" > "$LEDGER_A2_RUN/source-commit.txt"
+sha256sum -- "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/wheel.sha256"
+```
+
+摘要比较从标准输入读取 wheel 字节，不将路径拼进校验输入；持久校验记录由 `sha256sum` 自身生成，保留它对路径中换行和反斜杠的转义。
+
+`LEDGER_A2_RUN` 是新的日志容器，不是新的业务授权或已执行任务身份；原 run_id、证据和失败原件继续保留。只需继续 NAS 时，从这里转到 §4–§5，不重跑已完成的本地闭环。若另有受改动影响的源码回归，单独绑定已核实的 `LEDGER_A2_BUILD_VENV` 后选择 §3 对应命令；只做 NAS 接续不要求重新准备 build 环境。
+
+### 2.2 需要新建时再构建与安装
+
+本段用于确需新安装的机器/版本。下例使用该机的 `python3`；单独验证 3.11 时将 `LEDGER_PYTHON` 设为实际的 `python3.11`，并选择不同的 build/runtime 目录。
+
+```bash
+set -euo pipefail
+set -o noclobber
+umask 0077
+LEDGER_BASE='/替换为当前节点已核实的工作根'
 LEDGER_REPO="$LEDGER_BASE/projects/infra-artifact-ledger"
 LEDGER_SOURCE_SHA='<本次交付的完整40位小写SHA>'
 LEDGER_PYTHON=python3
@@ -45,6 +119,7 @@ LEDGER_A2_BUILD_VENV="$LEDGER_BASE/venvs/infra_artifact_ledger_a2_build_env"
 LEDGER_A2_RUNTIME_VENV="$LEDGER_BASE/venvs/infra_artifact_ledger_a2_runtime_env"
 LEDGER_LOCAL_ACCEPTANCE_PARENT="$LEDGER_BASE/data/infra-artifact-ledger/acceptance"
 
+[[ "$LEDGER_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
 test -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT"
 test ! -e "$LEDGER_A2_SRC"
 test ! -e "$LEDGER_A2_BUILD_VENV"
@@ -52,8 +127,10 @@ test ! -e "$LEDGER_A2_RUNTIME_VENV"
 git -C "$LEDGER_REPO" fetch origin
 git -C "$LEDGER_REPO" cat-file -e "$LEDGER_SOURCE_SHA^{commit}"
 git -C "$LEDGER_REPO" worktree add --detach "$LEDGER_A2_SRC" "$LEDGER_SOURCE_SHA"
-test "$(git -C "$LEDGER_A2_SRC" rev-parse HEAD)" = "$LEDGER_SOURCE_SHA"
-test -z "$(git -C "$LEDGER_A2_SRC" status --porcelain)"
+LEDGER_CHECKOUT_SHA=$(git -C "$LEDGER_A2_SRC" rev-parse HEAD)
+test "$LEDGER_CHECKOUT_SHA" = "$LEDGER_SOURCE_SHA"
+LEDGER_CHECKOUT_STATUS=$(git -C "$LEDGER_A2_SRC" status --porcelain)
+test -z "$LEDGER_CHECKOUT_STATUS"
 LEDGER_A2_RUN=$(mktemp -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT/a2-build-XXXXXXXX")
 mkdir "$LEDGER_A2_RUN/wheels"
 
@@ -76,15 +153,19 @@ git -C "$LEDGER_A2_SRC" rev-parse HEAD > "$LEDGER_A2_RUN/source-commit.txt"
 
 如果同名环境已存在，先选择新的环境名称，不在本流程中删除或重用未知环境。准备构建工具需要已配置的包索引或预先准备的同版本 wheel；安装产品本身使用已构建的本地 wheel，不执行 `pip install infra-artifact-ledger` 猜测来源。
 
+源码身份与工作树查询先分别检查命令是否成功，再比较输出；查询报错时不能把空输出视为干净工作树，也不能把看似匹配的 SHA 视为核验通过。此时停止后续环境创建和构建，保留已经取得的 checkout 与错误输出，查明原因后继续。
+
 runtime 输出应显示 `0.2.0a1`，模块来自该 runtime venv 的 `site-packages`。不要把 `PYTHONPATH=src` 的源码运行写成已安装软件验证。
 
 `--source-commit` 是调用者声明的来源值；脚本核对其格式，但不据此证明 wheel 来自该 Git 提交。保留固定 checkout 的完整 SHA、干净工作树检查、构建日志、wheel 摘要、安装日志和实际模块位置，形成可复核的构建链。NAS 工具使用同一个固定文件描述符计算 wheel 摘要并比较已安装包字节；这证明本次比较的字节匹配，不等于 Git 来源证明。安装态 smoke 工具另行明确其不核对 wheel 字节，不能省略上述构建记录。
 
 ## 3. 源码回归、资源和安装态验证
 
-以下命令沿用上一节设置的变量。各项失败保留日志并处理，不能把前一次运行结果写给新 SHA。
+以下是按缺口选择的命令清单，不是每次接续必须整段重跑的脚本。复用仍适用的源码、安装和资源结果；仅运行受改动影响或尚未覆盖的项目，并记录其准确版本。命令沿用 §2.1 或 §2.2 的绑定；源码项使用另行核实的 `LEDGER_A2_BUILD_VENV`，安装态项只需 runtime。各项失败保留日志并处理，不能把前一次运行结果写给新 SHA。
 
-```sh
+```bash
+set -euo pipefail
+set -o noclobber
 cd "$LEDGER_A2_SRC"
 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" -m unittest discover -s tests -v \
   > "$LEDGER_A2_RUN/unit.log" 2>&1
@@ -109,15 +190,17 @@ A2_RESOURCE_TESTS=1 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" \
 
 资源专项会真实构造大文件/大数据并消耗明显高于序列化大小的内存和磁盘，需在日志中保留实际耗时/RSS；1 GiB 文件上限不是内存上限。普通 discovery 中被跳过的资源项不算已通过。小常量故障测试与实际上限测试各自留证，不能相互替代。
 
-`test_snapshot_semantic_resources.py` 的四项专跑分别覆盖合法 Ledger 的 metadata 16 MiB、metadata 50,000 行、refs 250,000 行和 refs 32 MiB，共十二个 −1／等于／+1 场景。构造方式、完整恢复比对和总 TEXT 64 MiB 的可达性说明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。这组测试的文件系统类型分类使用明确的开发态模拟，实际执行数据库与文件操作；通过结果属于 `LOGIC_ONLY`，不能据此承认 Cloud overlay 的持久性或 GX10/NAS 的实机支持。未开启 `A2_RESOURCE_TESTS=1` 时四项跳过，须保留上述专门日志。
+`test_snapshot_semantic_resources.py` 的四项专跑分别覆盖合法 Ledger 的 metadata 16 MiB、metadata 50,000 行、refs 250,000 行和 refs 32 MiB，共十二个 −1／等于／+1 场景。构造方式、完整恢复比对和总 TEXT 64 MiB 的可达性说明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。这组测试的文件系统类型分类使用明确的开发态模拟，实际执行数据库与文件操作；通过结果属于 `LOGIC_ONLY`，不能据此承认 Cloud overlay 的持久性或 GX10/NAS 的实机支持。未开启 `A2_RESOURCE_TESTS=1` 时四项按跳过记录；实际执行专项时保留对应日志，已有适用结果继续复用。
 
 安装态 A2 脚本只在显式提供的本地父目录下生成合成库、两个新快照及新恢复目录；分别调用 API 与已安装 CLI，核对 Blob、已有操作重放和源库不变。未传 NAS 配置时，`nas_publish_flow=NOT_RUN`，只证明本地接入流程。本脚本无论是否提供 NAS 配置，都不能代替下一节的 NAS 丢失恢复演练。
+
+示例启用 `noclobber`，同名普通日志文件已存在时 Bash 在启动命令前拒绝输出重定向，旧内容保留。它不保证拒绝 FIFO 等特殊文件，也不能替代新建、私有且由操作者独占的日志目录。若需继续，先核对原执行和可能的副作用，再为获准继续的步骤分配新的日志目录或文件名；不要关闭保护覆盖原日志，也不要因日志冲突重做已经完成的业务。这一保护只针对这些日志重定向，不代表所有外部写入都有防重复保证。
 
 ## 4. 采集 NAS 配置
 
 在部署侧确认用于合成验收的已挂载共享目录，收集实际挂载源、挂载点、root、文件系统类型和 archive_root。配置示例与字段见 [A2_USAGE §5](A2_USAGE.md#5-nas-保存与读回)。只把配置保存在本机部署目录，不提交实际内网端点或凭据到公开仓库。
 
-```sh
+```bash
 LEDGER_NAS_ARCHIVE_ROOT='/替换为NAS上已存在的合成验收归档根'
 LEDGER_STORAGE_CONFIG='/替换为本机私有storage-config.json绝对路径'
 findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
@@ -131,13 +214,27 @@ findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
 
 前提是 S1–S4 已有相应证据、wheel 已安装且构建链已留存、已选择专属合成范围，且真实 NAS 配置已核实。工具先只读核对本地与 NAS 端点，再构造并关闭本轮合成库和本地快照，冻结精确归属清单；此后才创建 NAS 专属子树、执行当前挂载能力预检和发布。能力预检包含两个独立进程争用同一目录时只有一个创建者，失败不继续采用目标。挂载丢失/断网另列 `NOT_RUN`，不能由此竞争测试代替。
 
-```sh
+```bash
+set -euo pipefail
+set -o noclobber
+umask 0077
+test -d "$LEDGER_A2_RUN"
+for LEDGER_NAS_RECORD in a2-nas-console.log a2-nas-command-status.json; do
+  test ! -e "$LEDGER_A2_RUN/$LEDGER_NAS_RECORD"
+  test ! -L "$LEDGER_A2_RUN/$LEDGER_NAS_RECORD"
+done
+LEDGER_NAS_COMMAND_STATUS=0
 "$LEDGER_A2_RUNTIME_VENV/bin/python" -I "$LEDGER_A2_SRC/tools/acceptance/a2_nas_exercise.py" \
   --local-parent "$LEDGER_LOCAL_ACCEPTANCE_PARENT" \
   --storage-config "$LEDGER_STORAGE_CONFIG" \
   --source-commit "$LEDGER_SOURCE_SHA" \
-  --wheel "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/a2-nas-console.log" 2>&1
+  --wheel "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/a2-nas-console.log" 2>&1 || LEDGER_NAS_COMMAND_STATUS=$?
+printf '{"shell_command_status":%s}\n' "$LEDGER_NAS_COMMAND_STATUS" \
+  > "$LEDGER_A2_RUN/a2-nas-command-status.json"
+(exit "$LEDGER_NAS_COMMAND_STATUS")
 ```
+
+同名控制台日志或状态记录已存在（包括链接、目录和特殊文件）时，这段命令在启动前拒绝，保留原件；检查依赖上述日志目录由操作者独占，不构成对并发目录替换的原子保护。正常返回后，`shell_command_status` 保存 Bash 观察到的命令状态，再让外层收到同一状态。它可能来自程序退出、信号或启动失败，不能单独证明业务启动或通过；零值仍需对应的完整验收报告。若 shell 中断或状态文件保存失败，不能仅凭记录缺失判断业务未启动；先核对原日志、run_id 和实际结果，复用已有启动/退出证据，不能确定的项保留未知，不因缺失状态重跑业务。状态记录不是日志 fsync 或硬件断电耐久性的证明。
 
 脚本检查隔离解释器、安装包位于 venv 且不来自 checkout、安装包字节与指定 wheel 相符。本地创建全新的 `a2-nas-<32位ID>` 运行目录，NAS 也在指定 archive_root 下创建本次专属新子树，不复用既有 generation。
 
@@ -155,7 +252,7 @@ findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
 
 ## 6. 汇总、失败与移交
 
-每个机器/解释器组合分别记录完整源 SHA、wheel SHA-256、Python/SQLite/内核/架构、真实文件系统与挂载 profile、执行命令、退出码、日志、资源峰值以及失败/跳过项。公开 PR 只放经过核对的摘要与非敏感证据，不上传真实配置或个人数据。
+每个机器/解释器组合分别记录完整源 SHA、wheel SHA-256、Python/SQLite/内核/架构、真实文件系统与挂载 profile、执行命令、退出码、日志、资源峰值以及失败/跳过项。未测量的资源峰值明确标为 `NOT_MEASURED`，不填推测值，也不为补字段重放业务。公开 PR 只放经过核对的摘要与非敏感证据，不上传真实配置或个人数据。
 
 | 检查结果 | 可以形成的结论 |
 |---|---|

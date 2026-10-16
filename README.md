@@ -26,7 +26,7 @@
 flowchart TD
     A["报告工具、知识库或 Agent<br/>产生成果，选择版本"]
     B["接入入口<br/>Python 库 / JSON 命令行"]
-    C["infra-artifact-ledger<br/>保存身份、版本与内容<br/>记录来源和写入结果"]
+    C["infra-artifact-ledger<br/>保存身份、版本、内容与来源<br/>保存成功写入记录"]
     D[("本地 SQLite<br/>记录与实际内容一起保存")]
     E["应用按指定版本取回<br/>核对内容，继续使用"]
 
@@ -67,7 +67,7 @@ flowchart TD
 
 ## 开始使用
 
-1. 查看[兼容表](docs/COMPATIBILITY.md)，按[构建与安装步骤](docs/A2_RUNBOOK.md#2-固定源码构建与安装)在项目独立虚拟环境中安装 `0.2.0a1` wheel。安装环境、源码和数据目录分别管理。
+1. 查看[兼容表](docs/COMPATIBILITY.md)，按[安装指南](docs/INSTALL.md)在项目独立虚拟环境中安装 `0.2.0a1` wheel。安装环境、源码和数据目录分别管理。
 2. 按[接入指南](docs/USAGE.md#2-选择接入方式与数据归属)选择 Python 库或 JSON CLI，准备本地可靠文件系统上的新数据库路径。
 3. 跟随[普通报告完整示例](docs/REUSE_EXAMPLE.md)，完成“初始化 → 建立身份 → 保存 v1/v2 → 指定版本读回 → 校验 → 原请求重试核对 → 新库导入”。
 4. 需要备份时，按[快照与恢复指南](docs/A2_USAGE.md)使用自己的数据库、存储配置和全新恢复目标。
@@ -101,7 +101,7 @@ flowchart TD
 | 想了解什么 | 阅读入口 |
 |---|---|
 | 如何接入，完成一次真实读写 | [接入指南](docs/USAGE.md) · [报告完整示例](docs/REUSE_EXAMPLE.md) |
-| 如何构建安装、备份和恢复 | [构建与运行手册](docs/A2_RUNBOOK.md) · [快照与恢复指南](docs/A2_USAGE.md) |
+| 如何构建安装、备份和恢复 | [安装指南](docs/INSTALL.md) · [快照与恢复指南](docs/A2_USAGE.md) |
 | 精确的参数、数据格式和错误语义 | [公共接口](docs/INTERFACE_PROFILE.md) · [恢复接口](docs/a2/INTERFACE_PROFILE.md) |
 | 需求、责任边界与内部结构 | [需求](docs/REQUIREMENTS.md) · [架构](docs/ARCHITECTURE.md) |
 | 支持哪些环境，有哪些验证依据 | [兼容表](docs/COMPATIBILITY.md) · [基本能力验证](docs/A1_VALIDATION.md) · [恢复能力验证](docs/A2_VALIDATION.md) |

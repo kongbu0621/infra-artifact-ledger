@@ -2,7 +2,7 @@
 
 状态：**A1 `0.1.0a1` alpha 的独立接入指南**。可以从固定源码构建 wheel，在独立环境安装并运行库或 CLI；当前没有 PyPI 发布。本文不增加公共字段、方法或实现范围，字段与行为以 [公共接口](INTERFACE_PROFILE.md) 为准。实际源提交、构建和运行结果见 [验证记录](A1_VALIDATION.md)，支持矩阵见 [兼容表](COMPATIBILITY.md)。[文档 Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 已为 A1 的 P1–P5 记录 CLOSED。
 
-A1 的读写用法继续适用于 A2 软件；`0.2.0a1` 的一致快照、NAS 保存及新目录恢复见 [A2 使用指南](A2_USAGE.md)，新版本的构建与部署验收见 [A2 运行手册](A2_RUNBOOK.md)。本文下方 `0.1.0a1` 安装命令保留为 A1 历史版本示例，不用于安装本次 A2 wheel。
+A1 的读写用法继续适用于当前 `0.2.0a1`；首次安装统一按[安装指南](INSTALL.md)，一致快照、NAS 保存及新目录恢复见 [A2 使用指南](A2_USAGE.md)。维护者的部署验收见 [A2 运行手册](A2_RUNBOOK.md)。本文下方 `0.1.0a1` 安装命令保留为 A1 历史版本示例，不用于当前版本安装。
 
 ## 1. 什么情况下复用
 
@@ -42,7 +42,7 @@ A1 的读写用法继续适用于 A2 软件；`0.2.0a1` 的一致快照、NAS �
 3. 选择本地可靠文件系统上的新数据库路径，和软件安装目录分开；确认只有一个逻辑写入者。
 4. 先按下表完成一个合成报告的闭环，再连接真实业务数据。
 
-**Linux/Python 3.11 构建与离线安装。** 把下面四个绝对路径替换为自己的目录。`LEDGER_SRC` 指向 [验证记录](A1_VALIDATION.md) 中固定源提交的完整 checkout；先核对来源 SHA。构建与消费者使用两个不同 venv，数据目录另选。`pyproject.toml` 固定 setuptools/wheel；这里同时固定其构建环境使用的 packaging 版本。准备构建工具这一步需要已配置的包索引，或事先准备的同版本 wheel。
+**历史 A1 `0.1.0a1` 构建与离线安装。** 新用户按[当前版本安装指南](INSTALL.md)安装后，继续下方操作表和 §4；以下命令仅用于复现 A1 历史版本。把下面四个绝对路径替换为自己的目录。`LEDGER_SRC` 指向 [验证记录](A1_VALIDATION.md) 中固定源提交的完整 checkout；先核对来源 SHA。构建与消费者使用两个不同 venv，数据目录另选。`pyproject.toml` 固定 setuptools/wheel；这里同时固定其构建环境使用的 packaging 版本。准备构建工具这一步需要已配置的包索引，或事先准备的同版本 wheel。
 
 ```sh
 LEDGER_SRC=/path/to/projects/infra-artifact-ledger

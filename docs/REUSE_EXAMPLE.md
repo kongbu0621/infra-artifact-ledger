@@ -1,14 +1,14 @@
 # 独立复用示例：普通报告的版本归档与搬运
 
-状态：**A1 `0.1.0a1` alpha 的可执行合成报告教程**。本文主流程已通过隔离安装的 CLI walkthrough，并运行对应 Python 库代码块；实际源提交、wheel 和执行结果见 [验证记录](A1_VALIDATION.md)。安装入口见 [USAGE](USAGE.md)，字段和错误以 [公共接口](INTERFACE_PROFILE.md) 为准；本例不覆盖 [实施计划](IMPLEMENTATION_PLAN.md) P1–P5 的全部验收。
+状态：**源于 A1 `0.1.0a1` alpha 的可执行合成报告教程，基本读写接口继续适用于 `0.2.0a1`**。A1 主流程已通过隔离安装的 CLI walkthrough，并运行对应 Python 库代码块；历史源提交、wheel 和执行结果见 [验证记录](A1_VALIDATION.md)。当前版本安装入口见[安装指南](INSTALL.md)，字段和错误以 [公共接口](INTERFACE_PROFILE.md) 为准；本例不覆盖 [实施计划](IMPLEMENTATION_PLAN.md) P1–P5 的全部验收。
 
 场景：一个普通报告管理程序要保存季度报告 v1、v2，明确 v2 来自 v1，随后将完整历史搬到另一新 Ledger。它不需要 Code Driver、Agent、模型账号或私有仓库。报告审批、展示名称和“当前采用哪个版本”由报告程序负责；Ledger 只保存精确身份、版本、内容与来源关系。
 
 ## 1. 安装与准备
 
-先按 [USAGE 的构建与安装步骤](USAGE.md) 使用固定源码构建 wheel，在 Python 3.11 独立环境离线安装。当前没有 PyPI 发布，不执行 `pip install infra-artifact-ledger` 猜测包来源。本示例在已验证的 Linux 环境运行；安装完成后，从一个全新、本地可靠文件系统目录开始，所有数据库和输出目标必须不存在。
+先按[安装指南](INSTALL.md)使用固定源码构建并安装 `0.2.0a1` wheel；已经完成安装的读者直接复用同一环境。当前没有 PyPI 发布，不执行 `pip install infra-artifact-ledger` 猜测包来源。本示例在已验证的 Linux 环境运行；安装完成后，从一个全新、本地可靠文件系统目录开始，所有数据库和输出目标必须不存在。
 
-主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 Python 片段仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为 USAGE 中已安装 wheel 的同一个 venv 的绝对路径；本例显式使用该环境，不依赖激活：
+主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 Python 片段仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为安装指南中已安装 wheel 的同一个 runtime venv 的绝对路径；本例显式使用该环境，不依赖激活：
 
 ```sh
 LEDGER_VENV=/path/to/venvs/report-tool

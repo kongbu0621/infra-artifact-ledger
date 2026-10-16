@@ -10,7 +10,7 @@
 git clone https://github.com/kongbu0621/infra-artifact-ledger.git /path/to/projects/infra-artifact-ledger
 ```
 
-从兼容表及对应验证记录选择包含当前实现的完整 40 位提交 SHA，确认该提交已在本地仓库中。已有 checkout 可以直接使用，不必重新克隆或切换分支。下方脚本只从所选提交导出单独的构建副本，不纳入工作区未提交的改动，也不向原 checkout 写构建产物。
+从兼容表及对应验证记录选择包含当前实现的完整 40 位提交 SHA，确认该提交已在本地仓库中。已有 checkout 可以直接使用，不必重新克隆或切换分支。下方脚本将该提交取入独立 Git 对象库后导出构建副本，不套用原 checkout 的本地替换引用或导出属性，不纳入工作区未提交的改动，也不向原 checkout 写构建产物。
 
 预先创建一个可写的安装父目录，将下方 `/path/to/...` 和提交 SHA 替换为自己的值。脚本在父目录中创建全新的安装子目录，将构建环境、运行环境和 wheel 分开；应用数据目录另选本地可靠文件系统，不放进安装目录。
 
@@ -26,16 +26,21 @@ LEDGER_INSTALL_PARENT='/path/to/ledger-installs'
 LEDGER_PYTHON=python3.11
 
 [[ "$LEDGER_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
-LEDGER_SOURCE_TYPE=$(git -C "$LEDGER_REPO" cat-file -t "$LEDGER_SOURCE_SHA")
+LEDGER_SOURCE_TYPE=$(git --no-replace-objects -C "$LEDGER_REPO" cat-file -t "$LEDGER_SOURCE_SHA")
 test "$LEDGER_SOURCE_TYPE" = commit
 test -d "$LEDGER_INSTALL_PARENT"
 LEDGER_INSTALL_DIR=$(mktemp -d "$LEDGER_INSTALL_PARENT/ledger-install-XXXXXXXX")
 LEDGER_SRC="$LEDGER_INSTALL_DIR/source"
+LEDGER_EXPORT_REPO="$LEDGER_INSTALL_DIR/export.git"
 LEDGER_BUILD_VENV="$LEDGER_INSTALL_DIR/build"
 LEDGER_VENV="$LEDGER_INSTALL_DIR/runtime"
 LEDGER_WHEEL_DIR="$LEDGER_INSTALL_DIR/wheels"
 mkdir "$LEDGER_SRC" "$LEDGER_WHEEL_DIR"
-git -C "$LEDGER_REPO" archive "$LEDGER_SOURCE_SHA" | tar -xf - -C "$LEDGER_SRC"
+git init --quiet --bare --template= "$LEDGER_EXPORT_REPO"
+GIT_NO_REPLACE_OBJECTS=1 git -C "$LEDGER_EXPORT_REPO" -c protocol.file.allow=always \
+  fetch --quiet --no-tags --no-recurse-submodules --depth=1 -- "$LEDGER_REPO" "$LEDGER_SOURCE_SHA"
+git --no-replace-objects -C "$LEDGER_EXPORT_REPO" -c core.attributesFile=/dev/null \
+  archive --format=tar "$LEDGER_SOURCE_SHA" | tar -xf - -C "$LEDGER_SRC"
 printf '%s\n' "$LEDGER_SOURCE_SHA" > "$LEDGER_INSTALL_DIR/source-commit.txt"
 
 "$LEDGER_PYTHON" -m venv "$LEDGER_BUILD_VENV"

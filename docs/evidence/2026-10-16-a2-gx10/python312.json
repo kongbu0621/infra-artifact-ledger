@@ -1,0 +1,71 @@
+{
+  "status": "PASS",
+  "report": {
+    "result": "PASS",
+    "python": "3.12.3",
+    "sqlite": "3.45.1",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "package_version": "0.2.0a1",
+    "module_path": "<gx10-runtime>/lib/python3.12/site-packages/infra_artifact_ledger/__init__.py",
+    "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+    "work_dir": "<gx10-new-synthetic-work-dir>",
+    "source_commit_evidence": "CALLER_ASSERTED_NOT_GIT_ATTESTED",
+    "wheel_bytes_evidence": "NOT_ATTESTED_BY_THIS_SMOKE_TOOL; bind wheel digest separately",
+    "calls": [
+      {
+        "entry": "api",
+        "operation": "create",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "verify",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "check_restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "create",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "verify",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "check_restore",
+        "status": "PASS"
+      }
+    ],
+    "nas_publish_flow": "NOT_RUN",
+    "nas_capability_acceptance": "NOT_ATTESTED",
+    "nas_loss_exercise": "NOT_RUN"
+  },
+  "runtime_bindings_unchanged": true,
+  "old_a1_unchanged": true,
+  "old_files_compared": 27,
+  "source_files_match": 280,
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "execution_exit": {
+    "exit_code": 0,
+    "finished_utc": "2026-10-16T11:50:48.561745+00:00"
+  },
+  "stderr_bytes": 0,
+  "projection": "Only module_path and work_dir in the original execution report are redacted; exit and stderr size are separate retained observations."
+}

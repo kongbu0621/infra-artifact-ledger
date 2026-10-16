@@ -98,7 +98,13 @@ def parse_mountinfo(raw: str) -> tuple[Mount, ...]:
             mount = Mount(int(fields[0]), int(fields[1]), fields[2],
                           _unescape(fields[3]), _unescape(fields[4]),
                           tail[0], _unescape(tail[1]))
-            if mount.mount_id < 1 or not mount.point.startswith("/") or not mount.root.startswith("/"):
+            # nsfs.show_path emits a namespace name and inode, e.g. mnt:[42],
+            # rather than an absolute root. Keep these records for deepest-mount
+            # and fd binding checks; _classify still rejects nsfs as storage.
+            namespace_root = (mount.fs_type == "nsfs"
+                              and re.fullmatch(r"[a-z][a-z0-9_]*:\[[0-9]+\]", mount.root))
+            if (mount.mount_id < 1 or not mount.point.startswith("/")
+                    or (not mount.root.startswith("/") and not namespace_root)):
                 raise ValueError("invalid mount identity")
             result.append(mount)
         if not result or len({m.mount_id for m in result}) != len(result):

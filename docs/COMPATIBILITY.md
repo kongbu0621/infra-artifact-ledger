@@ -66,3 +66,16 @@ A2 封存文件上限 1 GiB，其他预算与合作式 300 秒期限见 [A2 接�
 | 硬件断电耐久性、systemd 隔离、Local Hand 常驻服务全链 | 未验证，且不新增为 Ledger A2 完成前置 | NOT_RUN |
 
 这两份结果证明所列环境下的安装态本地正向流程，整体 A2 仍为 PARTIAL；不能推广到所有 Linux、ext4、Python 3.11/3.12 或 NAS 配置。每轮只有一个版本、一个 39 字节 Blob 和两条成功幂等记录；完整数据规模及后续只读核对见公开证据，不宣称完整 T13 实机通过。没有为补录证据重跑业务或历史资源专项，也没有新增 Ledger 对 Local Hand 的运行依赖。
+
+
+## A2 GX10 修复版安装态补证（2026-10-16）
+
+上节 GX10 的 NOT_RUN 属于当时两次 x86_64 补证范围。本次修复合法 nsfs root 导致整张 mountinfo 被拒绝的问题，固定源码 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b`，新 wheel SHA-256 `b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293`。实际构建、17 模块字节绑定、首次失败与后续独立运行见[GX10 证据](evidence/2026-10-16-a2-gx10/README.md)和 [A2_VALIDATION §9](A2_VALIDATION.md#9-2026-10-16gx10-挂载表修复与安装态本地闭环)。
+
+| 环境或范围 | 本次结果 |
+|---|---|
+| GX10 / Linux 6.17.0-1031-nvidia / aarch64 / glibc 2.39 / Python 3.12.3 / SQLite 3.45.1 / ext4 | PASS：独立离线安装，API/CLI 各四项本地操作；编译、完整性、Blob、幂等记录及保留内容核对 |
+| 真实 NAS 能力、保存、丢失恢复与 T06/T08 部署故障 | NOT_RUN |
+| 其他 ARM、文件系统、Python/SQLite 组合 | 本次不新增兼容性声明 |
+
+整个 A2 仍为 PARTIAL。原 A1、原失败现场与旧 x86_64 结果保留各自版本，不追授给本次新 wheel；nsfs 仍不是可用存储。此次小型 fixture 不代表完整 T13、资源上限或硬件耐久性验收。

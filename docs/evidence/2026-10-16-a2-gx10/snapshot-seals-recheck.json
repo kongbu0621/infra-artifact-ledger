@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "snapshots": [
+    {
+      "role": "snapshot_1",
+      "marker_sha256": "e633cf8513187fe9d72f99c878ec9e373b7779596178b4935bce2f094c89d2ff",
+      "manifest_sha256": "d654e7bd0db95cf14c80748d05a7ba8095b133810874ac854764cb101c1762a7",
+      "database_sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670"
+    },
+    {
+      "role": "snapshot_2",
+      "marker_sha256": "b080518d8051a076d6e842427e519e4a99057ce62acc1489d6600b731fc24dc1",
+      "manifest_sha256": "067ccf90e3694155e56fbff69c8cdca8b11fe61c01d85af8f54e635602a407b2",
+      "database_sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670"
+    }
+  ],
+  "databases_checked": 5,
+  "schemas_equal": true,
+  "foreign_key_checks": "PASS",
+  "exact_table_sets_equal": true,
+  "retained_files_unchanged": true,
+  "database_writes": 0,
+  "original_business_replayed": false,
+  "checker_source_sha256": "57f8ac667fc5e5a1fb7471d7297c0c7221e9b6e978767eb699c98280f379b0f9"
+}

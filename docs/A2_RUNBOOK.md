@@ -127,8 +127,10 @@ test ! -e "$LEDGER_A2_RUNTIME_VENV"
 git -C "$LEDGER_REPO" fetch origin
 git -C "$LEDGER_REPO" cat-file -e "$LEDGER_SOURCE_SHA^{commit}"
 git -C "$LEDGER_REPO" worktree add --detach "$LEDGER_A2_SRC" "$LEDGER_SOURCE_SHA"
-test "$(git -C "$LEDGER_A2_SRC" rev-parse HEAD)" = "$LEDGER_SOURCE_SHA"
-test -z "$(git -C "$LEDGER_A2_SRC" status --porcelain)"
+LEDGER_CHECKOUT_SHA=$(git -C "$LEDGER_A2_SRC" rev-parse HEAD)
+test "$LEDGER_CHECKOUT_SHA" = "$LEDGER_SOURCE_SHA"
+LEDGER_CHECKOUT_STATUS=$(git -C "$LEDGER_A2_SRC" status --porcelain)
+test -z "$LEDGER_CHECKOUT_STATUS"
 LEDGER_A2_RUN=$(mktemp -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT/a2-build-XXXXXXXX")
 mkdir "$LEDGER_A2_RUN/wheels"
 
@@ -150,6 +152,8 @@ git -C "$LEDGER_A2_SRC" rev-parse HEAD > "$LEDGER_A2_RUN/source-commit.txt"
 ```
 
 如果同名环境已存在，先选择新的环境名称，不在本流程中删除或重用未知环境。准备构建工具需要已配置的包索引或预先准备的同版本 wheel；安装产品本身使用已构建的本地 wheel，不执行 `pip install infra-artifact-ledger` 猜测来源。
+
+源码身份与工作树查询先分别检查命令是否成功，再比较输出；查询报错时不能把空输出视为干净工作树，也不能把看似匹配的 SHA 视为核验通过。此时停止后续环境创建和构建，保留已经取得的 checkout 与错误输出，查明原因后继续。
 
 runtime 输出应显示 `0.2.0a1`，模块来自该 runtime venv 的 `site-packages`。不要把 `PYTHONPATH=src` 的源码运行写成已安装软件验证。
 

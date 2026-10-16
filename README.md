@@ -22,7 +22,9 @@
 
 下图表示接入关系。报告工具、知识库和 Agent 是可采用本组件的应用场景；各项目可以独立安装、各自保存 Ledger。
 
-[![主线从上到下：应用提交 → Python 库或 JSON 命令行 → Ledger → 应用按指定版本取回、核对内容、继续使用。右侧 SQLite 支撑同一事务提交及读取与校验。](docs/diagrams/application-position.svg)](docs/diagrams/application-position.svg)
+[![主线从上到下：应用提交 → Python 库或 JSON 命令行 → Ledger → 应用按指定版本取回、核对内容、继续使用。右侧 SQLite 支撑同一事务提交及读取与校验。](docs/diagrams/application-position.svg)](docs/diagrams/application-position.svg?raw=1)
+
+[查看原图（可缩放）](docs/diagrams/application-position.svg?raw=1)
 
 Ledger 在本地 SQLite 的同一事务中保存记录、有界内容和成功幂等结果。应用使用公共库或 CLI，无需直接操作数据库表，也不需要模型账号、Agent 框架、云账号或维护者的私有仓库。
 

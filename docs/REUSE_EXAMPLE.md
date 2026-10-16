@@ -180,10 +180,12 @@ PY
 
 原样再次执行 `append-v2.json` 及其 payload-map，预期返回原 `result_ref` 和原 `recorded_at`，`replayed=true`，上述记录数不变。不得重新生成 key 或改 ID 来“重试”。
 
-冲突反例：复制 `create-report.json` 为 `create-report-conflict.json`，只将 `body.artifact.type_ref.type_version` 改为 `"2"`，其余字段特别是幂等三元组保持原值。单独执行以下命令，**预期退出 4**、`IDEMPOTENCY_CONFLICT`、`commit_state=not_committed`；原报告身份和历史不变。这是被拒绝输入的预期结果，不是主流程成功退出。
+冲突反例：复制 `create-report.json` 为 `create-report-conflict.json`，只将 `body.artifact.type_ref.type_version` 改为 `"2"`，其余字段特别是幂等三元组保持原值。单独执行以下命令，**预期退出 4**、`IDEMPOTENCY_CONFLICT`、`commit_state=not_committed`；原报告身份和历史不变。这是被拒绝输入的预期结果，不是主流程成功退出。下面显式核对退出码，使启用 `set -e` 的 Shell 也能在该预期反例后继续；若最后的 `test` 失败，先核对实际返回，再继续后续步骤。
 
 ```sh
-"$LEDGER_VENV/bin/artifact-ledger" write --db source.sqlite --request create-report-conflict.json
+LEDGER_CONFLICT_EXIT=0
+"$LEDGER_VENV/bin/artifact-ledger" write --db source.sqlite --request create-report-conflict.json || LEDGER_CONFLICT_EXIT=$?
+test "$LEDGER_CONFLICT_EXIT" -eq 4
 ```
 
 无论是否发生响应丢失，都将以下查询保存为 `query-v2.json` 并执行，验证已经提交的 v2 可按原幂等身份找回；§7 也会复用此文件：

@@ -40,6 +40,18 @@
   "readonly_recheck": {
     "record": "readonly-recheck.json",
     "sha256": "b3d4b60c06330d65487cedf21f352ae37a24131d8d4f4de42be1340008a8cad6",
-    "original_business_replayed": false
+    "original_business_replayed": false,
+    "comparison_scope": "WITHIN_EACH_EXECUTION_CASE",
+    "file_preservation_scope": {
+      "entries": "DESCENDANTS_OF_EACH_RETAINED_RUN_DIRECTORY",
+      "file_content": "sha256",
+      "stat_fields": [
+        "st_mode",
+        "st_ino",
+        "st_size",
+        "st_mtime_ns"
+      ],
+      "other_metadata_attested": false
+    }
   }
 }

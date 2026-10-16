@@ -33,7 +33,11 @@
 
 两轮 runtime 探针、临时目录检查和业务进程均退出 0，stderr 为空，采集未截断、双流完整。业务报告必须恰含八项 PASS，零退出码不能单独建立成功。运行后完整 runtime 清单、所选源码和 wheel 与运行前一致。首次登记以只读 immutable SQLite 连接比较原合成库、各两份快照及两份恢复库的全部 SQL 表行；当时的读取前后摘要记录覆盖源库和恢复库，未包括快照数据库。
 
-PR #8 复核追加 readonly-recheck：每轮五个数据库都记录读取前后 SHA-256，检查完整性、外键、结构与全表行；四份快照均核对 marker、manifest 和数据库摘要，保留文件内容及元数据未变。快照按目录名排序编号，`snapshot_1/2` 不推定对应 API/CLI 顺序。这是当前内容的只读核对，不是重跑原操作，也不能证明历史 fsync 或断电耐久性。两个原始执行投影和 log-index 的原摘要保持不变。另将 17 个模块及固定脚本在 Python 3.11.15、3.12.14 中各编译一次，只调用内存 `compile()`，不导入、执行或写入字节码。
+PR #8 复核追加 readonly-recheck：每轮五个数据库都记录读取前后 SHA-256，检查完整性、外键、结构与全表行；四份快照均核对 marker、manifest 和数据库摘要。`all_sql_schema_and_rows_equal` 表示该轮五个库之间一致，两轮各有不同的生成时间，未断言十个库全都相同。源库与其快照的文件 SHA-256 不同；同轮逻辑记录一致，恢复库与该轮快照字节一致，逻辑一致不等于源库和快照整文件摘要相同。
+
+`retained_files_and_metadata_unchanged` 指运行目录内条目集合、文件 SHA-256 及 `st_mode`、`st_ino`、`st_size`、`st_mtime_ns` 的前后比较；未包含根目录自身，也未核对 atime、ctime、owner、ACL 或扩展属性。只读访问本身不保证访问时间不变。该字段的准确范围同时列在 summary 的 `readonly_recheck.file_preservation_scope` 中，原核对记录及其摘要保持原样。
+
+快照按目录名排序编号，`snapshot_1/2` 不推定对应 API/CLI 顺序。这是当前内容的只读核对，不是重跑原操作，也不能证明历史 fsync 或断电耐久性。两个原始执行投影和 log-index 的原摘要保持不变。另将 17 个模块及固定脚本在 Python 3.11.15、3.12.14 中各编译一次，只调用内存 `compile()`，不导入、执行或写入字节码。
 
 每轮 fixture 为 1 个 Artifact、1 个 Version、1 个 ContentRoot、1 个 Blob（39 字节）和 2 条成功幂等记录；数据库均为 49,152 字节。没有 Manifest、ProvenanceLink、ImportReceipt、多父版本或恢复后新增版本。全表比较仅覆盖实际存在的数据，不能据此宣称缺席的记录类型、完整 T13 实机范围或资源边界已经验证。
 

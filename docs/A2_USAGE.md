@@ -1,6 +1,6 @@
 # A2 一致快照与恢复使用指南
 
-本文面向使用 `infra-artifact-ledger` 的独立 Python 应用、命令行消费者及部署者。软件版本为 `0.2.0a1` alpha，可从核对过的源码构建 wheel；没有公开包发布承诺。实际通过的平台、源提交和未测项目见 [A2 验证记录](A2_VALIDATION.md) 与 [兼容表](COMPATIBILITY.md)，不能把实现或单元测试当作 GX10/NAS 已验收。首次安装与实机验收按 [运行手册](A2_RUNBOOK.md)。
+本文面向使用 `infra-artifact-ledger` 的独立 Python 应用、命令行消费者及部署者。软件版本为 `0.2.0a1` alpha，可从核对过的源码构建 wheel；没有公开包发布承诺。实际通过的平台、源提交和未测项目见 [A2 验证记录](A2_VALIDATION.md) 与 [兼容表](COMPATIBILITY.md)，不能把实现或单元测试当作 GX10/NAS 已验收。首次安装按[安装指南](INSTALL.md)；维护者的部署接续与实机验收见[运行手册](A2_RUNBOOK.md)。
 
 字段、预算与错误的规范来源为 [A2 接口](a2/INTERFACE_PROFILE.md)。本指南不改变已批准设计，也不将示例路径作为软件默认值。
 

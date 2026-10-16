@@ -36,6 +36,47 @@ class MountParsingTests(unittest.TestCase):
                 storage.parse_mountinfo(raw)
             self.assertEqual(caught.exception.code, "UNSUPPORTED_STORAGE")
 
+    def test_nsfs_roots_do_not_block_other_filesystems(self):
+        raw = ("10 1 8:1 / / rw - ext4 /dev/test rw\n"
+               "20 10 0:4 mnt:[4026532001] /run/ns/desktop rw - nsfs nsfs rw\n"
+               "21 10 0:4 net:[4026532002] /run/ns/network rw - nsfs nsfs rw\n"
+               "30 10 0:5 /export /mnt/archive rw - nfs4 server:/export rw\n")
+        mounts = storage.parse_mountinfo(raw)
+        self.assertEqual([m.root for m in mounts],
+                         ["/", "mnt:[4026532001]", "net:[4026532002]", "/export"])
+        with mock.patch.object(storage, "_mounts", return_value=mounts):
+            self.assertEqual(storage._mount_for(Path("/data/ledger"), 10), mounts[0])
+            self.assertEqual(storage._mount_for(Path("/mnt/archive/ledger"), 30), mounts[3])
+
+    def test_nsfs_record_is_retained_and_never_admitted_as_storage(self):
+        mounts = storage.parse_mountinfo(
+            "10 1 8:1 / / rw - ext4 /dev/test rw\n"
+            "20 10 0:4 mnt:[4026532001] /data/archive rw - nsfs nsfs rw\n")
+        target = Path("/data/archive")
+        with mock.patch.object(storage, "_mounts", return_value=mounts):
+            # Dropping the unsupported row would incorrectly select the parent.
+            with self.assertRaises(RecoveryError) as caught:
+                storage._mount_for(target, 10)
+            self.assertEqual(caught.exception.code, "UNSUPPORTED_STORAGE")
+            selected = storage._mount_for(target, 20)
+        self.assertEqual(selected, mounts[1])
+        for config in (None, {"mount_point":str(target), "mount_root":selected.root,
+                              "fs_type":"nsfs", "mount_source":"nsfs", "archive_root":str(target)}):
+            with self.subTest(config=config), self.assertRaises(RecoveryError) as caught:
+                storage._classify(target, selected, config)
+            self.assertEqual(caught.exception.code, "UNSUPPORTED_STORAGE")
+
+    def test_namespace_root_exception_does_not_accept_malformed_metadata(self):
+        rows = [f"20 10 0:4 mnt:[42] /data/archive rw - {kind} device rw"
+                for kind in ("ext4", "xfs", "btrfs", "nfs", "nfs4", "cifs", "unknown")]
+        rows += [f"20 10 0:4 {root} /data/archive rw - nsfs nsfs rw"
+                 for root in ("relative", "mnt:[]", "mnt:[-1]", "mnt:[42]suffix", "mnt:[42]/child")]
+        rows.append("20 10 0:4 mnt:[42] relative rw - nsfs nsfs rw")
+        for raw in rows:
+            with self.subTest(raw=raw), self.assertRaises(RecoveryError) as caught:
+                storage.parse_mountinfo(raw)
+            self.assertEqual(caught.exception.code, "UNSUPPORTED_STORAGE")
+
 
 class StorageTests(unittest.TestCase):
     def setUp(self):
@@ -291,10 +332,15 @@ class StorageTests(unittest.TestCase):
                     value = original_read(descriptor, count)
                     if descriptor == fd and not changed:
                         changed = True
+                        stamp = source.stat()
                         source.write_bytes(b"modified")
+                        # Two same-size writes can share one filesystem clock
+                        # tick. Inject an observable metadata change explicitly.
+                        os.utime(source, ns=(stamp.st_atime_ns, stamp.st_mtime_ns + 1_000_000_000))
                     return value
                 with mock.patch.object(storage.os, "read", side_effect=change):
                     self.assert_code("INTEGRITY_FAILURE", lambda: storage.copy_file(fd, directory, "mutated", self.budget))
+                self.assertTrue(changed)
             finally:
                 os.close(fd)
 

@@ -26,7 +26,7 @@
 flowchart TD
     A["报告工具、知识库或 Agent<br/>产生成果，选择版本"]
     B["接入入口<br/>Python 库 / JSON 命令行"]
-    C["infra-artifact-ledger<br/>保存身份、版本、内容与来源<br/>保存成功写入记录"]
+    C["infra-artifact-ledger<br/>保存身份、版本与内容<br/>保存来源关系<br/>保存成功写入记录"]
     D[("本地 SQLite<br/>记录与实际内容一起保存")]
     E["应用按指定版本取回<br/>核对内容，继续使用"]
 

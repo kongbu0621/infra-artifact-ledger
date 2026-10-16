@@ -213,12 +213,24 @@ findmnt -T "$LEDGER_NAS_ARCHIVE_ROOT" -o TARGET,SOURCE,FSTYPE,FSROOT
 ```bash
 set -euo pipefail
 set -o noclobber
+umask 0077
+test -d "$LEDGER_A2_RUN"
+for LEDGER_NAS_RECORD in a2-nas-console.log a2-nas-command-status.json; do
+  test ! -e "$LEDGER_A2_RUN/$LEDGER_NAS_RECORD"
+  test ! -L "$LEDGER_A2_RUN/$LEDGER_NAS_RECORD"
+done
+LEDGER_NAS_COMMAND_STATUS=0
 "$LEDGER_A2_RUNTIME_VENV/bin/python" -I "$LEDGER_A2_SRC/tools/acceptance/a2_nas_exercise.py" \
   --local-parent "$LEDGER_LOCAL_ACCEPTANCE_PARENT" \
   --storage-config "$LEDGER_STORAGE_CONFIG" \
   --source-commit "$LEDGER_SOURCE_SHA" \
-  --wheel "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/a2-nas-console.log" 2>&1
+  --wheel "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/a2-nas-console.log" 2>&1 || LEDGER_NAS_COMMAND_STATUS=$?
+printf '{"shell_command_status":%s}\n' "$LEDGER_NAS_COMMAND_STATUS" \
+  > "$LEDGER_A2_RUN/a2-nas-command-status.json"
+(exit "$LEDGER_NAS_COMMAND_STATUS")
 ```
+
+同名控制台日志或状态记录已存在（包括链接、目录和特殊文件）时，这段命令在启动前拒绝，保留原件；检查依赖上述日志目录由操作者独占，不构成对并发目录替换的原子保护。正常返回后，`shell_command_status` 保存 Bash 观察到的命令状态，再让外层收到同一状态。它可能来自程序退出、信号或启动失败，不能单独证明业务启动或通过；零值仍需对应的完整验收报告。若 shell 中断或状态文件保存失败，不能仅凭记录缺失判断业务未启动；先核对原日志、run_id 和实际结果，复用已有启动/退出证据，不能确定的项保留未知，不因缺失状态重跑业务。状态记录不是日志 fsync 或硬件断电耐久性的证明。
 
 脚本检查隔离解释器、安装包位于 venv 且不来自 checkout、安装包字节与指定 wheel 相符。本地创建全新的 `a2-nas-<32位ID>` 运行目录，NAS 也在指定 archive_root 下创建本次专属新子树，不复用既有 generation。
 

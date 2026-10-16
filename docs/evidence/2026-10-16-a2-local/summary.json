@@ -28,9 +28,18 @@
     "GX10_A2",
     "REAL_NAS_CAPABILITY_AND_ROUNDTRIP",
     "T06_T08_DEPLOYMENT_FAULT_EXERCISES",
-    "MOUNT_LOSS_OR_NETWORK_DISCONNECTION",
-    "POWER_LOSS_DURABILITY",
-    "RESIDENT_A2_END_TO_END"
+    "MOUNT_LOSS_OR_NETWORK_DISCONNECTION"
   ],
-  "provenance_limit": "The walkthrough source_commit is caller asserted. Separate checks bind the 17 source/wheel/installed modules and checkout script to the stated Git commit; the retained wheel was not rebuilt in this run."
+  "provenance_limit": "The walkthrough source_commit is caller asserted. Separate checks bind the 17 source/wheel/installed modules and checkout script to the stated Git commit; the retained wheel was not rebuilt in this run.",
+  "not_run_is_exhaustive_acceptance_matrix": false,
+  "outside_ledger_a2_acceptance": [
+    "POWER_LOSS_DURABILITY",
+    "RESIDENT_A2_END_TO_END",
+    "SYSTEMD_CONTAINMENT"
+  ],
+  "readonly_recheck": {
+    "record": "readonly-recheck.json",
+    "sha256": "b3d4b60c06330d65487cedf21f352ae37a24131d8d4f4de42be1340008a8cad6",
+    "original_business_replayed": false
+  }
 }

@@ -1,0 +1,301 @@
+{
+  "record_kind": "READ_ONLY_RECHECK_OF_RETAINED_LOCAL_FIXTURES",
+  "checked_on": "2026-10-16",
+  "reviewed_pr_head": "fab101b53ad9f7513fda957d5a58684bbe75e298",
+  "result": "PASS",
+  "database_access": "mode=ro&immutable=1; query_only=ON",
+  "current_consistency_only": true,
+  "proves_original_publication_fsync_or_power_loss": false,
+  "original_executions_replayed": false,
+  "cases": [
+    {
+      "case": "python311",
+      "original_result_sha256": "b419be5e9fbbd255201e1f456fe8760543b0a6991f0a77c99e2ec61a91827013",
+      "fixture_summary": {
+        "counts": {
+          "artifacts": 1,
+          "blobs": 1,
+          "content_roots": 1,
+          "idempotency_records": 2,
+          "import_receipts": 0,
+          "manifests": 0,
+          "provenance_links": 0,
+          "versions": 1
+        },
+        "verified_blob_count": 1,
+        "verified_byte_length": 39
+      },
+      "databases": [
+        {
+          "role": "source",
+          "bytes": 49152,
+          "sha256_before": "eb1903ffce36376304e32d56e81d02103c51ba128f9d234ea5fddef8b2093ea9",
+          "sha256_after": "eb1903ffce36376304e32d56e81d02103c51ba128f9d234ea5fddef8b2093ea9",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "snapshot_1",
+          "bytes": 49152,
+          "sha256_before": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "sha256_after": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "snapshot_2",
+          "bytes": 49152,
+          "sha256_before": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "sha256_after": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "api_restored",
+          "bytes": 49152,
+          "sha256_before": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "sha256_after": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "cli_restored",
+          "bytes": 49152,
+          "sha256_before": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "sha256_after": "a6f604f440a36a53f7ad5d6bb6bb31e7e9fb7899fe8f3e4f8c898ff0d0535649",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        }
+      ],
+      "snapshot_bindings": [
+        {
+          "role": "snapshot_1",
+          "manifest_sha256": "d27aa5d9741cea8c047e19e4154e28a0165cb9e47e0470b05d1ada77626b17d9",
+          "marker_sha256": "fa2b85f900fb7d2b6851a34bbb07153f63658d03eaf20f203428b98b190c68c6",
+          "summary": {
+            "counts": {
+              "artifacts": 1,
+              "blobs": 1,
+              "content_roots": 1,
+              "idempotency_records": 2,
+              "import_receipts": 0,
+              "manifests": 0,
+              "provenance_links": 0,
+              "versions": 1
+            },
+            "verified_blob_count": 1,
+            "verified_byte_length": 39
+          }
+        },
+        {
+          "role": "snapshot_2",
+          "manifest_sha256": "5ea6e28e14a6631edfa8905846fb0ea47d413ed0548934e407690223cc1ffb2a",
+          "marker_sha256": "1e8c094d92de283a01070f3616e07887bd91c20f16ce2783d49f59c23d3adb08",
+          "summary": {
+            "counts": {
+              "artifacts": 1,
+              "blobs": 1,
+              "content_roots": 1,
+              "idempotency_records": 2,
+              "import_receipts": 0,
+              "manifests": 0,
+              "provenance_links": 0,
+              "versions": 1
+            },
+            "verified_blob_count": 1,
+            "verified_byte_length": 39
+          }
+        }
+      ],
+      "all_sql_schema_and_rows_equal": true,
+      "retained_files_and_metadata_unchanged": true
+    },
+    {
+      "case": "python312",
+      "original_result_sha256": "78f094233cafc3d6464236f2422f8b1740f0b560a8fdad843458be43e9599098",
+      "fixture_summary": {
+        "counts": {
+          "artifacts": 1,
+          "blobs": 1,
+          "content_roots": 1,
+          "idempotency_records": 2,
+          "import_receipts": 0,
+          "manifests": 0,
+          "provenance_links": 0,
+          "versions": 1
+        },
+        "verified_blob_count": 1,
+        "verified_byte_length": 39
+      },
+      "databases": [
+        {
+          "role": "source",
+          "bytes": 49152,
+          "sha256_before": "d3d4babb63e7d016a91839662de121347f63f40cf83e0a9c384ed1aa73e29efc",
+          "sha256_after": "d3d4babb63e7d016a91839662de121347f63f40cf83e0a9c384ed1aa73e29efc",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "snapshot_1",
+          "bytes": 49152,
+          "sha256_before": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "sha256_after": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "snapshot_2",
+          "bytes": 49152,
+          "sha256_before": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "sha256_after": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "api_restored",
+          "bytes": 49152,
+          "sha256_before": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "sha256_after": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        },
+        {
+          "role": "cli_restored",
+          "bytes": 49152,
+          "sha256_before": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "sha256_after": "a9317d3a6051e68efe3c42cf08d68e700db5d67cb69f96525c2f3c19f1978e42",
+          "integrity_check": "ok",
+          "foreign_key_violations": 0,
+          "table_rows": {
+            "ledger_format": 1,
+            "operations": 2,
+            "payloads": 1,
+            "records": 4,
+            "refs": 3
+          }
+        }
+      ],
+      "snapshot_bindings": [
+        {
+          "role": "snapshot_1",
+          "manifest_sha256": "95103e96901eb25ccdd1368036e48c44c0cfc1737652f5cf147ca15da9ff581e",
+          "marker_sha256": "f240b725d413ddcd71fa5541163d5bc220113a8ab0c5bb556b1f9c1403900743",
+          "summary": {
+            "counts": {
+              "artifacts": 1,
+              "blobs": 1,
+              "content_roots": 1,
+              "idempotency_records": 2,
+              "import_receipts": 0,
+              "manifests": 0,
+              "provenance_links": 0,
+              "versions": 1
+            },
+            "verified_blob_count": 1,
+            "verified_byte_length": 39
+          }
+        },
+        {
+          "role": "snapshot_2",
+          "manifest_sha256": "ee207e0d87e013071fb756c3a1348878c0a68327df69518f9e0d894d80d723b7",
+          "marker_sha256": "6c6cb53ee0c51b7193a9cf01ff55f36127a91d3fc921046ecd8e5a6c418c89d0",
+          "summary": {
+            "counts": {
+              "artifacts": 1,
+              "blobs": 1,
+              "content_roots": 1,
+              "idempotency_records": 2,
+              "import_receipts": 0,
+              "manifests": 0,
+              "provenance_links": 0,
+              "versions": 1
+            },
+            "verified_blob_count": 1,
+            "verified_byte_length": 39
+          }
+        }
+      ],
+      "all_sql_schema_and_rows_equal": true,
+      "retained_files_and_metadata_unchanged": true
+    }
+  ],
+  "source_wheel_installation_rechecked": true,
+  "compilation": {
+    "method": "in-memory compile(); no imports or bytecode writes",
+    "results": [
+      {
+        "python": "3.11.15",
+        "compiled_files": 18
+      },
+      {
+        "python": "3.12.14",
+        "compiled_files": 18
+      }
+    ]
+  },
+  "private_recheck_script_sha256": "6cbe7c02acc7e554e224a765bf7ef0860e80269e06326a879626d25f533bd039"
+}

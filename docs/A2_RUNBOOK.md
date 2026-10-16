@@ -91,11 +91,14 @@ test -f "$LEDGER_A2_SRC/tools/acceptance/a2_nas_exercise.py"
 test -x "$LEDGER_A2_RUNTIME_VENV/bin/python"
 test -f "$LEDGER_A2_WHEEL"
 test -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT"
-printf '%s  %s\n' "$LEDGER_WHEEL_SHA256" "$LEDGER_A2_WHEEL" | sha256sum --check --status
+LEDGER_ACTUAL_WHEEL_SHA256=$(sha256sum < "$LEDGER_A2_WHEEL")
+[[ "$LEDGER_ACTUAL_WHEEL_SHA256" == "$LEDGER_WHEEL_SHA256  -" ]]
 LEDGER_A2_RUN=$(mktemp -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT/a2-resume-XXXXXXXX")
 printf '%s\n' "$LEDGER_SOURCE_SHA" > "$LEDGER_A2_RUN/source-commit.txt"
-printf '%s  %s\n' "$LEDGER_WHEEL_SHA256" "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/wheel.sha256"
+sha256sum -- "$LEDGER_A2_WHEEL" > "$LEDGER_A2_RUN/wheel.sha256"
 ```
+
+摘要比较从标准输入读取 wheel 字节，不将路径拼进校验输入；持久校验记录由 `sha256sum` 自身生成，保留它对路径中换行和反斜杠的转义。
 
 `LEDGER_A2_RUN` 是新的日志容器，不是新的业务授权或已执行任务身份；原 run_id、证据和失败原件继续保留。只需继续 NAS 时，从这里转到 §4–§5，不重跑已完成的本地闭环。若另有受改动影响的源码回归，单独绑定已核实的 `LEDGER_A2_BUILD_VENV` 后选择 §3 对应命令；只做 NAS 接续不要求重新准备 build 环境。
 
@@ -116,6 +119,7 @@ LEDGER_A2_BUILD_VENV="$LEDGER_BASE/venvs/infra_artifact_ledger_a2_build_env"
 LEDGER_A2_RUNTIME_VENV="$LEDGER_BASE/venvs/infra_artifact_ledger_a2_runtime_env"
 LEDGER_LOCAL_ACCEPTANCE_PARENT="$LEDGER_BASE/data/infra-artifact-ledger/acceptance"
 
+[[ "$LEDGER_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
 test -d "$LEDGER_LOCAL_ACCEPTANCE_PARENT"
 test ! -e "$LEDGER_A2_SRC"
 test ! -e "$LEDGER_A2_BUILD_VENV"
@@ -182,11 +186,11 @@ A2_RESOURCE_TESTS=1 PYTHONPATH=src "$LEDGER_A2_BUILD_VENV/bin/python" \
 
 资源专项会真实构造大文件/大数据并消耗明显高于序列化大小的内存和磁盘，需在日志中保留实际耗时/RSS；1 GiB 文件上限不是内存上限。普通 discovery 中被跳过的资源项不算已通过。小常量故障测试与实际上限测试各自留证，不能相互替代。
 
-`test_snapshot_semantic_resources.py` 的四项专跑分别覆盖合法 Ledger 的 metadata 16 MiB、metadata 50,000 行、refs 250,000 行和 refs 32 MiB，共十二个 −1／等于／+1 场景。构造方式、完整恢复比对和总 TEXT 64 MiB 的可达性说明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。这组测试的文件系统类型分类使用明确的开发态模拟，实际执行数据库与文件操作；通过结果属于 `LOGIC_ONLY`，不能据此承认 Cloud overlay 的持久性或 GX10/NAS 的实机支持。未开启 `A2_RESOURCE_TESTS=1` 时四项跳过，须保留上述专门日志。
+`test_snapshot_semantic_resources.py` 的四项专跑分别覆盖合法 Ledger 的 metadata 16 MiB、metadata 50,000 行、refs 250,000 行和 refs 32 MiB，共十二个 −1／等于／+1 场景。构造方式、完整恢复比对和总 TEXT 64 MiB 的可达性说明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)。这组测试的文件系统类型分类使用明确的开发态模拟，实际执行数据库与文件操作；通过结果属于 `LOGIC_ONLY`，不能据此承认 Cloud overlay 的持久性或 GX10/NAS 的实机支持。未开启 `A2_RESOURCE_TESTS=1` 时四项按跳过记录；实际执行专项时保留对应日志，已有适用结果继续复用。
 
 安装态 A2 脚本只在显式提供的本地父目录下生成合成库、两个新快照及新恢复目录；分别调用 API 与已安装 CLI，核对 Blob、已有操作重放和源库不变。未传 NAS 配置时，`nas_publish_flow=NOT_RUN`，只证明本地接入流程。本脚本无论是否提供 NAS 配置，都不能代替下一节的 NAS 丢失恢复演练。
 
-示例启用 `noclobber`，同名日志已存在时 Bash 在启动命令前拒绝输出重定向，旧日志保留。若需继续，先核对原执行和可能的副作用，再为获准继续的步骤分配新的日志目录或文件名；不要关闭保护覆盖原日志，也不要因日志冲突重做已经完成的业务。这一保护只针对这些日志重定向，不代表所有外部写入都有防重复保证。
+示例启用 `noclobber`，同名普通日志文件已存在时 Bash 在启动命令前拒绝输出重定向，旧内容保留。它不保证拒绝 FIFO 等特殊文件，也不能替代新建、私有且由操作者独占的日志目录。若需继续，先核对原执行和可能的副作用，再为获准继续的步骤分配新的日志目录或文件名；不要关闭保护覆盖原日志，也不要因日志冲突重做已经完成的业务。这一保护只针对这些日志重定向，不代表所有外部写入都有防重复保证。
 
 ## 4. 采集 NAS 配置
 
@@ -232,7 +236,7 @@ set -o noclobber
 
 ## 6. 汇总、失败与移交
 
-每个机器/解释器组合分别记录完整源 SHA、wheel SHA-256、Python/SQLite/内核/架构、真实文件系统与挂载 profile、执行命令、退出码、日志、资源峰值以及失败/跳过项。公开 PR 只放经过核对的摘要与非敏感证据，不上传真实配置或个人数据。
+每个机器/解释器组合分别记录完整源 SHA、wheel SHA-256、Python/SQLite/内核/架构、真实文件系统与挂载 profile、执行命令、退出码、日志、资源峰值以及失败/跳过项。未测量的资源峰值明确标为 `NOT_MEASURED`，不填推测值，也不为补字段重放业务。公开 PR 只放经过核对的摘要与非敏感证据，不上传真实配置或个人数据。
 
 | 检查结果 | 可以形成的结论 |
 |---|---|

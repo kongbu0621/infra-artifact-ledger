@@ -8,10 +8,11 @@
 
 先按[安装指南](INSTALL.md)使用固定源码构建并安装 `0.2.0a1` wheel；已经完成安装的读者直接复用同一环境。当前没有 PyPI 发布，不执行 `pip install infra-artifact-ledger` 猜测包来源。本示例在已验证的 Linux 环境运行；安装完成后，从一个全新、本地可靠文件系统目录开始，所有数据库和输出目标必须不存在。
 
-主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 Python 片段仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为安装指南中已安装 wheel 的同一个 runtime venv 的绝对路径；本例显式使用该环境，不依赖激活：
+主流程中每条命令都须退出 0、响应及内容符合本节预期后再继续；任何非预期失败都停止并按错误语义核对。准备代码会开启遇错停止，创建或进入目录失败时不再执行后续写入。§6 的冲突反例单独预期退出 4，不混同主流程成功。以下 Python 片段仅生成合成输入和独立核对输出，不实现 Ledger。`LEDGER_VENV` 必须改为安装指南中已安装 wheel 的同一个 runtime venv 的绝对路径，保留引号以支持路径中的空格；本例显式使用该环境，不依赖激活：
 
 ```sh
-LEDGER_VENV=/path/to/venvs/report-tool
+set -eu
+LEDGER_VENV='/path/to/venvs/report-tool'
 mkdir ledger-report-demo
 cd ledger-report-demo
 "$LEDGER_VENV/bin/python" - <<'PY'

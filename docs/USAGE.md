@@ -196,7 +196,7 @@ A1 首个 backend 依赖本机可靠文件系统和单一受信数据域。云�
 
 | 版本层次 | 当前实现与接入要求 |
 |---|---|
-| 软件包版本 | `0.1.0a1` alpha；从固定源提交构建 wheel，当前未发布 PyPI 包 |
+| 软件包版本 | 当前安装为 `0.2.0a1` alpha，按[安装指南](INSTALL.md)从固定源提交构建 wheel；本指南的 A1 历史安装记录为 `0.1.0a1`，两者均未发布 PyPI 包 |
 | 公共 metadata 合同 | `contract_version=0.1.0`，状态 `candidate`；固定兼容标记不要求访问私有来源 |
 | 行为 profile | `bounded-local-v0.1`；确认操作和上限，不把有相似 API 的产品自动视为兼容 |
 | 传输封装 | `transport_version=0.1.0`；package 与 descriptor 均须支持并验证 |

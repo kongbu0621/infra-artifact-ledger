@@ -1,0 +1,145 @@
+{
+  "record_kind": "REDACTED_PROJECTION_OF_RETAINED_EXECUTION",
+  "executed_on": "2026-10-16",
+  "installed_walkthrough_report": {
+    "result": "PASS",
+    "python": "3.11.15",
+    "sqlite": "3.37.2",
+    "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+    "package_version": "0.2.0a1",
+    "module_path": "<RUNTIME>/lib/python3.11/site-packages/infra_artifact_ledger/__init__.py",
+    "source_commit": "6707a1b521c9c4718674620e6c584656bd434e4c",
+    "work_dir": "<RUN>",
+    "source_commit_evidence": "CALLER_ASSERTED_NOT_GIT_ATTESTED",
+    "wheel_bytes_evidence": "NOT_ATTESTED_BY_THIS_SMOKE_TOOL; bind wheel digest separately",
+    "calls": [
+      {
+        "entry": "api",
+        "operation": "create",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "verify",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "api",
+        "operation": "check_restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "create",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "verify",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "restore",
+        "status": "PASS"
+      },
+      {
+        "entry": "cli",
+        "operation": "check_restore",
+        "status": "PASS"
+      }
+    ],
+    "nas_publish_flow": "NOT_RUN",
+    "nas_capability_acceptance": "NOT_ATTESTED",
+    "nas_loss_exercise": "NOT_RUN"
+  },
+  "observed_stages": [
+    {
+      "name": "a2-runtime-bytecode",
+      "exit_code": 0,
+      "elapsed_seconds": 0.021607185999528156,
+      "bytes_seen": {
+        "stdout": 27,
+        "stderr": 0
+      },
+      "bytes_retained": {
+        "stdout": 27,
+        "stderr": 0
+      },
+      "bytes_discarded": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "truncated": false,
+      "drain_incomplete": false,
+      "outcome": "SUCCEEDED"
+    },
+    {
+      "name": "interpreter-temporary-directory-check",
+      "exit_code": 0,
+      "elapsed_seconds": 0.019957258000431466,
+      "bytes_seen": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "bytes_retained": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "bytes_discarded": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "truncated": false,
+      "drain_incomplete": false,
+      "outcome": "SUCCEEDED"
+    },
+    {
+      "name": "a2-installed-local",
+      "exit_code": 0,
+      "elapsed_seconds": 1.102976080001099,
+      "bytes_seen": {
+        "stdout": 1236,
+        "stderr": 0
+      },
+      "bytes_retained": {
+        "stdout": 1236,
+        "stderr": 0
+      },
+      "bytes_discarded": {
+        "stdout": 0,
+        "stderr": 0
+      },
+      "truncated": false,
+      "drain_incomplete": false,
+      "outcome": "SUCCEEDED"
+    }
+  ],
+  "checks": {
+    "installed_payload_digest": "82a5bcb2ef84d2143d355905139284c5a4251867f572170447b40c5d887d84ed",
+    "source_wheel_installed_modules_equal": 17,
+    "runtime_unchanged": true,
+    "source_and_wheel_unchanged": true,
+    "original_synthetic_database_unchanged": true,
+    "restored_blob_and_idempotent_replay_verified": true,
+    "retained_sql_tables_equal_on_readonly_recheck": true,
+    "retained_snapshots_checked": 2
+  },
+  "execution_context": {
+    "filesystem": "ext4",
+    "filesystem_classification_mocked": false,
+    "ledger_import": "isolated_installed_wheel",
+    "runtime_writable": false,
+    "umask": "0077",
+    "systemd_containment_tested": false,
+    "resource_limits_enforced_by_systemd": false,
+    "resource_peak_measured": false,
+    "resident_task_submitted": false
+  },
+  "supervision_source_commit": "d04fcf51c51df5942d8a2c00c71f12d0c9214b12"
+}

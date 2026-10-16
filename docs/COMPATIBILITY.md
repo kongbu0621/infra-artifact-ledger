@@ -36,7 +36,7 @@ CLI 正常操作和错误使用单行 JSON；`--help` 是面向人的文本辅�
 本轮进程终止和故障注入证明的是已测试失败模型下的结果；没有真实断电、设备缓存或硬件故障耐久性证据。A2 一致快照/恢复、A3 两类真实消费者、A4 独立第二实现分别需要后续验证。
 
 
-## A2 0.2.0a1 补充状态
+## A2 0.2.0a1 Cloud 第九轮记录（2026-09-21）
 
 以上是 A1 0.1.0a1 历史证据；A2 运行修订仍为 D9 `928b3e0338e7460b9916bf27fc832ce5697b1b7a`。最新第九轮固定输入 `6bd6acfbe5c35d581891eb87275e1173e17848fc`，tree `6dd4da925cb97c22eca78a0a3f2165310e048db9`，包含 D9 与第八轮证据；本轮未修改产品代码、测试、工具和构建配置，未确认新缺陷。历史与当前来源见 [A2_VALIDATION](A2_VALIDATION.md)。
 
@@ -48,6 +48,20 @@ CLI 正常操作和错误使用单行 JSON；`--help` 是面向人的文本辅�
 
 A2 本地候选文件系统为 ext4/xfs/btrfs，NAS profile 为显式核实的 nfs/nfs4/cifs；类型名称不等于兼容认证。实际 Cloud overlay（fsync=volatile）仍被生产 API/CLI 拒绝，正向模拟仅 LOGIC_ONLY。
 
-GX10、受支持本地文件系统安装态正向、真实 NAS 及 T06/T08 实际部署演练仍 NOT_RUN，整体 PARTIAL。资源可达性证明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)，不替代部署资源或耐久性认证。上文 Windows/macOS/其他未验组合边界保留。
+在该轮记录时，GX10、受支持本地文件系统安装态正向、真实 NAS 及 T06/T08 实际部署演练均为 NOT_RUN，整体 PARTIAL。2026-10-16 的本地正向补证见下节。资源可达性证明见 [A2_RESOURCE_BOUNDARIES](A2_RESOURCE_BOUNDARIES.md)，不替代部署资源或耐久性认证。上文 Windows/macOS/其他未验组合边界保留。
 
 A2 封存文件上限 1 GiB，其他预算与合作式 300 秒期限见 [A2 接口](a2/INTERFACE_PROFILE.md)。读回核对不能证明过去发布同步或设备断电耐久性。构建/部署见 [A2_RUNBOOK](A2_RUNBOOK.md)。
+
+## A2 真实本地安装态补证（2026-10-16）
+
+固定输入 `6707a1b521c9c4718674620e6c584656bd434e4c`，保留 wheel SHA-256 为 `d1924a346effe83a100860a5f00f4c3eafa12fa51b63529f0a788cef94b4dc8a`。17 个运行模块与固定源码、wheel、两份独立安装字节一致；本轮未重建 wheel。完整来源与限定见 [A2_VALIDATION §8](A2_VALIDATION.md#8-2026-10-16真实本地安装态闭环)和[公开证据](evidence/2026-10-16-a2-local/README.md)。
+
+| 环境 | 验证范围 | 结果 |
+|---|---|---|
+| Linux x86_64 / kernel 6.8.0-124-generic / glibc 2.35 / ext4 / Python 3.11.15 / SQLite 3.37.2 | 独立安装后的 API/CLI 各四项本地快照、校验、恢复及恢复检查；Blob、幂等记录、源保护 | PASS |
+| 同一主机与文件系统 / Python 3.12.14 / SQLite 3.37.2 | 另一独立安装与新合成目录中的相同步骤 | PASS |
+| GX10 的 A2 | 未覆盖该机器与架构组合 | NOT_RUN |
+| 真实 NAS 能力、保存及丢失恢复 | 未使用 NAS 配置或网络文件系统替身 | NOT_RUN |
+| T06/T08 部署故障、挂载丢失/断网、硬件断电耐久性 | 本轮正向闭环不覆盖 | NOT_RUN |
+
+这两份结果证明所列环境下的安装态本地正向流程，整体 A2 仍为 PARTIAL；不能推广到所有 Linux、ext4、Python 3.11/3.12 或 NAS 配置。没有为补录证据重跑业务或历史资源专项，也没有新增 Ledger 对 Local Hand 的运行依赖。

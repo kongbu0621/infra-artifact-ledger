@@ -1,0 +1,25 @@
+{
+  "records": [
+    {
+      "case": "python311",
+      "public_file": "python311.json",
+      "public_sha256": "949573bdb4084d1a3d26dab07f6caf50fba36df67ef0f37bcaa845c5e9a75971",
+      "private_original_result_sha256": "b419be5e9fbbd255201e1f456fe8760543b0a6991f0a77c99e2ec61a91827013",
+      "private_original_stdout_sha256": "ac12ff60d079c5392225d78d8c34fa6f21442fd9d8be404e4df0a3edaf904cb2",
+      "private_install_log_sha256": "5c979c7eabf86b92a1975056654d2c8e2ae12d29a6aeb27299c15c4913070e18",
+      "transformation": "Replace module_path and work_dir with placeholders; label temporary-check stage without path-derived identifier; select non-sensitive result fields."
+    },
+    {
+      "case": "python312",
+      "public_file": "python312.json",
+      "public_sha256": "64476edb48e6aa77305bc99da1a4644a459cb50503e3247e27930999fb225b7b",
+      "private_original_result_sha256": "78f094233cafc3d6464236f2422f8b1740f0b560a8fdad843458be43e9599098",
+      "private_original_stdout_sha256": "f9bedcfcc4bf10c56e08b969046cf904515ee1492c504f89d625a91bc4114607",
+      "private_install_log_sha256": "5c979c7eabf86b92a1975056654d2c8e2ae12d29a6aeb27299c15c4913070e18",
+      "transformation": "Replace module_path and work_dir with placeholders; label temporary-check stage without path-derived identifier; select non-sensitive result fields."
+    }
+  ],
+  "private_integration_driver_sha256": "87cc27e70daa05feb06c11876b0c9b8308feb7db828c470a49164473ad71fea8",
+  "original_records_preserved": true,
+  "original_private_paths_published": false
+}

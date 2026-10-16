@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="804" viewBox="0 0 920 804" role="img" aria-labelledby="title description">
+  <title id="title">infra-artifact-ledger 在应用中的位置</title>
+  <desc id="description">主线从上到下：应用提交成果与来源信息，经 Python 库或 JSON 命令行进入 Ledger，最后由应用按指定版本取回，核对内容，继续使用。右侧本地 SQLite 是存储支撑；Ledger 向 SQLite 同一事务提交，SQLite 向 Ledger 提供读取与校验的内容。</desc>
+  <!-- Editable presentation of application-position.mmd. Keep its five nodes,
+       five directed edges and labels in sync. See ../DEVELOPMENT.md. -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#9aa9b5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; font-size: 23px; text-anchor: middle; fill: #8bc7ff; }
+      .node { fill: #102c42; stroke: #35566e; stroke-width: 1.6; }
+      .edge { fill: none; stroke: #9aa9b5; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .label { fill: #0d1117; stroke: #6ba8d6; stroke-width: 1.4; }
+      .edge-label { font-size: 20px; }
+      .heading { font-weight: 600; }
+      .storage-text { font-size: 22px; }
+    </style>
+  </defs>
+  <rect width="920" height="804" rx="16" fill="#0d1117"/>
+
+  <g id="edge-A-B" data-from="A" data-to="B" data-label="提交成果与来源信息">
+    <path class="edge" d="M 226 136 V 248"/>
+    <rect class="label" x="115" y="172" width="222" height="38" rx="19"/>
+    <text class="edge-label" x="226" y="198">提交成果与来源信息</text>
+  </g>
+  <g id="edge-B-C" data-from="B" data-to="C" data-label="">
+    <path class="edge" d="M 226 348 V 432"/>
+  </g>
+  <g id="edge-C-D" data-from="C" data-to="D" data-label="同一事务提交">
+    <path class="edge" d="M 416 478 H 604"/>
+    <rect class="label" x="438" y="427" width="144" height="38" rx="19"/>
+    <text class="edge-label" x="510" y="453">同一事务提交</text>
+  </g>
+  <g id="edge-D-C" data-from="D" data-to="C" data-label="读取与校验">
+    <path class="edge" d="M 604 550 H 416"/>
+    <rect class="label" x="448" y="499" width="124" height="38" rx="19"/>
+    <text class="edge-label" x="510" y="525">读取与校验</text>
+  </g>
+  <g id="edge-C-E" data-from="C" data-to="E" data-label="">
+    <path class="edge" d="M 226 588 V 680"/>
+  </g>
+
+  <g id="node-A" data-node="A">
+    <rect class="node" x="36" y="32" width="380" height="104" rx="24"/>
+    <text x="226" y="76">
+      <tspan x="226" class="heading">报告工具、知识库或 Agent</tspan>
+      <tspan x="226" dy="34">产生成果，选择版本</tspan>
+    </text>
+  </g>
+  <g id="node-B" data-node="B">
+    <rect class="node" x="36" y="248" width="380" height="100" rx="24"/>
+    <text x="226" y="289">
+      <tspan x="226">接入入口</tspan>
+      <tspan x="226" dy="34" class="heading">Python 库 / JSON 命令行</tspan>
+    </text>
+  </g>
+  <g id="node-C" data-node="C">
+    <rect class="node" x="36" y="432" width="380" height="156" rx="24"/>
+    <text x="226" y="469">
+      <tspan x="226" class="heading">infra-artifact-ledger</tspan>
+      <tspan x="226" dy="30">保存身份、版本与内容</tspan>
+      <tspan x="226" dy="30">保存来源关系</tspan>
+      <tspan x="226" dy="30">保存成功写入记录</tspan>
+    </text>
+  </g>
+  <g id="node-D" data-node="D">
+    <path class="node" d="M 604 432 A 140 24 0 0 1 884 432 V 560 A 140 24 0 0 1 604 560 Z"/>
+    <ellipse class="node" cx="744" cy="432" rx="140" ry="24"/>
+    <text class="storage-text" x="744" y="501">
+      <tspan x="744" class="heading">本地 SQLite</tspan>
+      <tspan x="744" dy="34">记录与实际内容一起保存</tspan>
+    </text>
+  </g>
+  <g id="node-E" data-node="E">
+    <rect class="node" x="36" y="680" width="380" height="92" rx="24"/>
+    <text x="226" y="719">
+      <tspan x="226">应用按指定版本取回</tspan>
+      <tspan x="226" dy="32">核对内容，继续使用</tspan>
+    </text>
+  </g>
+</svg>

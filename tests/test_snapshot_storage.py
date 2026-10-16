@@ -48,6 +48,17 @@ class MountParsingTests(unittest.TestCase):
             self.assertEqual(storage._mount_for(Path("/data/ledger"), 10), mounts[0])
             self.assertEqual(storage._mount_for(Path("/mnt/archive/ledger"), 30), mounts[3])
 
+    def test_nsfs_root_accepts_the_full_namespace_name_grammar(self):
+        names = ("cgroup", "ipc", "mnt", "net", "pid", "time", "user", "uts",
+                 "pid_for_children", "time_for_children", "ns2")
+        roots = [f"{name}:[{4026532000 + index}]"
+                 for index, name in enumerate(names)]
+        raw = "".join(
+            f"{100 + index} 1 0:4 {root} /run/ns/{index} rw - nsfs nsfs rw\n"
+            for index, root in enumerate(roots)
+        )
+        self.assertEqual([mount.root for mount in storage.parse_mountinfo(raw)], roots)
+
     def test_nsfs_record_is_retained_and_never_admitted_as_storage(self):
         mounts = storage.parse_mountinfo(
             "10 1 8:1 / / rw - ext4 /dev/test rw\n"

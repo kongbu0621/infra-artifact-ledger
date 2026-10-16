@@ -81,7 +81,9 @@ class MountParsingTests(unittest.TestCase):
         rows = [f"20 10 0:4 mnt:[42] /data/archive rw - {kind} device rw"
                 for kind in ("ext4", "xfs", "btrfs", "nfs", "nfs4", "cifs", "unknown")]
         rows += [f"20 10 0:4 {root} /data/archive rw - nsfs nsfs rw"
-                 for root in ("relative", "mnt:[]", "mnt:[-1]", "mnt:[42]suffix", "mnt:[42]/child")]
+                 for root in ("relative", ":[42]", "_mnt:[42]", "9mnt:[42]", "MNT:[42]",
+                              "mnt-name:[42]", "mnt.name:[42]", "mñt:[42]", "mnt:[]",
+                              "mnt:[-1]", "mnt:[42]suffix", "mnt:[42]/child")]
         rows.append("20 10 0:4 mnt:[42] relative rw - nsfs nsfs rw")
         for raw in rows:
             with self.subTest(raw=raw), self.assertRaises(RecoveryError) as caught:

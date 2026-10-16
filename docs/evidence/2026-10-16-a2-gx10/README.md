@@ -2,7 +2,7 @@
 
 固定修复源码 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b` 在 GX10 的真实 ext4、Linux aarch64、Python 3.12.3 / SQLite 3.45.1 上完成 API/CLI 各四项 create → verify → restore → check_restore，八项 PASS。整个 A2 仍为 **PARTIAL**；真实 NAS 保存、丢失恢复与 T06/T08 部署故障未执行。
 
-首次尝试使用原 `6707a1b` 及保留 wheel，在创建合成目录前因 mountinfo 解析失败退出 1，未产生合成数据库。GX10 的正常挂载表包含 namespace 文件系统的非绝对 root；旧解析器因此拒绝整张表，连同无关的 ext4 目标一起失败。Linux 的 [nsfs_show_path 实现](https://raw.githubusercontent.com/torvalds/linux/master/fs/nsfs.c) 使用 namespace 名称与 inode 的形式输出 root。修复仅在 fs_type 为 nsfs 时接受该语法，保留记录供最深挂载和 fd/mount_id 核对；nsfs 仍不能作为 Ledger 存储，其他类型的相对 root 仍拒绝。
+首次尝试使用原 `6707a1b` 及保留 wheel，在创建合成目录前因 mountinfo 解析失败退出 1，未产生合成数据库。GX10 的正常挂载表包含 namespace 文件系统的非绝对 root；旧解析器因此拒绝整张表，连同无关的 ext4 目标一起失败。与现场 6.17 内核对应的 Linux [`nsfs_show_path` 实现](https://raw.githubusercontent.com/torvalds/linux/v6.17/fs/nsfs.c)采用 namespace 名称与 inode 的形式输出 root；固定版本避免后续 `master` 变化改写本次依据。修复仅在 fs_type 为 nsfs 时接受该语法，保留记录供最深挂载和 fd/mount_id 核对；nsfs 仍不能作为 Ledger 存储，其他类型的相对 root 仍拒绝。
 
 本次从固定 Git 提交导出 280 个文件，在独立本地构建环境生成新 wheel，随后在 GX10 新建独立 runtime 离线安装。原失败目录、旧 A1 安装及数据保留。17 个模块的固定源码、wheel 与安装字节一致；GX10 的 Python 对 17 个模块与两个验收脚本进行内存编译。业务从源码目录外以 `-I -B` 运行，使用真实生产 API、CLI、SQLite 和存储检查。runtime 普通文件与目录已移除写权限；前后核对的是模块、解释器、venv 配置和 console script 绑定，并非完整 runtime inode 清单。
 

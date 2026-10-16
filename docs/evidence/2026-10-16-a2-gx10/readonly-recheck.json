@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "remote_files_verified": 24,
+  "databases": [
+    {
+      "role": "source",
+      "sha256": "9dd97121c16436eb8786cfe2bd5b5c0ce0d3a10a44b2afa2708ac018f15cedd4",
+      "bytes": 49152,
+      "rows": {
+        "ledger_format": 1,
+        "records": 4,
+        "operations": 2,
+        "payloads": 1,
+        "refs": 3
+      }
+    },
+    {
+      "role": "api_restored",
+      "sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670",
+      "bytes": 49152,
+      "rows": {
+        "ledger_format": 1,
+        "records": 4,
+        "operations": 2,
+        "payloads": 1,
+        "refs": 3
+      }
+    },
+    {
+      "role": "cli_restored",
+      "sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670",
+      "bytes": 49152,
+      "rows": {
+        "ledger_format": 1,
+        "records": 4,
+        "operations": 2,
+        "payloads": 1,
+        "refs": 3
+      }
+    },
+    {
+      "role": "snapshot_1",
+      "sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670",
+      "bytes": 49152,
+      "rows": {
+        "ledger_format": 1,
+        "records": 4,
+        "operations": 2,
+        "payloads": 1,
+        "refs": 3
+      }
+    },
+    {
+      "role": "snapshot_2",
+      "sha256": "cfe0d0d6fe8f957d5e6216082ba839d65f81c5e379c6799d6117e40037b73670",
+      "bytes": 49152,
+      "rows": {
+        "ledger_format": 1,
+        "records": 4,
+        "operations": 2,
+        "payloads": 1,
+        "refs": 3
+      }
+    }
+  ],
+  "all_logical_rows_equal": true,
+  "restored_bytes_equal_snapshot_bytes": true,
+  "independent_payload_bytes_verified": 39,
+  "idempotency_fingerprints_recomputed": 2,
+  "original_business_replayed": false,
+  "database_writes": 0,
+  "retained_files_unchanged": true,
+  "checker_source_sha256": "2c27a62239dad138e1ec6e3256a7966e38de379029744324b38d91ad27799820"
+}

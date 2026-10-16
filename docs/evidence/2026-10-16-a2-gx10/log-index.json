@@ -1,0 +1,107 @@
+{
+  "raw_logs_published": false,
+  "records": [
+    {
+      "role": "wheel_build",
+      "bytes": 1031,
+      "sha256": "3b17dd037fe6cf3c98406b2e2028d1b42e0b030a19f6363dd8ad14d07b46385d",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "build_binding",
+      "bytes": 422,
+      "sha256": "3de7ef9120164298f43ef5956eece859d66aaa0f2bbcff27450927c98e21734d",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "gx10_install",
+      "bytes": 245,
+      "sha256": "64023e5b23e972a842be05cbf3bdf0606eb72cb2f3ff7448438d570671fa7e07",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "gx10_smoke_stdout",
+      "bytes": 1276,
+      "sha256": "7c178e1023408e77885884aec7122af964dab8e628134f3482e7de0d63fb2d4d",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "gx10_smoke_stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "gx10_execution_receipt",
+      "bytes": 1891,
+      "sha256": "2886fa8f288430b925aa412e4e1dce6370f170f07669f7b5dd45b4f39b60b1f3",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "gx10_install_binding",
+      "bytes": 3493,
+      "sha256": "71e68e8d9214f54900380c1b2f67f4a32604a55911c388b247d57d97f7d56d1b",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "remote_readback_index",
+      "bytes": 4167,
+      "sha256": "a1d1764863d217308500778b49bf3d80d5d36b5a290cccb9226d2afc55d10c14",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "private_execution_controller",
+      "bytes": 7310,
+      "sha256": "388b3d691e97e5bac18d9a82e88e93f0a112bdf2d774c71b3e88aa37446b5f60",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "private_readonly_checker",
+      "bytes": 6117,
+      "sha256": "2c27a62239dad138e1ec6e3256a7966e38de379029744324b38d91ad27799820",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "private_seal_checker",
+      "bytes": 2962,
+      "sha256": "57f8ac667fc5e5a1fb7471d7297c0c7221e9b6e978767eb699c98280f379b0f9",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "retained_first_failure",
+      "bytes": 2286,
+      "sha256": "5c3bc506273717a5000ff353fbca78d38eb56314063f350ecc781a8551b2b97c",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "old_parser_reproduction",
+      "bytes": 3283,
+      "sha256": "56ff62a11122599fcc923ad4f4385e9fb8740ab7cdfb9cb5f61a20ae54f21e74",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "storage_python311",
+      "bytes": 124,
+      "sha256": "ae78e803036b11aaf81f0571a9862bb820abc602335b60b57c6232fec4ff96b4",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "storage_python312",
+      "bytes": 124,
+      "sha256": "cc88e61dfbe86eb3b08f408b751820f7c8aa71afb4ae9ac988f6bf84a4f24764",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "snapshot_python311",
+      "bytes": 393,
+      "sha256": "e3c679f08c7bf63d92ed09b0f8b2c18d3393ef27ad7e225f3b2cf5a300e42680",
+      "raw_location": "PRIVATE_RETAINED"
+    },
+    {
+      "role": "retained_mountinfo_parse_result",
+      "bytes": 26,
+      "sha256": "768ae4708c4b2b4c58b934f88c2ed5de6f91fe46b077610ef0624437d5cd7e02",
+      "raw_location": "PRIVATE_RETAINED"
+    }
+  ]
+}

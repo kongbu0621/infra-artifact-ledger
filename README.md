@@ -4,7 +4,7 @@
 
 这里的“制品”指需要保留精确内容和版本的数字成果，例如报告、数据集、工作流 JSON 或模型输出。本仓库的独立目标，是让个人、团队和其他软件能够回答：这是哪个成果、用的是哪一版、内容是否完整、与哪些来源有关、失败重试是否重复登记。
 
-**当前实现：`0.2.0a1` alpha，保留 A1 的 Python 库、JSON CLI 与本地 SQLite backend，新增 A2 五个恢复入口：create / publish / verify / restore / check_restore。** 可从固定源码构建 wheel 并离线安装，尚未发布 PyPI 包，也不是稳定版。仓库为 Public，采用 [MIT LICENSE](LICENSE)。A1 的 P1–P5 授权与历史证据见 [主 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)、[A1 验证记录](docs/A1_VALIDATION.md)；A2 的 S1–S5 独立授权见 [A2 Gate](docs/a2/GATE.md)，实际执行与未测项见 [A2 验证记录](docs/A2_VALIDATION.md)。2026-10-16 已完成 Linux x86_64、真实 ext4、Python 3.11/3.12 的安装态本地 A2 合成闭环；GX10 与真实 NAS 验收仍未执行，整个 A2 仍为 PARTIAL。实际版本和范围见 [兼容表](docs/COMPATIBILITY.md)。
+**当前实现：`0.2.0a1` alpha，保留 A1 的 Python 库、JSON CLI 与本地 SQLite backend，新增 A2 五个恢复入口：create / publish / verify / restore / check_restore。** 可从固定源码构建 wheel 并离线安装，尚未发布 PyPI 包，也不是稳定版。仓库为 Public，采用 [MIT LICENSE](LICENSE)。A1 的 P1–P5 授权与历史证据见 [主 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md)、[A1 验证记录](docs/A1_VALIDATION.md)；A2 的 S1–S5 独立授权见 [A2 Gate](docs/a2/GATE.md)，实际执行与未测项见 [A2 验证记录](docs/A2_VALIDATION.md)。2026-10-16 已完成 Linux x86_64、真实 ext4、Python 3.11/3.12 的安装态本地 A2 合成闭环；随后修复 GX10 的 namespace 挂载表解析问题，补齐该机 Python 3.12 / aarch64 的[安装态本地闭环](docs/evidence/2026-10-16-a2-gx10/README.md)。真实 NAS 验收仍未执行，整个 A2 仍为 PARTIAL。实际版本和范围见 [兼容表](docs/COMPATIBILITY.md)。
 
 通过 Python 库和命令行工具，在本地单一受信数据域内，用 SQLite 同一事务保存元数据和有界内容字节；公共数据格式为后续其他实现提供对接边界。消费者不需要模型账号、Agent 框架、云账号或访问维护者的私有仓库。
 
@@ -22,7 +22,7 @@
 2026-10-15 的接续调整只记录任务顺序，没有新增执行结果。2026-10-16 的[独立本地实测](docs/evidence/2026-10-16-a2-local/README.md)现已补录：两版 Python 各完成 API/CLI 的 create、verify、restore、check_restore，并核对恢复内容、幂等记录和原合成库不变。它只覆盖所列本地环境，不代表整个 A2 完成。
 
 1. 先核对并复用已有实现、安装和适用验证结果，从原中断点接续；结果未知的操作先查原记录，避免重复写入。
-2. 复用已经通过的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地闭环，只补仍缺失或实际失效的部分；入口见 [A2 运行手册](docs/A2_RUNBOOK.md)。手册给出完整流程，接续只选缺口对应步骤；已核实适用的 A2 build/runtime 环境不必重建，新写入演练仍用专属的新输出与恢复目标，保留旧现场。GX10 等未覆盖机器组合仍需独立证据，同一次有效结果覆盖的对应项目不重复运行。
+2. 复用已经通过的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地闭环，只补仍缺失或实际失效的部分；入口见 [A2 运行手册](docs/A2_RUNBOOK.md)。手册给出完整流程，接续只选缺口对应步骤；已核实适用的 A2 build/runtime 环境不必重建，新写入演练仍用专属的新输出与恢复目标，保留旧现场。GX10 的修复版本地结果另见[独立证据](docs/evidence/2026-10-16-a2-gx10/README.md)；其他未覆盖机器组合仍需独立证据，同一次有效结果覆盖的对应项目不重复运行。
 3. 接续原范围内剩余的真实 NAS 等现场项。实际环境不具备时如实保留未完成项，不以本地替身冒充，也不据此取消这部分需求。本地闭环通过不等于 NAS 保存与丢失恢复通过。
 4. Local Hand 仅针对上述任务的实际阻塞补齐能力；它是否需要改动由任务决定。其当前 NAS 作业屏蔽保持不变，配套任务说明见 [Local Hand PR #41](https://github.com/kongbu0621/infra-local-hand/pull/41)；本仓接续不依赖该 PR 先合入，也不由此获得修改 Local Hand 部署或 NAS 服务的权限。
 

@@ -1,0 +1,108 @@
+{
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "source_tree": "f1e18c92e05888441c19ee463bfb1f804c4b1d16",
+  "source_archive_sha256": "700f02ed763525bf71b423e6378821136428603fc5326f24c79b40c9812f2dd3",
+  "source_files_checked": 280,
+  "source_files_unchanged_after_build": 280,
+  "wheel_name": "infra_artifact_ledger-0.2.0a1-py3-none-any.whl",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "build_tools": {
+    "setuptools": "84.0.0",
+    "wheel": "0.48.0",
+    "packaging": "26.3"
+  },
+  "build_location": "separate local build environment; offline install on GX10",
+  "source_wheel_installed_modules_equal": [
+    {
+      "path": "src/infra_artifact_ledger/__init__.py",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1"
+    },
+    {
+      "path": "src/infra_artifact_ledger/__main__.py",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3"
+    },
+    {
+      "path": "src/infra_artifact_ledger/_checkpoints.py",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580"
+    },
+    {
+      "path": "src/infra_artifact_ledger/cli.py",
+      "sha256": "4c069c425888eef0c268d299042c81f3254ac0804af4d2c586bca8ae43eb7e2f"
+    },
+    {
+      "path": "src/infra_artifact_ledger/errors.py",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d"
+    },
+    {
+      "path": "src/infra_artifact_ledger/fingerprint.py",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f"
+    },
+    {
+      "path": "src/infra_artifact_ledger/portable.py",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab"
+    },
+    {
+      "path": "src/infra_artifact_ledger/records.py",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4"
+    },
+    {
+      "path": "src/infra_artifact_ledger/recovery.py",
+      "sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2"
+    },
+    {
+      "path": "src/infra_artifact_ledger/service.py",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_cli.py",
+      "sha256": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_common.py",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_format.py",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_sqlite.py",
+      "sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c"
+    },
+    {
+      "path": "src/infra_artifact_ledger/snapshot_storage.py",
+      "sha256": "bea6637b509542797f4fd10ede405abc297d837632ec6f4d8f50c685b2feeb61"
+    },
+    {
+      "path": "src/infra_artifact_ledger/sqlite_store.py",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190"
+    },
+    {
+      "path": "src/infra_artifact_ledger/validation.py",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+    }
+  ],
+  "acceptance_scripts": [
+    {
+      "path": "tests/installed_snapshot_walkthrough.py",
+      "size": 10002,
+      "sha256": "1023b33a1492f879266bf320ecd3979a114da71cd699915afa0d5f034249675d"
+    },
+    {
+      "path": "tools/acceptance/a2_nas_exercise.py",
+      "size": 43521,
+      "sha256": "3644ca35185531a13035d7b3a518110c531562b20dbbfd8052325e2be1daf6fc"
+    }
+  ],
+  "compiled_on_gx10": {
+    "runtime_modules": 17,
+    "acceptance_scripts": 2
+  },
+  "runtime_bindings": {
+    "runtime_python_sha256": "1401f5c1ddd9e8f9d77622113a8d04b5f7ef57c0e3f40dd29db248a5aa91622e",
+    "venv_config_sha256": "353da15364243fa3e6c805daa7fa522f0ad944137f43587dee584b17ee5dbc68",
+    "console_script_sha256": "6570a78f9366524a75ffbd7c390dc812a40ce1a0e9f0e87d6df1b4b6ddc2efed"
+  },
+  "runtime_bindings_unchanged": true,
+  "binding_limit": "Checks 17 module bytes, interpreter, venv config and console script; not a complete runtime inode inventory. Source commit evidence is supplied by this independent Git/archive/build binding, not inferred from the smoke-tool argument."
+}

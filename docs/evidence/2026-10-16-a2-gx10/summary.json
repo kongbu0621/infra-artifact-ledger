@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-16",
+  "package_version": "0.2.0a1",
+  "a2_overall": "PARTIAL",
+  "gx10_installed_local_flow": "PASS",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "environment": {
+    "architecture": "aarch64",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "filesystem": "ext4",
+    "python": "3.12.3",
+    "sqlite": "3.45.1"
+  },
+  "operations": 8,
+  "preserved_prior_files_checked": 27,
+  "preserved_prior_scope": "Original A1 modules/data plus the first failed A2 run records; applicable file metadata and old Git head/status also compared.",
+  "first_gx10_attempt": {
+    "source_commit": "6707a1b521c9c4718674620e6c584656bd434e4c",
+    "status": "FAILED",
+    "exit_code": 1,
+    "error": "UNSUPPORTED_STORAGE: Linux mount metadata is invalid",
+    "failure_stage": "initial scratch-parent storage check before synthetic fixture creation",
+    "synthetic_directories_observed": 0,
+    "raw_failure_retained": true,
+    "continuation": "Fixed source in a separate new source/runtime/output directory; no completed business replayed."
+  },
+  "regression": {
+    "new_tests_with_old_parser": "2 errors reproduce the namespace-root defect",
+    "initial_existing_test_failure": "Same-size source mutation could share timestamps; test now explicitly injects an observable mtime change.",
+    "storage_python311": {
+      "discovered": 25,
+      "passed": 25
+    },
+    "storage_python312": {
+      "discovered": 25,
+      "passed": 25
+    },
+    "snapshot_python311": {
+      "discovered": 279,
+      "passed": 267,
+      "skipped": 12
+    },
+    "skip_scope": "11 opt-in resource cases and one unsupported-filesystem case inapplicable on this ext4 test directory.",
+    "retained_real_mountinfo": {
+      "rows_parsed": 53,
+      "nsfs_rows_retained": 3
+    },
+    "not_additive": "Storage tests are included in the snapshot suite; these counts are not independent totals."
+  },
+  "nas_publish_flow": "NOT_RUN",
+  "nas_capability_acceptance": "NOT_ATTESTED",
+  "nas_loss_exercise": "NOT_RUN",
+  "t06_t08_deployment_faults": "NOT_RUN",
+  "fixture": {
+    "artifacts": 1,
+    "versions": 1,
+    "content_roots": 1,
+    "blobs": 1,
+    "blob_bytes": 39,
+    "idempotency_records": 2,
+    "manifests": 0,
+    "provenance_links": 0,
+    "import_receipts": 0
+  },
+  "limits": [
+    "Not full T13 real-machine coverage.",
+    "No new resource-peak or hardware durability measurements.",
+    "No systemd isolation or resident Local Hand A2 end-to-end acceptance.",
+    "Historical x86_64 results remain bound to their original source and wheel."
+  ]
+}

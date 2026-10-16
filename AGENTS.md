@@ -1,6 +1,6 @@
 # Working in this repository
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与真实本地验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地合成闭环已通过；GX10、真实 NAS 验收仍未执行，整个 A2 尚未完成。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与真实本地验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地合成闭环已通过；随后 GX10 / aarch64 / Python 3.12 的修复版安装态本地闭环也已通过；真实 NAS 验收仍未执行，整个 A2 尚未完成。
 
 ## 当前任务接续（2026-10-15）
 
@@ -16,7 +16,9 @@ Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞�
 
 2026-10-16 已补录[本地实测证据](docs/evidence/2026-10-16-a2-local/README.md)，固定输入为
 `6707a1b521c9c4718674620e6c584656bd434e4c`，复用已保留 wheel，两版解释器各完成八项
-API/CLI 操作。优先复用该结果，继续真实 NAS、GX10 和尚未覆盖的部署故障项。
+API/CLI 操作。随后修复 namespace 挂载表解析，固定 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b`
+的新 wheel 在 GX10 完成本地八项操作，见[GX10 证据](docs/evidence/2026-10-16-a2-gx10/README.md)。
+两次来源分开记录，旧失败保留；复用适用结果，继续真实 NAS 和尚未覆盖的部署故障项。
 Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 接续的统一前置。
 
 ## Current execution boundary

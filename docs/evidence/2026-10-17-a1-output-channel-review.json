@@ -24,8 +24,10 @@
       "failures": 0
     },
     "source_targeted_tests": 70,
-    "installed_targeted_tests": 70,
-    "test_sets_overlap": true
+    "installed_targeted_tests": 48,
+    "test_sets_overlap": true,
+    "installed_interpreter_tests_run": 70,
+    "source_or_mixed_subprocess_tests": 22
   },
   "source_boundary": {
     "base": "8d3a9527c859fe1a2258a8068e3feadc39d260ce",
@@ -240,5 +242,12 @@
     "tools_build_and_normative_unchanged": true,
     "privacy_scan": "PASS",
     "diff_check": "PASS"
+  },
+  "installed_coverage_correction": {
+    "original_claim": 70,
+    "corrected_pure_installed": 48,
+    "reason": "test_cli.py (18) and test_cli_output_paths.py (4) set child PYTHONPATH to checkout src; parent venv alone was insufficient",
+    "original_logs_unchanged": true,
+    "followup": "2026-10-17-test-subprocess-binding-review.json"
   }
 }

@@ -1,0 +1,213 @@
+{
+  "status": "PASS",
+  "scope": "nine_selected_fault_and_conflict_scenarios_on_one_actual_CIFS_profile",
+  "a2_overall": "PARTIAL",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "product_code_changed": false,
+  "runtime": {
+    "package_version": "0.2.0a1",
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+    "sqlite": "3.45.1",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "machine": "aarch64",
+    "installed_package_wheel_bytes": "MATCH"
+  },
+  "storage": {
+    "local": "ext4",
+    "nas": "cifs",
+    "dialect": "SMB 3.1.1",
+    "profile": "mounted-posix-v1",
+    "global_mount_unchanged": true,
+    "services_or_fstab_changed": false
+  },
+  "cases": {
+    "publish_stdout_loss": {
+      "exit": 9,
+      "readonly_verify": "OK",
+      "manifest_reference": "saved_before_publish",
+      "original_NAS_publish_retried": false
+    },
+    "same_generation_different_content": {
+      "independent_processes": 2,
+      "synchronized_at_exclusive_mkdir": true,
+      "winner": "b",
+      "successes": 1,
+      "TARGET_EXISTS": 1,
+      "winner_bytes_and_all_rows_match": true
+    },
+    "existing_incomplete_generation": {
+      "exit": 4,
+      "error": "TARGET_EXISTS",
+      "state": "not_applicable",
+      "original_sentinel_unchanged": true
+    },
+    "partial_database": {
+      "real_bytes_written": 128,
+      "injected_error": "EIO",
+      "exit": 9,
+      "state": "not_published",
+      "verify": "INCOMPLETE_SNAPSHOT"
+    },
+    "partial_manifest": {
+      "real_bytes_written": 128,
+      "injected_error": "EIO",
+      "exit": 9,
+      "state": "not_published",
+      "verify": "INCOMPLETE_SNAPSHOT"
+    },
+    "post_marker_final_sync_failure": {
+      "injection": "generation_directory_fsync_EIO",
+      "marker_link_completed": true,
+      "exit": 9,
+      "error": "PUBLICATION_UNKNOWN",
+      "state": "unknown",
+      "readonly_verify": "OK"
+    },
+    "marker_link_acknowledgement_loss": {
+      "injection": "EIO_after_real_successful_NAS_marker_link",
+      "exit": 9,
+      "error": "PUBLICATION_UNKNOWN",
+      "state": "unknown",
+      "readonly_verify": "OK"
+    },
+    "post_marker_mount_loss": {
+      "method": "actual_lazy_unmount_in_private_namespace_then_empty_ext4_shadow_bind",
+      "ordinary_user_uid": 1000,
+      "exit": 9,
+      "error": "PUBLICATION_UNKNOWN",
+      "state": "unknown",
+      "readonly_verify_via_original_mount": "OK",
+      "one_temporary_marker_directory_retained": true
+    },
+    "missing_mount_before_call": {
+      "exit": 3,
+      "error": "UNSUPPORTED_STORAGE",
+      "state": "not_published",
+      "same_named_empty_local_archive": "unchanged"
+    }
+  },
+  "references_before_publish": {
+    "a": {
+      "database_sha256": "eba8fb4df71d5501fe8209f916af7c139a146c9dc84aeaad6bfc14f20ccdfacf",
+      "durability_scope": "filesystem_acknowledged",
+      "manifest_sha256": "d8241aedf352194fa57e69064367fa94c0475be3c12baef87b5747078ca08303",
+      "snapshot_id": "01d5dea8e54573e01108aad3804c2011",
+      "summary": {
+        "counts": {
+          "artifacts": 2,
+          "blobs": 3,
+          "content_roots": 3,
+          "idempotency_records": 7,
+          "import_receipts": 1,
+          "manifests": 1,
+          "provenance_links": 2,
+          "versions": 4
+        },
+        "verified_blob_count": 3,
+        "verified_byte_length": 103
+      }
+    },
+    "b": {
+      "database_sha256": "5d0f28c8df7949f67b32795a6273fedc0b6dd30432d0e146e5398d6185e3d44b",
+      "durability_scope": "filesystem_acknowledged",
+      "manifest_sha256": "5ce15f9b2ee883bc6506c7a116dec73007ed660af21fc00c8fbaa1e035398a33",
+      "snapshot_id": "01d5dea8e54573e01108aad3804c2011",
+      "summary": {
+        "counts": {
+          "artifacts": 3,
+          "blobs": 3,
+          "content_roots": 3,
+          "idempotency_records": 8,
+          "import_receipts": 1,
+          "manifests": 1,
+          "provenance_links": 2,
+          "versions": 4
+        },
+        "verified_blob_count": 3,
+        "verified_byte_length": 103
+      }
+    }
+  },
+  "evidence": {
+    "transported_files": 138,
+    "transported_bytes": 738283,
+    "complete_NAS_generations_independently_checked": 5,
+    "all_SQL_rows_and_Blob_bytes_compared": true,
+    "old_successful_generation_unchanged": true,
+    "script_hashes": {
+      "checker.py": "4242e12cd07c743e82e3a526d8b409ee963d0cbc0986e319189fc9abfb3586ae",
+      "checker-v2.py": "205190ec59eccb44af1706b1737bb3011ba59e2688531c91ef9be90c26b76316",
+      "namespace_check.py": "37999c2cae8fde5a052b8fd1d5db0f749448eeeaf8be205dad6c72ab0ad662d0",
+      "namespace-reconcile.py": "df3b4d792362caa792669040e4dae55b7412f03a8ebef0b015254d1c8b101ab1"
+    },
+    "index_sha256": "e26313e1bb077d7ed5031ffdfdd84304a185cced2b6acedc49290e9652b9c2aa",
+    "ordinary_report_sha256": "1a9ab0d7abe96b20878b64833680fd9bc1f03f93f868efb463a3d34732b9c6b6",
+    "final_report_sha256": "97a4601faad1fe9eff83dbd0ef4f921fdeb5f3f79218a56d168bce49e78bbc52"
+  },
+  "controller_repair": {
+    "initial_status": "FAIL",
+    "error": "ModuleNotFoundError",
+    "cause": "System Python supervisor imported product only to check an already completed child response.",
+    "product_child_already_exited": true,
+    "original_child_result": "PUBLICATION_UNKNOWN",
+    "failed_original_preserved": true,
+    "fix": "Response checking uses stdlib only; resume runs previously unrun precall rejection and read-only reconciliation.",
+    "original_marker_publication_reexecuted": false
+  },
+  "independent_audit": {
+    "status": "PASS",
+    "files": 138,
+    "all_transport_hashes_match": true,
+    "complete_nas_generations_checked": 5,
+    "all_rows_and_payloads_match": true,
+    "contention_winner": "b",
+    "partial_files_checked": 2,
+    "old_generation_unchanged": true,
+    "global_mount_unchanged": true,
+    "no_local_fallback_files": true,
+    "original_controller_failure_preserved": true,
+    "marker_temporary_directory_retained": true,
+    "audit_sha256": "ab20585f17ecbca130451050c2270679200271d6ee7e176769eed2ff7dfa4d1b",
+    "limitation": "Current bytes and retained execution evidence; not physical network loss or historical final sync."
+  },
+  "negative_probes": [
+    {
+      "case": "nas_bytes",
+      "result": "REJECTED",
+      "reason": "NAS candidate bytes differ",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "unknown_result",
+      "result": "REJECTED",
+      "reason": "Wrong semantic state",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "global_mount",
+      "result": "REJECTED",
+      "reason": "Global mount binding changed",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "isolation",
+      "result": "REJECTED",
+      "reason": "Actual isolated loss checkpoint",
+      "transport_hashes_updated": true
+    }
+  ],
+  "limits": {
+    "physical_network_disconnect": "NOT_RUN",
+    "device_power_loss": "NOT_RUN",
+    "resource_peaks": "NOT_MEASURED",
+    "remaining_T06": "Other interruption positions, short-write recovery, ENOSPC/permission/readback failures are not certified on this deployment by this run.",
+    "historical_final_sync_attested_by_verify": false,
+    "other_storage_profiles_validated": false,
+    "entire_A2_complete": false
+  },
+  "private_data": {
+    "endpoints_credentials_database_payloads_published": false,
+    "raw_failed_and_successful_evidence_retained": true
+  }
+}

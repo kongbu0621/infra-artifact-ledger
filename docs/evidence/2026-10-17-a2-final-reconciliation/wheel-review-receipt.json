@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-17",
+  "reviewed_head": "bf0475c90e0d81d474d9d2f445cdb99974e8095b",
+  "status": "PASS",
+  "scope": "Acceptance runner identity binding; local regression and read-only retained evidence checks",
+  "findings_fixed": [
+    "Separate wheel opens could mix the modules of one archive with the expected digest of another after pathname replacement.",
+    "Dictionary-based module collection hid duplicate ZIP names; basename-only comparison did not verify exact relative module membership."
+  ],
+  "original_race_reproduced": {
+    "status": "REPRODUCED",
+    "original_runner_sha256": "c59a61afed95e9953de6b79d7c953ecc153b7fd94144ded3dadce96074156247",
+    "actual_original_identity_block_passed": true,
+    "module_contents_from_original_wheel": 17,
+    "reported_sha256_from_different_replacement_wheel": true,
+    "product_or_NAS_executed": false
+  },
+  "binding_method": "Read at most 64 MiB + 1 from one open; reject oversized or wrong-hash data, then compare unique complete Python membership and bytes using the same verified memory image. A later pathname replacement does not alter that image.",
+  "original_runner_sha256": "c59a61afed95e9953de6b79d7c953ecc153b7fd94144ded3dadce96074156247",
+  "reviewed_runner_sha256": "6ad9072834fba74056cfe88dba0bf199dc8abfb4fc312c4a5e769889f929e2a0",
+  "regression_checker_sha256": "8f59e7e4a45c9275710bd91115f4752c5c9784a35cf720d1730b52fbbdf270ce",
+  "targeted_tests": 12,
+  "test_result": "PASS",
+  "runner_business_assertions_unchanged": 20,
+  "entire_runner_body_after_identity_verification_unchanged": true,
+  "retained_wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "retained_wheel_modules_equal_original_report_and_fixed_source": 17,
+  "fixed_source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "retained_archives": [
+    {
+      "case": "final_acceptance",
+      "manifest_sha256": "c9d3266ce1da16f86f4bf03e0a789ae92c9f7b9536af7a3387a9398f1277941f",
+      "entries_unchanged": 75
+    },
+    {
+      "case": "previous_review",
+      "manifest_sha256": "00e686af88728d318268afe048408089fdc6b7c575faf217dcb004edde8d0020",
+      "entries_unchanged": 15
+    }
+  ],
+  "review_controller_correction": "Initial assertion-order comparison assumed ast.walk source order and failed before writing a receipt; the controller now compares the complete unchanged business-body AST. Initial failure retained privately.",
+  "historical_results_modified": false,
+  "new_full_runner_business_execution": false,
+  "NAS_business_executed": false,
+  "product_changed": false,
+  "a2_acceptance": "COMPLETE_FOR_RECORDED_CONFIGURATION",
+  "draft": true,
+  "merged": false,
+  "limits": "This validates saved module and wheel identities. It does not retroactively observe process memory or exclude every historical race. The original recorded module hashes independently match the retained wheel and fixed Git source."
+}

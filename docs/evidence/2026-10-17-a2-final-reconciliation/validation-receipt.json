@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "relative_links": 283,
+  "anchors": 17,
+  "JSON": "PASS",
+  "compiled_new_public_scripts": 1,
+  "privacy_scan": "PASS",
+  "diff_check": "PASS",
+  "executed_script_sha256": "f7deef2d43450be939631b97ad92c6a70a4c4641661e6e59f90284cdaaf2462a",
+  "published_script_sha256": "0a3c4c3d6da4d9e8710cfe79052df86245c7a23d03472dcafada0d5d47f10424",
+  "script_difference": "report field names only, no execution-logic change",
+  "product_diff_from_installed_source": "none",
+  "read_only_reconciliation": "PASS",
+  "normative_items": 15,
+  "fresh_probe_exit": 0,
+  "first_harness_failure_preserved": true,
+  "product_changed": false,
+  "new_NAS_generation_published": false
+}

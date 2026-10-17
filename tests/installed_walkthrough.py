@@ -1,9 +1,16 @@
 """Run the published report tutorial against an isolated installed wheel.
 
-Run using the consumer venv's Python with -I. This deliberately does not add
+Run using the consumer venv's Python with -I and without -O/-OO. This does not add
 the repository's src directory to sys.path or implement any Ledger behavior.
 """
 from __future__ import annotations
+
+import sys
+
+# This executable acceptance uses assertions, including calls whose effects
+# are part of the walkthrough. Refuse optimization before any fixture work.
+if not __debug__:
+    raise SystemExit("Installed walkthrough requires assertions; remove -O/-OO.")
 
 import argparse
 import copy
@@ -15,11 +22,12 @@ from pathlib import Path
 import re
 import sqlite3
 import subprocess
-import sys
 import tempfile
 
 
 def main() -> None:
+    if not sys.flags.isolated or sys.prefix == sys.base_prefix:
+        raise SystemExit("Use the consumer virtual environment's Python with -I.")
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, required=True)
     args = parser.parse_args()
@@ -46,7 +54,8 @@ def main() -> None:
             (work / f"report-v{number}.txt").write_bytes(f"Quarterly report v{number}\n".encode())
 
         def cli(*argv: str, expected: int = 0) -> dict:
-            result = subprocess.run([str(executable), *argv], cwd=work,
+            # -I on the parent does not sanitize the child's environment.
+            result = subprocess.run([sys.executable, "-I", str(executable), *argv], cwd=work,
                                     capture_output=True, text=True, check=False)
             assert result.returncode == expected, (argv, result.returncode, result.stdout, result.stderr)
             assert result.stdout.endswith("\n") and len(result.stdout.splitlines()) == 1, result.stdout

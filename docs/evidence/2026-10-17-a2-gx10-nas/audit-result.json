@@ -1,0 +1,28 @@
+{
+  "status": "PASS",
+  "scope": "post-exercise independent read-only audit",
+  "readback_files": 18,
+  "all_file_hashes_match": true,
+  "nas_generation_matches_independent_reference": true,
+  "nas_database_matches_all_expected_rows_and_payloads": true,
+  "restored_database_preserves_every_original_row_and_payload": true,
+  "only_expected_new_version_relations_operation_payload_added": true,
+  "table_rows_before": {
+    "ledger_format": 1,
+    "records": 16,
+    "refs": 21,
+    "operations": 7,
+    "payloads": 3
+  },
+  "table_rows_after": {
+    "ledger_format": 1,
+    "records": 19,
+    "refs": 25,
+    "operations": 8,
+    "payloads": 4
+  },
+  "payload_bytes_before": 103,
+  "payload_bytes_after": 132,
+  "nas_exercise_replayed": false,
+  "limit": "Readback checks current bytes and retained execution evidence; not NAS power-loss durability."
+}

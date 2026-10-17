@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "a2_overall": "PARTIAL",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "restore_scenarios": 15,
+  "check_fixture_scenarios": 7,
+  "files": 219,
+  "bytes": 1227519,
+  "symlinks": 4,
+  "restore_states": {
+    "published": 1,
+    "not_published": 6,
+    "unknown": 5,
+    "killed_without_response": 2,
+    "response_channel_failed": 1
+  },
+  "unknown_current": {
+    "complete": 4,
+    "no_public_database": 1
+  },
+  "restore_check": {
+    "OK": 7,
+    "NOT_FOUND": 8
+  },
+  "sidecar_checks": {
+    "refused": 6,
+    "unrelated_link_accepted": 1
+  },
+  "preserved": {
+    "target_temporary_directories": 3,
+    "double_link_targets": 2,
+    "scratch_databases": 2
+  },
+  "NAS_input_unchanged": true,
+  "NAS_writes": false,
+  "product_changes": false,
+  "independent_audit": "PASS",
+  "negative_probes_rejected": 6,
+  "fault_model": "Selected EIO/ENOSPC/EACCES in own ordinary-user worker; real staged byte corruption, actual SIGKILL, real CLI broken output pipe; NAS input and unchanged I/O are real.",
+  "limitations": [
+    "No original final-sync/cleanup proof from later readback.",
+    "No physical power loss, actual NAS capacity/ACL fault, or deployment resource peak claim.",
+    "Not all A2 or other storage configurations."
+  ],
+  "raw_report_sha256": "dabee8d5348ab19edb81543f01522cab125970f76fc020786062cb84f5bed5bb"
+}

@@ -1,0 +1,156 @@
+{
+  "status": "PASS",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "modules": {
+    "infra_artifact_ledger/__init__.py": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1",
+    "infra_artifact_ledger/__main__.py": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3",
+    "infra_artifact_ledger/_checkpoints.py": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580",
+    "infra_artifact_ledger/cli.py": "4c069c425888eef0c268d299042c81f3254ac0804af4d2c586bca8ae43eb7e2f",
+    "infra_artifact_ledger/errors.py": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d",
+    "infra_artifact_ledger/fingerprint.py": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f",
+    "infra_artifact_ledger/portable.py": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab",
+    "infra_artifact_ledger/records.py": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4",
+    "infra_artifact_ledger/recovery.py": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2",
+    "infra_artifact_ledger/service.py": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec",
+    "infra_artifact_ledger/snapshot_cli.py": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8",
+    "infra_artifact_ledger/snapshot_common.py": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080",
+    "infra_artifact_ledger/snapshot_format.py": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b",
+    "infra_artifact_ledger/snapshot_sqlite.py": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c",
+    "infra_artifact_ledger/snapshot_storage.py": "bea6637b509542797f4fd10ede405abc297d837632ec6f4d8f50c685b2feeb61",
+    "infra_artifact_ledger/sqlite_store.py": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190",
+    "infra_artifact_ledger/validation.py": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+  },
+  "runtime": {
+    "python": "3.12.3",
+    "sqlite": "3.45.1",
+    "machine": "aarch64"
+  },
+  "utf16": {
+    "A1_schema_verified": true,
+    "actual_header_encoding": 2,
+    "manifest_claim": "UTF-8",
+    "all_inputs_unchanged": true,
+    "no_invalid_target_created": true,
+    "NAS_binding_and_names_unchanged": true,
+    "cases": [
+      {
+        "route": "API",
+        "operation": "create",
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published",
+        "stage": "snapshot"
+      },
+      {
+        "route": "CLI",
+        "operation": "create",
+        "exit": 3,
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published"
+      },
+      {
+        "route": "API",
+        "operation": "publish",
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published",
+        "stage": "verify"
+      },
+      {
+        "route": "CLI",
+        "operation": "publish",
+        "exit": 3,
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published"
+      },
+      {
+        "route": "API",
+        "operation": "verify",
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_applicable",
+        "stage": "verify"
+      },
+      {
+        "route": "CLI",
+        "operation": "verify",
+        "exit": 3,
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_applicable"
+      },
+      {
+        "route": "API",
+        "operation": "restore",
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published",
+        "stage": "verify"
+      },
+      {
+        "route": "CLI",
+        "operation": "restore",
+        "exit": 3,
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_published"
+      },
+      {
+        "route": "API",
+        "operation": "check_restore",
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_applicable",
+        "stage": "verify"
+      },
+      {
+        "route": "CLI",
+        "operation": "check_restore",
+        "exit": 3,
+        "code": "UNSUPPORTED_FORMAT",
+        "state": "not_applicable"
+      }
+    ]
+  },
+  "restored_idempotency": {
+    "old_key_replays": 2,
+    "different_input_conflicts": 2,
+    "conflict_code": "IDEMPOTENCY_CONFLICT",
+    "physical_bytes_and_old_operations_unchanged": true,
+    "before": {
+      "counts": {
+        "artifacts": 1,
+        "versions": 1,
+        "content_roots": 1,
+        "blobs": 1,
+        "manifests": 0,
+        "provenance_links": 0,
+        "import_receipts": 0,
+        "idempotency_records": 2
+      },
+      "verified_blob_count": 1,
+      "verified_byte_length": 20
+    },
+    "after_new_version": {
+      "counts": {
+        "artifacts": 1,
+        "versions": 2,
+        "content_roots": 2,
+        "blobs": 2,
+        "manifests": 0,
+        "provenance_links": 0,
+        "import_receipts": 0,
+        "idempotency_records": 3
+      },
+      "verified_blob_count": 2,
+      "verified_byte_length": 31
+    },
+    "before_new_write": {
+      "ledger.sqlite": {
+        "size": 49152,
+        "sha256": "2d1fbdaf621a5f997a2d51b5dc5b53394107bbb6512a225687e80c5613d35cce"
+      }
+    }
+  },
+  "storage_classification_mocked": false,
+  "product_modified": false,
+  "scope": "Real installed API/CLI, fresh ext4 fixtures; publish rejects invalid local input before any NAS generation. Existing NAS root binding and entries checked.",
+  "public_publish_calls": 2,
+  "NAS_generation_published": false,
+  "raw_report_sha256": "3070870268752866ad30f111f2770fdfcf6ffc47f576cc52393318b8556270d1",
+  "raw_field_clarification": "Raw report NAS_publish_executed=false means no NAS generation was published. Public publish was called twice (API/CLI) and rejected UTF16 before publication; do not read it as zero publish API invocations."
+}

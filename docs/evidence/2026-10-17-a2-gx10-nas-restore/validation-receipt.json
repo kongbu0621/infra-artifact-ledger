@@ -1,0 +1,39 @@
+{
+  "compilation": "PASS",
+  "negative_copies_remote_effects": false,
+  "negative_probes": [
+    {
+      "probe": "unknown_state",
+      "reason": "Semantic outcome",
+      "result": "REJECTED"
+    },
+    {
+      "probe": "hardlink_count",
+      "reason": "Original hard-link count",
+      "result": "REJECTED"
+    },
+    {
+      "probe": "cleanup_sync_order",
+      "reason": "Cleanup-before-sync ordering",
+      "result": "REJECTED"
+    },
+    {
+      "probe": "sidecar_accepted",
+      "reason": "Process exit/timeout",
+      "result": "REJECTED"
+    },
+    {
+      "probe": "kill_exit",
+      "reason": "Process exit/timeout",
+      "result": "REJECTED"
+    },
+    {
+      "probe": "NAS_input_changed",
+      "reason": "Independent database reference",
+      "result": "REJECTED"
+    }
+  ],
+  "original_evidence": "PASS before and after negative probes",
+  "status": "PASS",
+  "transport_hashes_updated_in_negative_copies": true
+}

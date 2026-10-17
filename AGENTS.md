@@ -2,13 +2,15 @@
 
 修改 README 图示时，先读[图示维护约定](docs/DEVELOPMENT.md#图示维护约定)：布局须突出主线和最终用途，并检查实际展示的文字与有向连线。
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与真实本地验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地合成闭环已通过；随后 GX10 / aarch64 / Python 3.12 的修复版安装态本地闭环也已通过；真实 NAS 验收仍未执行，整个 A2 尚未完成。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与实机验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。所列 Linux x86_64 与 GX10 的 ext4 安装态本地合成闭环已通过；2026-10-17 又完成 GX10 + CIFS（SMB 3.1.1）的真实 NAS 合成保存与丢失恢复。最终对账现已完成，A2 S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；详见[最终记录](docs/evidence/2026-10-17-a2-final-reconciliation/README.md)。下列历史段落的 PARTIAL 只表示各轮结束时状态。
 
 ## 当前任务接续（2026-10-15）
 
 新会话先读取 [开发与接续记录的当前主任务与接续点](docs/DEVELOPMENT.md#当前主任务与接续点2026-10-15)。
 Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞，才回头建设 Local Hand；
-现在应从本仓中断处继续。主任务仍是已批准的 A2 未完成项，Local Hand 为它提供所需能力，
+当时应从本仓中断的已批准 A2 未完成项继续，Local Hand 为它提供所需能力；
+该范围现已在记录配置内验收完成；Owner 已明确指示合并 PR13，随后要求全仓复核并直接修复，
+本轮复核与验证见 [A2 验证记录 §20](docs/A2_VALIDATION.md#20-全仓复核2026-10-17)。合并状态以 [PR13](https://github.com/kongbu0621/infra-artifact-ledger/pull/13) 为准，
 不再要求用户另选示例项目，不把 Local Hand 阶段收尾当成本仓 A2 完成。
 
 沿用原任务范围和授权，复用仍有效的结果，只补实际缺口；已有写入结果未知时先核对原记录。
@@ -20,8 +22,50 @@ Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞�
 `6707a1b521c9c4718674620e6c584656bd434e4c`，复用已保留 wheel，两版解释器各完成八项
 API/CLI 操作。随后修复 namespace 挂载表解析，固定 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b`
 的新 wheel 在 GX10 完成本地八项操作，见[GX10 证据](docs/evidence/2026-10-16-a2-gx10/README.md)。
-两次来源分开记录，旧失败保留；复用适用结果，继续真实 NAS 和尚未覆盖的部署故障项。
+两次来源分开记录，旧失败保留；复用适用结果，后续 NAS 结果与剩余项见下文。
 Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 接续的统一前置。
+
+2026-10-17 已复用同一 GX10 安装完成 [CLI 响应丢失实测](docs/evidence/2026-10-17-a2-gx10-response-loss/README.md)：
+新合成范围内的 create/restore 各执行一次，通道失败后只读核对原对象，没有重复执行。
+它仅补齐 T08 的本地安装态子项，不能代替 NAS 或其他部署故障场景。
+
+同日完成 [GX10 真实 NAS 合成恢复](docs/evidence/2026-10-17-a2-gx10-nas/README.md)：
+实际 CIFS 绑定与能力预检通过，保存与独立回读后移除本轮本地可恢复副本，再仅从 NAS 恢复。
+全表、实际内容、幂等重放与恢复后新增版本均通过；18 个证据文件已取回核对并持久保留。
+该轮 T15 配置内正向链路 PASS；后续故障补证见下一段，不能把该轮原报告的未测项当作当前状态。
+接续先读私有记录中的实际挂载与归档绑定，复用本次结果，不重跑已经完成的恢复。
+挂载为临时配置，没有保存密码或新增开机自动挂载；挂载失效时先核对状态再按需重新连接。
+
+同日又完成[真实 NAS 发布故障与冲突](docs/evidence/2026-10-17-a2-gx10-nas-faults/README.md)：
+发布丢响应、同 ID 不同内容竞争、拒覆盖不完整目录、部分数据库/manifest 写入失败、
+marker 后 fsync/回执故障及隔离命名空间的实际挂载丢失与缺失拒绝均得到预期结果。
+138 个文件已取回独立核对；原成功代与主机挂载未变。初次控制器核对导入错误已修复并保留
+失败原件，只接续未执行项，没有重放原发布。挂载丢失的临时 marker 目录仍保留。
+该轮尚缺的短写、空间/权限/回读失败随后已补证，见下一段；复用已完成结果。
+真实断网、设备断电与资源峰值不在本轮通过声明内；A2 整体仍为 PARTIAL。
+
+随后完成[十八个 NAS 发布 I/O 与进程中断场景](docs/evidence/2026-10-17-a2-gx10-nas-io/README.md)：
+短写续写、零写入、ENOSPC/EDQUOT/EACCES、marker 前后回读错误、实际字节损坏，以及
+marker link 前后实际 SIGKILL 均按预期记录。278 个文件独立核对通过；六个 unknown 的
+当前对象分别为三个完整、一个不完整、两个损坏，不能把 unknown 统一视为成功。
+两个被杀进程没有产品响应，不能伪造 envelope；它们的 NAS marker 临时目录和本地 scratch
+各保留两个。既有归档、挂载及安装未变，原发布未重试；空间/权限错误是受控注入，未更改 NAS 容量或 ACL。
+该轮之后的恢复端补证见下一段；不重跑上述发布场景。
+
+随后完成[NAS 输入下的恢复故障与只读核对](docs/evidence/2026-10-17-a2-gx10-nas-restore/README.md)：
+15 个新恢复场景与 7 个核对场景通过，219 个文件和四个断链已取回独立核对。五个 unknown
+的当前目标为四个完整、一个无公开 DB；被杀及丢响应原调用不伪造结果。六种 sidecar（含断链）
+均拒绝，无关断链保留；三个目标暂存目录、两个双硬链接目标及两个 scratch 数据库继续保留。
+NAS 原快照只读、安装和挂载未变，产品代码未改。T09/T11 随后的补证见下一段；A2 仍为 PARTIAL，不以不断重跑故障替代完成判断。
+
+
+随后完成[GX10 资源边界与恢复目标冲突](docs/evidence/2026-10-17-a2-gx10-resources-conflicts/README.md)：
+六项真实 ext4 安装态资源测试分别测量 RSS/耗时；16 个合法边界点中 11 个完成闭环、五个超限拒绝，
+无跳过。五种既有恢复目标均保留，两组双进程竞争各只有一个完整胜出者。187 个普通文件与一个断链
+已取回；61 个大库及相关文件约 9.95 GB 保留在 GX10 私有持久目录，38 个数据库对象独立逐表核对。
+历史 D9 与当前固定源的 17 个运行模块中 16 个未变，唯一差异是已实测的 nsfs 挂载表解析；
+按具体职责复用已有验证。最终 T01–T15 对账随后完成，另补十条公共入口 UTF-16 拒绝和两个恢复后旧 key 冲突；原失败保留，修正后的验收脚本通过，产品未改。
+**当前 A2 S1–S5 在记录配置内验收完成。** [最终结论](docs/evidence/2026-10-17-a2-final-reconciliation/README.md)与 PR13 复核记录保留；不再把已闭合矩阵写成待验、不重复业务。Owner 的 PR13 合并指令已收到，不要求重复授权。其他机器、真实断网/断电等未测边界保留，A3/A4 或生产启用另按其范围处理。
 
 接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
 `${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。
@@ -34,7 +78,7 @@ Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 
 
 ## Current execution boundary
 
-当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前接续目标是 A2 未完成项。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
+当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前已完成该 A2 范围的记录配置验收，PR13 已获 Owner 明确合并指令，全仓复核结果见上节；实际合并状态以 GitHub 为准。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
 
 本次已批准范围内的接续按上节 Owner 决定和本节执行；历史 Gate 中与此冲突的通用重开要求不作为重复开工前置。已有公开授权记录足以核实原范围时，不得仅因私有 companion 暂不可读而把整个任务退回 OPEN。某个动作所需的基线或授权确实不能核实，或动作超出原范围时，暂停该动作及依赖它的后续步骤并说明具体缺失，不受影响的已授权工作继续。
 

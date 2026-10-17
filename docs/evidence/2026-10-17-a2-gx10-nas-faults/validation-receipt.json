@@ -1,0 +1,45 @@
+{
+  "positive": {
+    "status": "PASS",
+    "files": 138,
+    "all_transport_hashes_match": true,
+    "complete_nas_generations_checked": 5,
+    "all_rows_and_payloads_match": true,
+    "contention_winner": "b",
+    "partial_files_checked": 2,
+    "old_generation_unchanged": true,
+    "global_mount_unchanged": true,
+    "no_local_fallback_files": true,
+    "original_controller_failure_preserved": true,
+    "marker_temporary_directory_retained": true,
+    "audit_sha256": "ab20585f17ecbca130451050c2270679200271d6ee7e176769eed2ff7dfa4d1b",
+    "limitation": "Current bytes and retained execution evidence; not physical network loss or historical final sync."
+  },
+  "negative_probes": [
+    {
+      "case": "nas_bytes",
+      "result": "REJECTED",
+      "reason": "NAS candidate bytes differ",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "unknown_result",
+      "result": "REJECTED",
+      "reason": "Wrong semantic state",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "global_mount",
+      "result": "REJECTED",
+      "reason": "Global mount binding changed",
+      "transport_hashes_updated": true
+    },
+    {
+      "case": "isolation",
+      "result": "REJECTED",
+      "reason": "Actual isolated loss checkpoint",
+      "transport_hashes_updated": true
+    }
+  ],
+  "original_evidence_unchanged": true
+}

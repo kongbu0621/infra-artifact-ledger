@@ -65,4 +65,4 @@ sha256sum -- "$LEDGER_WHEEL" > "$LEDGER_INSTALL_DIR/wheel.sha256"
 
 继续[普通报告示例](REUSE_EXAMPLE.md#1-安装与准备)，把其中的 `LEDGER_VENV` 设置为上一步 runtime 的绝对路径；使用全新的数据目录，完成报告 v1/v2 保存、内容读回、重试核对和新库导入。Python 接入方式见[库调用示例](USAGE.md#4-python-与跨语言调用约定)。
 
-本指南只完成软件安装；是否可在某个存储目标运行，还须核对[兼容范围](COMPATIBILITY.md)。需要一致快照或 NAS 保存时继续[快照与恢复指南](A2_USAGE.md)，真实 NAS 验收仍未完成。维护者的部署接续和验收命令另见[运行手册](A2_RUNBOOK.md)。
+本指南只完成软件安装；是否可在某个存储目标运行，还须核对[兼容范围](COMPATIBILITY.md)。需要一致快照或 NAS 保存时继续[快照与恢复指南](A2_USAGE.md)。A2 已在记录的 GX10/ext4 + CIFS（SMB 3.1.1）配置内完成验收，详见[验收结论与未测边界](evidence/2026-10-17-a2-final-reconciliation/README.md)；其他部署仍需核对适用性。维护者的部署接续和验收命令另见[运行手册](A2_RUNBOOK.md)。

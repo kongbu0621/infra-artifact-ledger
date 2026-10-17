@@ -1,0 +1,99 @@
+{
+  "date": "2026-10-17",
+  "reviewed_head": "9316c9cb4dd3edebeab5d3fefdfdcfc2b406aa97",
+  "status": "PASS",
+  "scope": "PR13 evidence and current-document review; no new NAS or Ledger business execution",
+  "findings_fixed": [
+    "Optimized Python could remove assertions and skip replay calls in the acceptance runner. Reject -O/-OO before product imports or I/O.",
+    "CLI evidence used overwrite writes at the shared run root. Place new evidence in the exclusively created fixture receipts directory and use exclusive writes."
+  ],
+  "runner_safety": {
+    "status": "PASS",
+    "original_runner_sha256": "0a3c4c3d6da4d9e8710cfe79052df86245c7a23d03472dcafada0d5d47f10424",
+    "reviewed_runner_sha256": "c59a61afed95e9953de6b79d7c953ecc153b7fd94144ded3dadce96074156247",
+    "optimization_reproduction": [
+      {
+        "optimize": 0,
+        "original_replay_calls": 1
+      },
+      {
+        "optimize": 1,
+        "original_replay_calls": 0
+      },
+      {
+        "optimize": 2,
+        "original_replay_calls": 0
+      }
+    ],
+    "optimized_invocations_rejected_before_product_import_plan_read_or_writes": [
+      "-O",
+      "-OO"
+    ],
+    "normal_mode_reaches_product_import": true,
+    "exclusive_writers": [
+      "save_bytes",
+      "dump"
+    ],
+    "new_regular_files_created": 2,
+    "existing_regular_files_preserved": 2,
+    "existing_symlinks_and_targets_preserved": 2,
+    "original_acceptance_assertions_unchanged": 23,
+    "overwriting_writers_remaining": 0,
+    "NAS_or_product_business_executed": false,
+    "checker_sha256": "67c4203981709b6f236c94c52453bb009e5f7f29330f789c7de6b19cc7b819b2"
+  },
+  "retained_audits": [
+    {
+      "case": "nas",
+      "status": "PASS",
+      "decoded_result_equal_to_retained_public_result": true,
+      "public_result_path": "docs/evidence/2026-10-17-a2-gx10-nas/audit-result.json",
+      "public_result_sha256": "c29dda47e523aab65aaa0d007bb7be3f7592126fed3da827e2fdec99b7a1a118",
+      "rechecked_result_sha256": "c29dda47e523aab65aaa0d007bb7be3f7592126fed3da827e2fdec99b7a1a118"
+    },
+    {
+      "case": "nas-faults",
+      "status": "PASS",
+      "decoded_result_equal_to_retained_public_result": true,
+      "public_result_path": "docs/evidence/2026-10-17-a2-gx10-nas-faults/audit-result.json",
+      "public_result_sha256": "b8427107fe5c66ecf156bc910394523e9911ad275d304969a8862d54caa99391",
+      "rechecked_result_sha256": "b8427107fe5c66ecf156bc910394523e9911ad275d304969a8862d54caa99391"
+    },
+    {
+      "case": "nas-io",
+      "status": "PASS",
+      "decoded_result_equal_to_retained_public_result": true,
+      "public_result_path": "docs/evidence/2026-10-17-a2-gx10-nas-io/audit-result.json",
+      "public_result_sha256": "644cd1b08d0181b50980fc3cabc173d9b319a53e320a5283b7ba7a5e2a7c0c4c",
+      "rechecked_result_sha256": "644cd1b08d0181b50980fc3cabc173d9b319a53e320a5283b7ba7a5e2a7c0c4c"
+    },
+    {
+      "case": "nas-restore",
+      "status": "PASS",
+      "decoded_result_equal_to_retained_public_result": true,
+      "public_result_path": "docs/evidence/2026-10-17-a2-gx10-nas-restore/audit-result.json",
+      "public_result_sha256": "a387f463c7634bb7857155f03239aa6e634e5f883e2b71c610b7a0bb622b0ac0",
+      "rechecked_result_sha256": "d90a828c4bc1fdb20654d694918fba60c7f4253894e4e4d9aaf7ff36282ecd15"
+    },
+    {
+      "case": "resources-conflicts",
+      "status": "PASS",
+      "decoded_result_equal_to_retained_public_result": true,
+      "public_result_path": "docs/evidence/2026-10-17-a2-gx10-resources-conflicts/audit-result.json",
+      "public_result_sha256": "780d91a585c1f03066862f6e871a28b48271cab853b12641054f1347a9610baf",
+      "rechecked_result_sha256": "4c719d19937fa290af56e4c7683f2656f9faa3a8e2bf2de37892412c27c21731"
+    }
+  ],
+  "historical_execution_script_sha256": "f7deef2d43450be939631b97ad92c6a70a4c4641661e6e59f90284cdaaf2462a",
+  "historical_execution_python_flags": [
+    "-I",
+    "-B"
+  ],
+  "historical_results_modified": false,
+  "product_changed": false,
+  "normative_documents_changed": false,
+  "a2_acceptance": "COMPLETE_FOR_RECORDED_CONFIGURATION",
+  "new_full_runner_business_execution": false,
+  "draft": true,
+  "merged": false
+}

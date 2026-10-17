@@ -1,0 +1,129 @@
+{
+  "format": "infra-artifact-ledger-a2-nas-public-evidence/v1",
+  "date": "2026-10-17",
+  "status": "PASS",
+  "scope": "one synthetic NAS roundtrip on the recorded GX10/CIFS profile",
+  "a2_overall": "PARTIAL",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "nas_exercise_script_sha256": "3644ca35185531a13035d7b3a518110c531562b20dbbfd8052325e2be1daf6fc",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "package_version": "0.2.0a1",
+  "runtime": {
+    "machine": "aarch64",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+    "sqlite": "3.45.1",
+    "installed_package_wheel_bytes": "MATCH"
+  },
+  "storage": {
+    "local_fs_type": "ext4",
+    "nas_fs_type": "cifs",
+    "smb_dialect": "3.1.1",
+    "profile": "mounted-posix-v1",
+    "actual_mount_and_archive_binding_verified": true,
+    "storage_preflight": "PASS",
+    "concurrent_directory_probe": {
+      "already_exists": 1,
+      "created": 1,
+      "processes": 2
+    },
+    "durability_scope": "filesystem_acknowledged"
+  },
+  "execution": {
+    "shell_command_status": 0,
+    "elapsed_seconds": 1.5915653870033566,
+    "completed_utc": "2026-10-17T06:18:43.766523+00:00",
+    "run_id": "a2-nas-a0908786915004c6772dfc599a2ba309",
+    "create": "OK",
+    "publish": "OK",
+    "independent_nas_verify": "OK",
+    "owned_local_source_donor_snapshot_scratch_removed": true,
+    "independent_nas_restore": "OK",
+    "check_restore_before_new_write": "OK",
+    "verify_child_exit": 0,
+    "restore_child_exit": 0
+  },
+  "snapshot_reference": {
+    "database_sha256": "e23882f3ab67468bce3709caecf1c3b68bad0dc47290ef57700bb717bced3504",
+    "manifest_sha256": "022d0498cd03b59342da205d7e665b5ba0c3bfa420d536dc2dc1708e064fa91b",
+    "snapshot_id": "78080b3779f48b3fd3ced525fab78b09"
+  },
+  "before_new_write": {
+    "counts": {
+      "artifacts": 2,
+      "blobs": 3,
+      "content_roots": 3,
+      "idempotency_records": 7,
+      "import_receipts": 1,
+      "manifests": 1,
+      "provenance_links": 2,
+      "versions": 4
+    },
+    "verified_blob_count": 3,
+    "verified_byte_length": 103
+  },
+  "after_new_write": {
+    "counts": {
+      "artifacts": 2,
+      "blobs": 4,
+      "content_roots": 4,
+      "idempotency_records": 8,
+      "import_receipts": 1,
+      "manifests": 1,
+      "provenance_links": 2,
+      "versions": 5
+    },
+    "verified_blob_count": 4,
+    "verified_byte_length": 132
+  },
+  "original_request_replay_preserved_state": true,
+  "new_version_parent_refs": [
+    "version:nas-merged"
+  ],
+  "new_payload_sha256": "fe4ba95149a95f263e3d95b778c71091a5102803b206663de473938ae4883cc2",
+  "independent_audit": {
+    "status": "PASS",
+    "scope": "post-exercise independent read-only audit",
+    "readback_files": 18,
+    "all_file_hashes_match": true,
+    "nas_generation_matches_independent_reference": true,
+    "nas_database_matches_all_expected_rows_and_payloads": true,
+    "restored_database_preserves_every_original_row_and_payload": true,
+    "only_expected_new_version_relations_operation_payload_added": true,
+    "table_rows_before": {
+      "ledger_format": 1,
+      "records": 16,
+      "refs": 21,
+      "operations": 7,
+      "payloads": 3
+    },
+    "table_rows_after": {
+      "ledger_format": 1,
+      "records": 19,
+      "refs": 25,
+      "operations": 8,
+      "payloads": 4
+    },
+    "payload_bytes_before": 103,
+    "payload_bytes_after": 132,
+    "nas_exercise_replayed": false,
+    "limit": "Readback checks current bytes and retained execution evidence; not NAS power-loss durability.",
+    "checker_sha256": "ff1f70413dc72126b1fc67da38d518295a9a7c50573e964e5bdd775e0cf34bee"
+  },
+  "resource_peak": "NOT_MEASURED",
+  "remaining_not_run": [
+    "T06 actual deployment/NAS fault cases",
+    "T08 NAS publish response loss and mount loss",
+    "NAS same-generation publish contention (directory primitive contention only was exercised)",
+    "real network interruption",
+    "NAS power-loss/hardware durability"
+  ],
+  "private_evidence": {
+    "readback_files": 18,
+    "report_sha256": "3536f9e5550c6ddf4e7adb6ab2a3419ee4fe04e2c0dcc3461f5018427476b06e",
+    "index_sha256": "dca0dedd602dba381a7891997ed3e5e04bc5014bb06d4a439382b6724c682b4d",
+    "retained_in_durable_operator_state": true,
+    "credentials_stored": false,
+    "deployment_paths_endpoints_and_databases_published": false
+  }
+}

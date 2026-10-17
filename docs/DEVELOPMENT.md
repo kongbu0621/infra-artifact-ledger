@@ -11,13 +11,13 @@
 中断处继续，不再让用户另选项目或反复制造演示任务。已有本地 CLI 或本地 Codex 能在原授权
 范围内推进的工作直接接续；Local Hand 只补实际必需的能力缺口，不要求先建成完整通用执行器。
 
-当前接续范围是已批准的 `A2-snapshot-nas-restore-v0.1` S1–S5 未完成项，
-以 [A2 验证记录](A2_VALIDATION.md)、[兼容表](COMPATIBILITY.md)和保留现场为事实依据。
+已批准的 `A2-snapshot-nas-restore-v0.1` S1–S5 已于 2026-10-17 完成所列配置内验收，Owner 随后明确指示合并 PR13，并要求全仓复核、发现问题直接修复。[本轮复核](A2_VALIDATION.md#20-全仓复核2026-10-17)完成后执行已授权合并；实际状态见 [PR13](https://github.com/kongbu0621/infra-artifact-ledger/pull/13)。
+以 [A2 验证记录](A2_VALIDATION.md)、[兼容表](COMPATIBILITY.md)和保留现场为事实依据；下文按时间保留接续过程。
 2026-10-15 的接续调整只记录任务顺序，没有新增执行结果。2026-10-16 的[独立本地实测](evidence/2026-10-16-a2-local/README.md)现已补录：两版 Python 各完成 API/CLI 的 create、verify、restore、check_restore，并核对恢复内容、幂等记录和原合成库不变。它只覆盖所列本地环境，不代表整个 A2 完成。
 
 1. 先核对并复用已有实现、安装和适用验证结果，从原中断点接续；结果未知的操作先查原记录，避免重复写入。
 2. 复用已经通过的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地闭环，只补仍缺失或实际失效的部分；入口见 [A2 运行手册](A2_RUNBOOK.md)。手册给出完整流程，接续只选缺口对应步骤；已核实适用的 A2 build/runtime 环境不必重建，新写入演练仍用专属的新输出与恢复目标，保留旧现场。GX10 的修复版本地结果另见[独立证据](evidence/2026-10-16-a2-gx10/README.md)；其他未覆盖机器组合仍需独立证据，同一次有效结果覆盖的对应项目不重复运行。
-3. 接续原范围内剩余的真实 NAS 等现场项。实际环境不具备时如实保留未完成项，不以本地替身冒充，也不据此取消这部分需求。本地闭环通过不等于 NAS 保存与丢失恢复通过。
+3. 2026-10-17 已完成[真实 NAS 合成恢复](evidence/2026-10-17-a2-gx10-nas/README.md)、[九种发布故障与冲突](evidence/2026-10-17-a2-gx10-nas-faults/README.md)，随后补齐[十八个发布 I/O 与进程中断场景](evidence/2026-10-17-a2-gx10-nas-io/README.md)。又完成[NAS 输入恢复端的 15 个恢复与 7 个核对场景](evidence/2026-10-17-a2-gx10-nas-restore/README.md)。随后补齐[六项真实资源测试、五种既有目标及两组恢复竞争](evidence/2026-10-17-a2-gx10-resources-conflicts/README.md)，核对历史验证与当前运行模块的适用关系。最终 T01–T15 对账及两个入口缺口补验现已完成，详见[最终验收结论](evidence/2026-10-17-a2-final-reconciliation/README.md)。当前配置内 A2 S1–S5 验收完成，PR13 复核修正验收脚本的优化模式、日志覆盖及 wheel/模块身份绑定问题，记录见[最终验收记录](evidence/2026-10-17-a2-final-reconciliation/README.md#pr13-复核与验收脚本修正)。Owner 随后授权合并，复核与实际状态按本节入口接续。控制器原失败、挂载丢失和 SIGKILL 的临时文件、损坏原件均保留；不重新发布。挂载失效时先核对私有接续记录与现场，按需恢复连接，不以本地替身冒充真实 NAS。
 4. Local Hand 仅针对上述任务的实际阻塞补齐能力；它是否需要改动由任务决定。其当前 NAS 作业屏蔽保持不变，配套任务说明见 [Local Hand PR #41](https://github.com/kongbu0621/infra-local-hand/pull/41)；本仓接续不依赖该 PR 先合入，也不由此获得修改 Local Hand 部署或 NAS 服务的权限。
 
 接续现场项时，先按[私有部署记录](A2_RUNBOOK.md#0-接续现有部署)核对原执行端和实际访问绑定；已有且核实适用的安装从[复用入口](A2_RUNBOOK.md#21-复用已核实的安装)继续。当前机器没有配置，不等于 NAS 未配置。
@@ -31,11 +31,11 @@
 | 阶段 | 目标与当前状态 | 记录入口 |
 |---|---|---|
 | A1 本地 Ledger | Python 库、JSON CLI、本地 SQLite 及有界完整搬运已有 alpha 实现与验证 | [授权与范围](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) · [验证记录](A1_VALIDATION.md) |
-| A2 快照与恢复 | create / publish / verify / restore / check_restore 已实现；安装态本地闭环通过，真实 NAS 及剩余现场项未完成，整体 PARTIAL | [授权与范围](a2/GATE.md) · [验证记录](A2_VALIDATION.md) |
+| A2 快照与恢复 | S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；累计证据与未测边界见最终对账 | [授权与范围](a2/GATE.md) · [验证记录](A2_VALIDATION.md) |
 | A3 真实消费者 | Code Driver 与独立 Generic Agent 两类消费者采用；实际集成消费者仍为 0 | [后续计划](IMPLEMENTATION_PLAN.md#6-后续入口与停止条件) |
 | A4 独立第二实现 | 跨实现状态搬运与行为符合性待验证 | [需求与阶段边界](REQUIREMENTS.md#4-成功标准与阶段边界) |
 
-A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2/A3/A4 尚未完成，各阶段分别取得证据。
+A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2 已在所列配置内验收完成；A3/A4 尚未完成，各阶段分别取得证据。
 
 A2 设计已通过 PR #5 合并，并获独立开工授权；后续实现以独立 CLOSED 记录为祖先。五份已批准设计文档保留基线原文，其中 Candidate / OPEN / NOT_RUN 描述的是设计形成时的状态；当前权限见 A2 Gate，实现及实际验收见 A2 验证记录。GX10、本地文件系统与真实 NAS 的证据分别记录，不把计划、模拟测试或历史 A1 通过自动转成 A2 实机通过。
 

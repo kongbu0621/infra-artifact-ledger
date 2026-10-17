@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "files": 138,
+  "all_transport_hashes_match": true,
+  "complete_nas_generations_checked": 5,
+  "all_rows_and_payloads_match": true,
+  "contention_winner": "b",
+  "partial_files_checked": 2,
+  "old_generation_unchanged": true,
+  "global_mount_unchanged": true,
+  "no_local_fallback_files": true,
+  "original_controller_failure_preserved": true,
+  "marker_temporary_directory_retained": true,
+  "audit_sha256": "ab20585f17ecbca130451050c2270679200271d6ee7e176769eed2ff7dfa4d1b",
+  "limitation": "Current bytes and retained execution evidence; not physical network loss or historical final sync."
+}

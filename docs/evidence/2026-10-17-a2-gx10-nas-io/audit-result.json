@@ -1,0 +1,141 @@
+{
+  "status": "PASS",
+  "readback_files": 278,
+  "bytes": 1532951,
+  "scenarios": {
+    "corrupt_db_after": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "INTEGRITY_FAILURE",
+      "exact_files_checked": true
+    },
+    "corrupt_manifest_after": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "INTEGRITY_FAILURE",
+      "exact_files_checked": true
+    },
+    "eacces_db_open": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "eacces_marker_link": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "edquot_db": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "enospc_db": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "enospc_db_sync": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "enospc_manifest": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "enospc_marker": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "kill_after_marker": {
+      "publisher_exit": -9,
+      "publication_state": null,
+      "error": null,
+      "verify": "OK",
+      "exact_files_checked": true
+    },
+    "kill_before_marker": {
+      "publisher_exit": -9,
+      "publication_state": null,
+      "error": null,
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "read_db_after": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "OK",
+      "exact_files_checked": true
+    },
+    "read_db_before": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "read_manifest_after": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "OK",
+      "exact_files_checked": true
+    },
+    "read_manifest_before": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    },
+    "read_marker_after": {
+      "publisher_exit": 9,
+      "publication_state": "unknown",
+      "error": "PUBLICATION_UNKNOWN",
+      "verify": "OK",
+      "exact_files_checked": true
+    },
+    "short_write": {
+      "publisher_exit": 0,
+      "publication_state": "published",
+      "error": null,
+      "verify": "OK",
+      "exact_files_checked": true
+    },
+    "zero_write": {
+      "publisher_exit": 9,
+      "publication_state": "not_published",
+      "error": "IO_ERROR",
+      "verify": "INCOMPLETE_SNAPSHOT",
+      "exact_files_checked": true
+    }
+  },
+  "complete_NAS_generations_with_all_rows_and_payloads": 5,
+  "two_precisely_corrupted_generations_rejected": true,
+  "old_T15_and_fault_evidence_unchanged": true,
+  "retained_NAS_marker_temporary_directories": 2,
+  "retained_local_scratch_databases": 2,
+  "global_mount_unchanged": true,
+  "audit_sha256": "db557ea697d1dba3c604d6e3782fff9627e8127d717a1f5ba6ce3c8863d8db80",
+  "limitations": "Controlled syscall errors and actual process kills; not actual NAS disk-full, server ACL/quota enforcement, network/power failure, or historical final-sync proof."
+}

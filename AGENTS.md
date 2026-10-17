@@ -9,7 +9,7 @@
 新会话先读取 [开发与接续记录的当前主任务与接续点](docs/DEVELOPMENT.md#当前主任务与接续点2026-10-15)。
 Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞，才回头建设 Local Hand；
 当时应从本仓中断的已批准 A2 未完成项继续，Local Hand 为它提供所需能力；
-该范围现已在记录配置内验收完成，当前待审阅草稿 PR13，
+该范围现已在记录配置内验收完成，当前 PR13 复核完成，保持草稿、待 Owner 明确合并指令，
 不再要求用户另选示例项目，不把 Local Hand 阶段收尾当成本仓 A2 完成。
 
 沿用原任务范围和授权，复用仍有效的结果，只补实际缺口；已有写入结果未知时先核对原记录。
@@ -64,7 +64,7 @@ NAS 原快照只读、安装和挂载未变，产品代码未改。T09/T11 随�
 已取回；61 个大库及相关文件约 9.95 GB 保留在 GX10 私有持久目录，38 个数据库对象独立逐表核对。
 历史 D9 与当前固定源的 17 个运行模块中 16 个未变，唯一差异是已实测的 nsfs 挂载表解析；
 按具体职责复用已有验证。最终 T01–T15 对账随后完成，另补十条公共入口 UTF-16 拒绝和两个恢复后旧 key 冲突；原失败保留，修正后的验收脚本通过，产品未改。
-**当前 A2 S1–S5 在记录配置内验收完成。** 下一步审阅[最终结论](docs/evidence/2026-10-17-a2-final-reconciliation/README.md)与草稿 PR13；不再把已闭合矩阵写成待验、不重复业务，也不自动合并。其他机器、真实断网/断电等未测边界保留，A3/A4 或生产启用另按其范围处理。
+**当前 A2 S1–S5 在记录配置内验收完成。** [最终结论](docs/evidence/2026-10-17-a2-final-reconciliation/README.md)与草稿 PR13 的本次复核已完成；不再把已闭合矩阵写成待验、不重复业务，也不自动合并。其他机器、真实断网/断电等未测边界保留，A3/A4 或生产启用另按其范围处理。
 
 接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
 `${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。
@@ -77,7 +77,7 @@ NAS 原快照只读、安装和挂载未变，产品代码未改。T09/T11 随�
 
 ## Current execution boundary
 
-当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前已完成该 A2 范围的记录配置验收，待审阅草稿 PR13。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
+当前已有 **A1-local-ledger-v0.1（P1–P5）与 A2-snapshot-nas-restore-v0.1（S1–S5）** 的 CLOSED 授权；当前已完成该 A2 范围的记录配置验收，PR13 本次复核完成，待 Owner 明确合并指令。固定基线及 Owner 决定分别见 [A1 Gate](docs/PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 与 [A2 Gate](docs/a2/GATE.md)。原 R/A/B/C 和独立 CLOSED 提交保留用于追溯，不因换会话、换执行者或本次接续文档修正而重新建立一套开工审批。
 
 本次已批准范围内的接续按上节 Owner 决定和本节执行；历史 Gate 中与此冲突的通用重开要求不作为重复开工前置。已有公开授权记录足以核实原范围时，不得仅因私有 companion 暂不可读而把整个任务退回 OPEN。某个动作所需的基线或授权确实不能核实，或动作超出原范围时，暂停该动作及依赖它的后续步骤并说明具体缺失，不受影响的已授权工作继续。
 

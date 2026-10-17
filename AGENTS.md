@@ -2,7 +2,7 @@
 
 修改 README 图示时，先读[图示维护约定](docs/DEVELOPMENT.md#图示维护约定)：布局须突出主线和最终用途，并检查实际展示的文字与有向连线。
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与真实本地验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地合成闭环已通过；随后 GX10 / aarch64 / Python 3.12 的修复版安装态本地闭环也已通过；真实 NAS 验收仍未执行，整个 A2 尚未完成。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与实机验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。所列 Linux x86_64 与 GX10 的 ext4 安装态本地合成闭环已通过；2026-10-17 又完成 GX10 + CIFS（SMB 3.1.1）的真实 NAS 合成保存与丢失恢复。剩余部署故障项未完成，整个 A2 仍为 PARTIAL。
 
 ## 当前任务接续（2026-10-15）
 
@@ -20,12 +20,19 @@ Owner 已明确：本仓原任务被本地执行、验证和结果取回阻塞�
 `6707a1b521c9c4718674620e6c584656bd434e4c`，复用已保留 wheel，两版解释器各完成八项
 API/CLI 操作。随后修复 namespace 挂载表解析，固定 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b`
 的新 wheel 在 GX10 完成本地八项操作，见[GX10 证据](docs/evidence/2026-10-16-a2-gx10/README.md)。
-两次来源分开记录，旧失败保留；复用适用结果，继续真实 NAS 和尚未覆盖的部署故障项。
+两次来源分开记录，旧失败保留；复用适用结果，后续 NAS 结果与剩余项见下文。
 Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 接续的统一前置。
 
 2026-10-17 已复用同一 GX10 安装完成 [CLI 响应丢失实测](docs/evidence/2026-10-17-a2-gx10-response-loss/README.md)：
 新合成范围内的 create/restore 各执行一次，通道失败后只读核对原对象，没有重复执行。
-它仅补齐 T08 的本地安装态子项；真实 NAS、T06 及 T08 的其余部署场景继续保持未完成。
+它仅补齐 T08 的本地安装态子项，不能代替 NAS 或其他部署故障场景。
+
+同日完成 [GX10 真实 NAS 合成恢复](docs/evidence/2026-10-17-a2-gx10-nas/README.md)：
+实际 CIFS 绑定与能力预检通过，保存与独立回读后移除本轮本地可恢复副本，再仅从 NAS 恢复。
+全表、实际内容、幂等重放与恢复后新增版本均通过；18 个证据文件已取回核对并持久保留。
+本轮 T15 配置内正向链路 PASS；T06、T08 的 NAS 发布丢响应/挂载丢失等剩余项未执行。
+接续先读私有记录中的实际挂载与归档绑定，复用本次结果，不重跑已经完成的恢复。
+挂载为临时配置，没有保存密码或新增开机自动挂载；挂载失效时先核对状态再按需重新连接。
 
 接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
 `${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。

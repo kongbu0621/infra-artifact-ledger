@@ -1,6 +1,6 @@
 # A2 实现与验证记录
 
-状态：**实现已提交；Cloud 验证通过；真实 ext4 上的 Linux x86_64 / Python 3.11、3.12 安装态本地合成闭环 PASS；A2 完整验收仍为 PARTIAL**。2026-10-16 的 x86_64 来源与结果见 §8；修复版在 GX10 / aarch64 / Python 3.12 的安装态本地闭环也已 PASS，见 §9。2026-10-17 的 GX10 本地 CLI 响应丢失及原对象核对通过，补充 T08 的安装态子项，见 §10。真实 NAS 保存/丢失恢复、T06 部署故障及 T08 的 NAS 发布丢响应、挂载丢失等其余现场项仍为 **NOT_RUN**。§1–§5、§7 保留此前 Cloud 复核与移交记录，§6 是更新至本次的累计证据映射。D9 运行代码见 §3.9，第九轮固定输入见 §3.10。历史记录中的环境与 NOT_RUN 描述属于相应轮次，后续结果不追授给旧提交。
+状态：**实现已提交；所列 Cloud 与本地安装态验证通过；GX10 + CIFS 的真实 NAS 合成保存与丢失恢复 PASS；A2 完整验收仍为 PARTIAL**。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 与 GX10 / aarch64 / Python 3.12 本地闭环见 §8–§9。2026-10-17 的 GX10 本地 CLI 响应丢失及原对象核对见 §10；随后完成的真实 NAS 恢复见 §11。T06 部署故障及 T08 的 NAS 发布丢响应、挂载丢失等其余现场项仍为 **NOT_RUN**。§1–§5、§7 保留此前 Cloud 复核与移交记录，§6 是更新至本次的累计证据映射。D9 运行代码见 §3.9，第九轮固定输入见 §3.10。历史记录中的环境与 NOT_RUN 描述属于相应轮次，后续结果不追授给旧提交。
 
 ## 1. 授权、源码和制品链
 
@@ -306,21 +306,21 @@ D2 另以 A1 公共 API 构造四组完整合法库，共 **12 个 limit−1/= /
 | T02 | 隔离头预检、DELETE 头部残留 WAL/SHM 拒绝、异常 journal 的打开前拒绝、UTF-16、锁与期限 | SQLite/预检逻辑通过；journal 反例未进入 SQLite；环境限定本表版本 |
 | T03 | `test_snapshot_format/storage/recovery`：成员、链接、JSON、ID | 逻辑通过 |
 | T04 | 物理/外键/业务/幂等/Blob/summary 损坏反例 | 逻辑通过 |
-| T05 | mountinfo、fd mount_id、端点/root/子挂载与路径替换模型；§9 补 namespace root 回归与 GX10 实际挂载表解析 | 已列回归和 GX10 本地正向通过；真实 NAS 挂载变化 NOT_RUN |
-| T06 | 部分复制、marker 发布、同步失败、DB/manifest 发布后 EIO/摘要变化及最终回读 verify 阶段 | LOGIC_ONLY 通过；真实部署/NAS/设备耐久性 NOT_RUN |
-| T07 | `test_snapshot_concurrency` 两独立进程争同 ID；工具竞争探针固定目录 fd 并检查替换后状态 | 本地系统调用逻辑通过；真实 NAS 竞争 NOT_RUN |
+| T05 | mountinfo、fd mount_id、端点/root/子挂载与路径替换模型；§9 补实际 namespace 解析，§11 补真实 CIFS 绑定与能力正向 | 已列回归、本地及该 NAS 配置正向通过；真实 NAS 挂载变化 NOT_RUN |
+| T06 | 部分复制、marker 发布、同步失败、DB/manifest 发布后 EIO/摘要变化及最终回读 verify 阶段 | LOGIC_ONLY 通过；真实部署故障及设备耐久性 NOT_RUN |
+| T07 | `test_snapshot_concurrency` 两独立进程争同 ID；§11 真实 NAS 上两进程固定目录 fd 的 mkdir 竞争 | 本地逻辑与真实 NAS 目录原语竞争通过；完整的 NAS 同 generation 发布竞争仍 NOT_RUN |
 | T08 | stdout/丢响应核对、真实子进程通道故障；未完成发布的 unknown 与已完成发布后的 report 失败保留 published；§10 补 GX10 安装态 create/restore 丢响应与原对象只读核对 | 所列逻辑与本地实机子项通过；NAS 发布丢响应、挂载丢失等其余现场项 NOT_RUN，整项仍为 PARTIAL |
 | T09 | 文件/SQL/JSON 边界、1 GiB 合法封存、403 MB payload、四组合法库 12 点及 TEXT 上界证明 | 已列资源链 LOGIC_ONLY 通过；不形成部署资源/耐久性认证 |
 | T10 | 同 fd 复制、字节/hash/路径/挂载变化检查 | 逻辑通过 |
 | T11 | 既有目标拒覆盖，内容不同的双进程恢复竞争 | 逻辑通过 |
 | T12 | 复制/链接/清理/同步/最终回读失败，真实进程终止后 nlink=2 只读核对 | 逻辑通过；真实 NAS 失败模型未验 |
-| T13 | Cloud：全表/全 Blob、多父合并与内容复用、旧 key 重放、恢复后追加版本及 payload；§8–§9 本地：单版本/单 Blob、原 append key 重放、保留库全表比较 | Cloud 合成数据逻辑通过；本地仅覆盖所列小型 fixture，不代表全部 T13 实机通过 |
-| T14 | 五入口、CLI/错误/配置、真实进程输出失败退出码、独立 wheel、辅助子进程、A1 回归；§8–§9 补本地 API/CLI 各四项安装态正向操作 | PARTIAL；所列 x86_64 / Python 3.11、3.12 及 GX10 / aarch64 / Python 3.12 的 ext4 本地正向 PASS；NAS publish 仍 NOT_RUN |
-| T15 | NAS 丢失恢复工具及归属清单、wheel、错误保留、竞争探针目录绑定和追加版本回归 | 工具已交付并有逻辑回归；真实演练 NOT_RUN |
+| T13 | Cloud 原逻辑及 §8–§9 本地 fixture；§11 真 NAS 恢复的全表/Blob、多父合并、内容复用、旧 key 重放与原制品追加版本 | 本次丰富合成数据的正向延续 PASS；不把未跑的实机冲突反例算入 |
+| T14 | 五入口的既有逻辑与本地安装证据；§11 增加真实 NAS API publish、独立 CLI verify/restore 和恢复后 API check_restore | 所列安装态正向 PASS；真实 NAS 的全套 API/CLI 错误反例未由本轮覆盖，整项仍 PARTIAL |
+| T15 | §11 真 CIFS 保存、独立回读、按归属清单移除本轮本地可恢复副本、NAS-only 恢复与完整状态核对 | 该 GX10 / CIFS / SMB 3.1.1 合成配置 PASS；不推及其他 NAS 或硬件断电 |
 
 ## 7. 第九轮实机移交与完成条件（历史）
 
-以下保留 2026-09-21 第九轮的移交原记录。当前已完成项和下一接续点见 §8–§9；不因这段历史流程重复构建或重跑已有适用结果。
+以下保留 2026-09-21 第九轮的移交原记录。当前已完成项和下一接续点见 §8–§11；不因这段历史流程重复构建或重跑已有适用结果。
 
 本会话没有可调用的 GX10 shell 或已接入的 A2 Local Hand 执行通道；现有 Local Hand 信息不能自动等价为本任务已获机器访问。A2 授权保持有效，本记录不要求重复开工批准，也不新增或修改 Local Hand 准入配置。
 
@@ -401,3 +401,31 @@ create 的 manifest 摘要是在响应丢失后按原 ID 和源码身份读取�
 
 本次只补 T08 的本地安装态响应通道故障子项。没有运行 NAS publish、挂载丢失、真实断网、
 NAS-only 恢复或 T06 部署中断，也不证明硬件耐久性；T08 整项及 A2 整体仍为 PARTIAL。
+
+## 11. 2026-10-17：GX10 真实 NAS 合成恢复
+
+复用 §9 的固定 `d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b`、已有 wheel 与独立 runtime，
+在 GX10 / aarch64 / Python 3.12.3 / SQLite 3.45.1 / ext4 和真实 CIFS（SMB 3.1.1）挂载上，
+完成一次 `synthetic_nas_roundtrip`，脚本退出 0、结果 PASS。
+wheel SHA-256 为 `b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293`；
+执行前核对 wheel 与验收脚本摘要，工具再次核对安装模块字节。
+
+真实挂载与目录绑定、存储能力、两进程目录原语竞争通过。新合成快照发布后由独立进程回读，
+核对预先保管的身份与摘要，再按冻结归属清单移除本轮源库、导入源、本地快照和暂存。
+另一个全新进程仅从 NAS 恢复至新本地目录；写入前 check_restore、全部 SQL 行与所有 Blob
+核对通过，原请求重放不增记录，随后在原 Artifact 上追加一个新版本及 29 bytes 内容。
+
+初始为 2 个 Artifact、4 个 Version、3 个 Blob / 103 bytes、7 个幂等记录及 1 个导入回执。
+新增版本后分别为 2、5、4 / 132 bytes、8、1；独立只读对账确认全部旧行、关系、操作与内容保留，
+仅增加预期的版本、内容根、Blob、四条关系和一次操作。18 个原始证据文件在成功恢复后取回，
+大小与摘要全部一致并持久保留；现场确认 disposable 已不存在，原 NAS 挂载仍匹配。
+
+详见[公开证据](evidence/2026-10-17-a2-gx10-nas/README.md)、
+[结构化摘要](evidence/2026-10-17-a2-gx10-nas/summary.json)和
+[独立核对程序](evidence/2026-10-17-a2-gx10-nas/audit.py)。实际端点、配置、密码输入过程的无密码记录、
+原始报告与合成数据库保存在私有部署侧；没有把它们发布到仓库。
+
+本次仅证明这个配置下的真实合成恢复，耐久性范围为 `filesystem_acknowledged`。
+T06、T08 的 NAS 发布丢响应/挂载丢失等剩余故障、同 generation 的完整 NAS 发布竞争、
+真实断网和设备断电仍未执行，未测量资源峰值。A2 继续保持 PARTIAL；接续复用已有结果与挂载绑定，
+不重复已完成的恢复。挂载为临时配置，没有新增开机自动挂载或保存密码。

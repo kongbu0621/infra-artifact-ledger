@@ -4,7 +4,7 @@
 if not __debug__:
  raise SystemExit("Acceptance requires assertions; run without -O or -OO.")
 
-import hashlib,json,os,platform,sqlite3,subprocess,sys,zipfile
+import hashlib,io,json,os,platform,sqlite3,subprocess,sys,zipfile
 from pathlib import Path
 from infra_artifact_ledger import initialize,open as open_ledger,LedgerError,recovery
 from infra_artifact_ledger import snapshot_format as fmt,snapshot_storage as storage
@@ -12,6 +12,29 @@ from infra_artifact_ledger.sqlite_store import _SCHEMA,APPLICATION_ID
 from infra_artifact_ledger.snapshot_common import Budget
 
 def sha(raw):return hashlib.sha256(raw).hexdigest()
+def wheel_modules(wheel_path,expected_sha256,package):
+ """Compare module bytes and wheel digest from one bounded in-memory image."""
+ with Path(wheel_path).open('rb') as source:raw=source.read(64*1024*1024+1)
+ if len(raw)>64*1024*1024 or sha(raw)!=expected_sha256:
+  raise ValueError('Wheel size or SHA-256 does not match the plan.')
+ prefix='infra_artifact_ledger/'
+ with zipfile.ZipFile(io.BytesIO(raw)) as wheel:
+  members=[item for item in wheel.infolist() if item.filename.startswith(prefix) and item.filename.endswith('.py')]
+  names={item.filename for item in members}
+  installed={prefix+p.relative_to(package).as_posix() for p in package.rglob('*.py') if '__pycache__' not in p.relative_to(package).parts}
+  if len(members)!=17 or len(names)!=17 or names!=installed:
+   raise ValueError('Wheel and installed Python module membership differ or contain duplicates.')
+  if sum(item.file_size for item in members)>16*1024*1024:
+   raise ValueError('Wheel Python modules exceed the acceptance budget.')
+  modules={}
+  for item in members:
+   path=package/item.filename[len(prefix):]
+   if path.is_symlink() or not path.is_file() or path.stat().st_size!=item.file_size:
+    raise ValueError('Installed Python module type or size differs from wheel.')
+   content=wheel.read(item)
+   if path.read_bytes()!=content:raise ValueError('Installed Python module bytes differ from wheel.')
+   modules[item.filename]=sha(content)
+ return modules
 def save_bytes(p,raw):
  with p.open('xb') as f:
   f.write(raw);f.flush();os.fsync(f.fileno())
@@ -23,11 +46,7 @@ def run(plan):
  root=Path(plan['run_dir']);out=root/'fixtures-v2';out.mkdir(mode=0o700)
  receipts=out/'receipts';receipts.mkdir(mode=0o700)
  package=Path(recovery.__file__).parent
- with zipfile.ZipFile(plan['wheel']) as wheel:
-  modules={n:sha(wheel.read(n)) for n in wheel.namelist() if n.startswith('infra_artifact_ledger/') and n.endswith('.py')}
-  assert len(modules)==17
-  assert all(sha((package/Path(n).name).read_bytes())==h for n,h in modules.items())
- assert sha(Path(plan['wheel']).read_bytes())==plan['wheel_sha256']
+ modules=wheel_modules(plan['wheel'],plan['wheel_sha256'],package)
  helper=(root/'acceptance_helpers.py').read_bytes();assert sha(helper)==plan['helper_sha256']
  ns={'__name__':'closure_fixture_helpers'};exec(compile(helper,'acceptance_helpers.py','exec'),ns)
  config=json.loads(Path(plan['storage_config']).read_text());config=fmt.capture_storage_config(config)

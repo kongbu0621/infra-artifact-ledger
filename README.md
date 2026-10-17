@@ -22,20 +22,9 @@
 
 下图表示接入关系。报告工具、知识库和 Agent 是可采用本组件的应用场景；各项目可以独立安装、各自保存 Ledger。
 
-```mermaid
-flowchart TD
-    A["报告工具、知识库或 Agent<br/>产生成果，选择版本"]
-    B["接入入口<br/>Python 库 / JSON 命令行"]
-    C["infra-artifact-ledger<br/>保存身份、版本与内容<br/>保存来源关系<br/>保存成功写入记录"]
-    D[("本地 SQLite<br/>记录与实际内容一起保存")]
-    E["应用按指定版本取回<br/>核对内容，继续使用"]
+[![主线从上到下：应用提交 → Python 库或 JSON 命令行 → Ledger → 应用按指定版本取回、核对内容、继续使用。右侧 SQLite 支撑同一事务提交及读取与校验。](docs/diagrams/application-position.svg)](https://raw.githubusercontent.com/kongbu0621/infra-artifact-ledger/d0545f188c36a206ab625141137e1c02ab694ec9/docs/diagrams/application-position.svg)
 
-    A -->|"提交成果与来源信息"| B
-    B --> C
-    C -->|"同一事务提交"| D
-    D -->|"读取与校验"| C
-    C --> E
-```
+[查看原图（可缩放）](https://raw.githubusercontent.com/kongbu0621/infra-artifact-ledger/d0545f188c36a206ab625141137e1c02ab694ec9/docs/diagrams/application-position.svg)
 
 Ledger 在本地 SQLite 的同一事务中保存记录、有界内容和成功幂等结果。应用使用公共库或 CLI，无需直接操作数据库表，也不需要模型账号、Agent 框架、云账号或维护者的私有仓库。
 

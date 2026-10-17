@@ -1,5 +1,7 @@
 # Working in this repository
 
+修改 README 图示时，先读[图示维护约定](docs/DEVELOPMENT.md#图示维护约定)：布局须突出主线和最终用途，并检查实际展示的文字与有向连线。
+
 本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与真实本地验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。2026-10-16 的 Linux x86_64 / Python 3.11、3.12 / ext4 安装态本地合成闭环已通过；随后 GX10 / aarch64 / Python 3.12 的修复版安装态本地闭环也已通过；真实 NAS 验收仍未执行，整个 A2 尚未完成。
 
 ## 当前任务接续（2026-10-15）

@@ -74,4 +74,4 @@ python3 -I -B docs/evidence/2026-10-17-a2-final-reconciliation/check-wheel-bindi
 
 `COMPLETE_FOR_RECORDED_CONFIGURATION` 表示原 A2 范围在上述环境验收完成。软件仍为 `0.2.0a1` alpha、合同仍为 candidate；不自动获得生产启用、其他 NAS/机器、实际断网/断电、硬件缓存、NAS 真满盘/ACL、NAS 服务端资源、冗余备份或自动调度的证明。临时 CIFS 挂载也没有变成开机自动挂载。
 
-原失败、unknown、损坏代及临时文件继续保留。后续操作先按私有接续记录检查实际安装与挂载，不重放成功业务，不为完成声明清理原件。PR13 继续为草稿、未合并；PR13 本次复核已完成，合并仍须 Owner 明确指令。A3/A4 与 Local Hand 的独立资格另按各自范围处理。
+原失败、unknown、损坏代及临时文件继续保留。后续操作先按私有接续记录检查实际安装与挂载，不重放成功业务，不为完成声明清理原件。Owner 随后明确指示合并 PR13，并要求全仓复核；[本轮结果](../../A2_VALIDATION.md#20-全仓复核2026-10-17)另行记录，实际合并状态见 [PR13](https://github.com/kongbu0621/infra-artifact-ledger/pull/13)。此前回执的草稿/未合并字段是当时事实，保留原样。A3/A4 与 Local Hand 的独立资格另按各自范围处理。

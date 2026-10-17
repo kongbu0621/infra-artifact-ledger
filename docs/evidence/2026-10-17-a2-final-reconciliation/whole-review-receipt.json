@@ -1,0 +1,221 @@
+{
+  "reviewed_source_commit": "73ec631a780c780fd610ded86a12e80ec3e4b394",
+  "scope": "whole infra-artifact-ledger repository; 327 tracked files before fixes",
+  "product_modules_changed": false,
+  "baseline_suite": {
+    "discovered": 446,
+    "passed": 425,
+    "skipped": 21,
+    "failures": 0,
+    "python": "3.11.15",
+    "sqlite": "3.37.2",
+    "resource_cases_reused": 20,
+    "environment_conditional_skip": 1
+  },
+  "walkthrough_before": {
+    "ordinary": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 25
+    },
+    "optimized": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 22
+    },
+    "polluted": {
+      "returncode": 1,
+      "shadow_import_observed": true
+    }
+  },
+  "walkthrough_after": {
+    "ordinary-after": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 25
+    },
+    "polluted-after": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 25
+    },
+    "optimized-after": {
+      "returncode": 1,
+      "rejected_before_inputs": true
+    },
+    "optimized2-after": {
+      "returncode": 1,
+      "rejected_before_inputs": true
+    },
+    "snapshot": {
+      "result": "PASS",
+      "calls": [
+        {
+          "entry": "api",
+          "operation": "create",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "verify",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "check_restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "create",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "verify",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "check_restore",
+          "status": "PASS"
+        }
+      ],
+      "NAS_run": false
+    }
+  },
+  "new_startup_regression_methods_passed": 2,
+  "new_startup_regression_optimization_modes": [
+    "-O",
+    "-OO"
+  ],
+  "build_tools": {
+    "setuptools": "84.0.0",
+    "wheel": "0.48.0",
+    "packaging": "26.3"
+  },
+  "built_wheel_sha256": "bfde4b62e43992922945b81ced9f13241379de7b74d784e1a81bed891dc51f31",
+  "wheel_source_and_installed_modules_equal": [
+    {
+      "name": "infra_artifact_ledger/__init__.py",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1"
+    },
+    {
+      "name": "infra_artifact_ledger/__main__.py",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3"
+    },
+    {
+      "name": "infra_artifact_ledger/_checkpoints.py",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580"
+    },
+    {
+      "name": "infra_artifact_ledger/cli.py",
+      "sha256": "4c069c425888eef0c268d299042c81f3254ac0804af4d2c586bca8ae43eb7e2f"
+    },
+    {
+      "name": "infra_artifact_ledger/errors.py",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d"
+    },
+    {
+      "name": "infra_artifact_ledger/fingerprint.py",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f"
+    },
+    {
+      "name": "infra_artifact_ledger/portable.py",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab"
+    },
+    {
+      "name": "infra_artifact_ledger/records.py",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4"
+    },
+    {
+      "name": "infra_artifact_ledger/recovery.py",
+      "sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2"
+    },
+    {
+      "name": "infra_artifact_ledger/service.py",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_cli.py",
+      "sha256": "daeaf9f5a763a5931d3c34b3b1ec40d4968a65bd2ff480a25c96ffb0dab530e8"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_common.py",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_format.py",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_sqlite.py",
+      "sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_storage.py",
+      "sha256": "bea6637b509542797f4fd10ede405abc297d837632ec6f4d8f50c685b2feeb61"
+    },
+    {
+      "name": "infra_artifact_ledger/sqlite_store.py",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190"
+    },
+    {
+      "name": "infra_artifact_ledger/validation.py",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+    }
+  ],
+  "changed_python_sources": {
+    "tests/installed_walkthrough.py": "c4358c18588e673d4c90391fe8fc79d670185a143def148f4453d7bd59b881f4",
+    "tests/test_installed_walkthrough.py": "9a9b41e70b72704379b6bccd6dd37b629cea1faa8950abf96256ee2e17685a2f"
+  },
+  "raw_log_sha256": {
+    "suite.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "suite.stderr": "e3a65f8d87d2ba709a86ebf8a2845187e719eb216ae8051b300ab8989c7443f6",
+    "ordinary-before.stdout": "2666723af179c334faabf2763b1892d290d976b7592250884f98e1ced0104f1b",
+    "optimized-before.stdout": "b89b9d884549cab9835094a8b09280deb4fe818b316df7a8c88ac9c374b35d0e",
+    "polluted-before.stderr": "2c4fac32b3dd0076be35111ffccd4e3cccad4e23071797d184bdba87f7099086",
+    "ordinary-after.stdout": "aae2ce08bf73a9ddffbac5d116da730bb47028ff4e0321e40a3ca6220491a560",
+    "polluted-after.stdout": "aae2ce08bf73a9ddffbac5d116da730bb47028ff4e0321e40a3ca6220491a560",
+    "optimized-after.stderr": "4efc37ee3442f21f12200ba3a95ead5e724cf14dc206d961a65da64706f7e903",
+    "optimized2-after.stderr": "4efc37ee3442f21f12200ba3a95ead5e724cf14dc206d961a65da64706f7e903",
+    "snapshot-after.stdout": "664f4b44635efa5c1ff9281f7ed42e36f3b4160ee06159e058d36a829cd390fa",
+    "startup-regressions.stderr": "0b1c0a3f8b9a41e074d7f32fde32492b2416fb1e8e8b8ccdeb52c67e4071d805",
+    "wheel-build.stdout": "5d40790c45f4e3142a2fe0e415f37e9ce1de9e1e91d132d00341a8f4d2d757c0",
+    "runtime-install.stdout": "e61236a413d8d41aee13f5b23b5408ab45a501311659c01247c72bfe4485cc33"
+  },
+  "raw_logs": "retained privately; original module paths and runtime locations not published",
+  "NAS_business_executed_this_review": false,
+  "historical_records_rewritten": false,
+  "merge_authorization": "Owner explicitly requested merging PR13; verify actual state on GitHub",
+  "final_structural_checks": {
+    "status": "PASS",
+    "files": 329,
+    "file_types": {
+      ".json": 65,
+      ".md": 45,
+      ".mmd": 1,
+      ".py": 72,
+      ".svg": 1,
+      ".toml": 1,
+      ".txt": 142,
+      "<none>": 2
+    },
+    "local_links": 502,
+    "anchors": 36,
+    "public_shell_examples_syntax_checked": 23,
+    "product_tools_and_normative_unchanged": true,
+    "privacy_scan": "PASS",
+    "diff_check": "PASS"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "a2_overall": "PARTIAL",
+  "bytes_verified": 1227519,
+  "check_fixtures": 7,
+  "double_link_targets_preserved": 2,
+  "files_verified": 219,
+  "no_historical_sync_or_cleanup_claim": true,
+  "original_NAS_unchanged": true,
+  "report_sha256": "dabee8d5348ab19edb81543f01522cab125970f76fc020786062cb84f5bed5bb",
+  "restore_cases": {
+    "cleanup": {
+      "current_check": "OK",
+      "exit": 9,
+      "state": "unknown"
+    },
+    "kill_after": {
+      "current_check": "OK",
+      "exit": -9,
+      "state": null
+    },
+    "kill_before": {
+      "current_check": "NOT_FOUND",
+      "exit": -9,
+      "state": null
+    },
+    "link_eacces": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "not_published"
+    },
+    "link_eio_after": {
+      "current_check": "OK",
+      "exit": 9,
+      "state": "unknown"
+    },
+    "link_eio_before": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "unknown"
+    },
+    "link_enospc": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "not_published"
+    },
+    "nas_read": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "not_published"
+    },
+    "parent_sync": {
+      "current_check": "OK",
+      "exit": 9,
+      "state": "unknown"
+    },
+    "partial_copy": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "not_published"
+    },
+    "response_loss": {
+      "current_check": "OK",
+      "exit": 9,
+      "state": null
+    },
+    "staged_fsync": {
+      "current_check": "NOT_FOUND",
+      "exit": 9,
+      "state": "not_published"
+    },
+    "success_order": {
+      "current_check": "OK",
+      "exit": 0,
+      "state": "published"
+    },
+    "target_sync": {
+      "current_check": "OK",
+      "exit": 9,
+      "state": "unknown"
+    },
+    "verify_corrupt": {
+      "current_check": "NOT_FOUND",
+      "exit": 6,
+      "state": "not_published"
+    }
+  },
+  "restore_current_NOT_FOUND": 8,
+  "restore_current_OK": 7,
+  "scratch_databases_preserved": 2,
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "status": "PASS",
+  "symlinks_preserved": 4,
+  "target_temp_directories_preserved": 3,
+  "unknown_current_absent": 1,
+  "unknown_current_complete": 4,
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293"
+}

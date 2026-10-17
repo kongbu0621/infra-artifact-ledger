@@ -1,0 +1,115 @@
+{
+  "status": "PASS",
+  "scope": "18 selected installed-CIFS publication I/O faults and two process-kill boundaries",
+  "a2_overall": "PARTIAL",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "product_code_changed": false,
+  "runtime": {
+    "package_version": "0.2.0a1",
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+    "sqlite": "3.45.1",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "machine": "aarch64",
+    "installed_package_wheel_bytes": "MATCH"
+  },
+  "storage": {
+    "nas": "cifs",
+    "dialect": "SMB 3.1.1",
+    "local": "ext4",
+    "global_mount_unchanged": true,
+    "server_capacity_quota_ACL_or_services_changed": false
+  },
+  "reference_before_publish": {
+    "database_sha256": "b34700105f8864f31d2b70483919172f97d9a8840bbdc1830463e737445434b9",
+    "durability_scope": "filesystem_acknowledged",
+    "manifest_sha256": "44a32fa97c31ab38c03235d442ef552327203dc5cb8b6e45f6bff3d55ccbcc45",
+    "snapshot_id": "eaad7f095379b174dd39caea21abd0dc",
+    "summary": {
+      "counts": {
+        "artifacts": 2,
+        "blobs": 3,
+        "content_roots": 3,
+        "idempotency_records": 7,
+        "import_receipts": 1,
+        "manifests": 1,
+        "provenance_links": 2,
+        "versions": 4
+      },
+      "verified_blob_count": 3,
+      "verified_byte_length": 103
+    }
+  },
+  "scenario_count": 18,
+  "publisher_results": {
+    "published": 1,
+    "not_published": 9,
+    "unknown": 6,
+    "SIGKILL_without_response": 2
+  },
+  "readonly_verify_results": {
+    "OK": 5,
+    "INCOMPLETE_SNAPSHOT": 11,
+    "INTEGRITY_FAILURE": 2
+  },
+  "unknown_current_contents": {
+    "complete": 3,
+    "incomplete": 1,
+    "corrupt": 2
+  },
+  "short_write_counters": {
+    "COMMITTED.json": {
+      "bytes": 187,
+      "calls": 2,
+      "short_returns": 1
+    },
+    "ledger.sqlite": {
+      "bytes": 49152,
+      "calls": 507,
+      "short_returns": 506
+    },
+    "manifest.json": {
+      "bytes": 693,
+      "calls": 8,
+      "short_returns": 7
+    }
+  },
+  "fault_model": {
+    "short_write": "real NAS write syscalls with buffers capped at 97 bytes; product loops unchanged",
+    "errno": "ENOSPC/EDQUOT/EACCES/EIO injected at selected syscall boundaries on ordinary-user workers",
+    "corruption": "one real byte changed in each of two fresh owned NAS generations after marker link",
+    "process_stop": "actual SIGKILL of this run's own publisher process groups before/after real marker link",
+    "no_storage_classification_or_SQLite_replacement": true
+  },
+  "retained_remainders": {
+    "NAS_marker_temporary_directories": 2,
+    "local_scratch_databases": 2,
+    "deleted_or_repaired": false
+  },
+  "verification": {
+    "readback_files": 278,
+    "bytes": 1532951,
+    "all_transport_hashes_match": true,
+    "all_18_actual_file_states_checked": true,
+    "complete_NAS_generations_full_SQL_rows_and_Blob_bytes": 5,
+    "old_T15_and_previous_NAS_fault_evidence_unchanged": true,
+    "original_publications_retried": false,
+    "offline_audit": "PASS",
+    "negative_probes_rejected": 6
+  },
+  "private_evidence_hashes": {
+    "readback-index.json": "3d8060210ed89a61b8295ebc69fa0b64271f98a468588549aea38312193289f9",
+    "run/checker.py": "9b4af843f957a2a4a0e4298816b8c962eda792a09152e453e32a1a3ef7da0b8c",
+    "run/support.py": "205190ec59eccb44af1706b1737bb3011ba59e2688531c91ef9be90c26b76316",
+    "run/report.json": "aba40c843b8ca66f86c7f736f0fa519cd82581542e4fcabd7faef10149262802"
+  },
+  "limits": {
+    "actual_NAS_disk_full_or_server_quota_ACL_enforcement": "NOT_TESTED",
+    "real_network_or_power_loss": "NOT_TESTED",
+    "resource_peaks": "NOT_MEASURED",
+    "historical_sync_proven_by_readback": false,
+    "all_platforms_or_all_A2_cases_passed": false
+  },
+  "next_scope": "Reconcile remaining T01-T15 deployment evidence, prioritizing restore-side T12 faults with NAS input; reuse completed publications and preserved failures.",
+  "private_endpoints_credentials_payloads_databases_published": false
+}

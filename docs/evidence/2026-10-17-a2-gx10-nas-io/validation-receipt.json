@@ -1,0 +1,42 @@
+{
+  "positive": "PASS",
+  "negative_probes": [
+    {
+      "case": "short_write_count",
+      "result": "REJECTED",
+      "reason": "Real short-write continuation count",
+      "transport_hashes_and_dependent_reports_updated": true
+    },
+    {
+      "case": "remote_link_state",
+      "result": "REJECTED",
+      "reason": "Semantic outcome",
+      "transport_hashes_and_dependent_reports_updated": true
+    },
+    {
+      "case": "corruption_repaired",
+      "result": "REJECTED",
+      "reason": "Exact remaining NAS bytes differ",
+      "transport_hashes_and_dependent_reports_updated": true
+    },
+    {
+      "case": "kill_exit",
+      "result": "REJECTED",
+      "reason": "Process exit/diagnostic",
+      "transport_hashes_and_dependent_reports_updated": true
+    },
+    {
+      "case": "errno",
+      "result": "REJECTED",
+      "reason": "Injected errno differs",
+      "transport_hashes_and_dependent_reports_updated": true
+    },
+    {
+      "case": "old_nas_bytes",
+      "result": "REJECTED",
+      "reason": "Prior independent evidence changed",
+      "transport_hashes_and_dependent_reports_updated": true
+    }
+  ],
+  "original_evidence_unchanged": true
+}

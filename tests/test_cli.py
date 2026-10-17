@@ -183,8 +183,11 @@ class CLITests(unittest.TestCase):
                 process.kill()
                 process.wait()
             process.stderr.close()
-        self.assertNotEqual(returncode, 0)
+        self.assertEqual(returncode, 1)
         self.assertIn(b"response channel failed", diagnostics)
+        self.assertNotIn(b"Exception ignored", diagnostics)
+        self.assertNotIn(b"Traceback", diagnostics)
+        self.assertEqual(diagnostics.count(b"\n"), 1)
         query = self.put("lost-response-query.json", {
             "idempotency_scope_ref": SCOPE, "operation_kind": "create_artifact", "idempotency_key": key,
         })

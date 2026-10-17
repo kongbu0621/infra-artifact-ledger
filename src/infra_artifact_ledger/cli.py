@@ -6,6 +6,7 @@ Content files are explicitly named by the caller and published without replace.
 
 import argparse
 import hashlib
+import io
 import os
 from pathlib import Path
 import stat
@@ -344,6 +345,31 @@ def _encode_error(error):
     return canonical_bytes(envelope) + b"\n"
 
 
+def _write_channel(stream, value):
+    """Write without leaving our bytes for a failing interpreter-exit flush."""
+    if stream is None:
+        raise OSError("Output channel is unavailable")
+    buffer = getattr(stream, "buffer", None)
+    raw = getattr(buffer, "raw", buffer)
+    if type(buffer) in (io.FileIO, io.BufferedWriter, io.BufferedRandom) and type(raw) is io.FileIO:
+        # Preserve a caller's pending output and stream ownership. Only known
+        # file buffers are bypassed; custom streams keep their write contract.
+        getattr(stream, "flush", buffer.flush)()
+        remaining = memoryview(value if isinstance(value, bytes) else value.encode("utf-8"))
+        while remaining:
+            written = os.write(raw.fileno(), remaining)
+            if written <= 0:
+                raise OSError("Incomplete output write")
+            remaining = remaining[written:]
+        return
+    output = buffer if isinstance(value, bytes) else stream
+    if output is None:
+        raise OSError("Binary output channel is unavailable")
+    if output.write(value) != len(value):
+        raise OSError("Incomplete output write")
+    output.flush()
+
+
 def main(argv=None):
     """Return a stable exit code; no storage or file exception leaks as traceback."""
     arguments = sys.argv[1:] if argv is None else list(argv)
@@ -361,14 +387,12 @@ def main(argv=None):
         encoded = _encode_error(error)
         exit_code = 1
     try:
-        sys.stdout.buffer.write(encoded)
-        sys.stdout.buffer.flush()
+        _write_channel(sys.stdout, encoded)
     except (OSError, ValueError):
         # A broken response channel may have a partial JSON line. Do not append a
         # second envelope or pretend a confirmed database write was rolled back.
         try:
-            sys.stderr.write("artifact-ledger: response channel failed; query the original operation identity.\n")
-            sys.stderr.flush()
+            _write_channel(sys.stderr, "artifact-ledger: response channel failed; query the original operation identity.\n")
         except (OSError, ValueError):
             pass
         return 1

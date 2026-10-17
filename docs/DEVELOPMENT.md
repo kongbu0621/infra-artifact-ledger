@@ -11,7 +11,7 @@
 中断处继续，不再让用户另选项目或反复制造演示任务。已有本地 CLI 或本地 Codex 能在原授权
 范围内推进的工作直接接续；Local Hand 只补实际必需的能力缺口，不要求先建成完整通用执行器。
 
-已批准的 `A2-snapshot-nas-restore-v0.1` S1–S5 已于 2026-10-17 完成所列配置内验收，Owner 随后明确指示合并 PR13，并要求全仓复核、发现问题直接修复。[本轮复核](A2_VALIDATION.md#20-全仓复核2026-10-17)完成后执行已授权合并；实际状态见 [PR13](https://github.com/kongbu0621/infra-artifact-ledger/pull/13)。
+已批准的 `A2-snapshot-nas-restore-v0.1` S1–S5 已于 2026-10-17 完成所列配置内验收，[PR13](https://github.com/kongbu0621/infra-artifact-ledger/pull/13) 经[全仓复核](A2_VALIDATION.md#20-全仓复核2026-10-17)后按 Owner 指令合入 `8d3a952`。随后再次全仓复核修复 A1 CLI 的响应短写与退出刷新问题，见 [A1 验证记录 §11](A1_VALIDATION.md#11-全仓再复核a1-响应通道2026-10-17)；该修复单独提交审阅，未升级现场安装或重放 NAS 业务。
 以 [A2 验证记录](A2_VALIDATION.md)、[兼容表](COMPATIBILITY.md)和保留现场为事实依据；下文按时间保留接续过程。
 2026-10-15 的接续调整只记录任务顺序，没有新增执行结果。2026-10-16 的[独立本地实测](evidence/2026-10-16-a2-local/README.md)现已补录：两版 Python 各完成 API/CLI 的 create、verify、restore、check_restore，并核对恢复内容、幂等记录和原合成库不变。它只覆盖所列本地环境，不代表整个 A2 完成。
 

@@ -1,0 +1,244 @@
+{
+  "base_commit": "8d3a9527c859fe1a2258a8068e3feadc39d260ce",
+  "implementation_commit": "bf852937934dab9b2bf6061d19e7d030b9d54b19",
+  "scope": "whole-repository follow-up; 329 base files match prior inventory",
+  "runtime": {
+    "platform": "Linux x86_64",
+    "python": "3.11.15",
+    "sqlite": "3.37.2"
+  },
+  "before": {
+    "test_methods_discovered": 10,
+    "failure_events_including_subtests": 9,
+    "error_events": 1,
+    "real_unbuffered_partial_pipe_exit": 0,
+    "buffered_broken_pipe_and_full_device_exit": 120,
+    "partial_custom_init_response_exit": 0
+  },
+  "after": {
+    "new_output_channel_test_methods": 10,
+    "full_suite": {
+      "discovered": 458,
+      "passed": 437,
+      "skipped": 21,
+      "failures": 0
+    },
+    "source_targeted_tests": 70,
+    "installed_targeted_tests": 70,
+    "test_sets_overlap": true
+  },
+  "source_boundary": {
+    "base": "8d3a9527c859fe1a2258a8068e3feadc39d260ce",
+    "changed_runtime_modules": [
+      "cli.py",
+      "snapshot_cli.py"
+    ],
+    "unchanged_runtime_modules": 15,
+    "moved_output_helper_AST_identical": true,
+    "all_other_A2_CLI_functions_AST_identical": true,
+    "database_and_recovery_logic_unchanged": true
+  },
+  "wheel_sha256": "9fa26350aed118e41c92316fcd4d0b58703134b29c1dc2412def1854b69c1c91",
+  "wheel_source_and_installed_modules_equal": [
+    {
+      "name": "infra_artifact_ledger/__init__.py",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1"
+    },
+    {
+      "name": "infra_artifact_ledger/__main__.py",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3"
+    },
+    {
+      "name": "infra_artifact_ledger/_checkpoints.py",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580"
+    },
+    {
+      "name": "infra_artifact_ledger/cli.py",
+      "sha256": "c7ee9c6274dca9f66accef5c4e05141b0813adb8f18a0a0c8886ae96c3e86b40"
+    },
+    {
+      "name": "infra_artifact_ledger/errors.py",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d"
+    },
+    {
+      "name": "infra_artifact_ledger/fingerprint.py",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f"
+    },
+    {
+      "name": "infra_artifact_ledger/portable.py",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab"
+    },
+    {
+      "name": "infra_artifact_ledger/records.py",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4"
+    },
+    {
+      "name": "infra_artifact_ledger/recovery.py",
+      "sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2"
+    },
+    {
+      "name": "infra_artifact_ledger/service.py",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_cli.py",
+      "sha256": "acf9b9cd18aa4577e2e8f56f54bacec719056d43e7fc5055cfa0b711738dc1ed"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_common.py",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_format.py",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_sqlite.py",
+      "sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c"
+    },
+    {
+      "name": "infra_artifact_ledger/snapshot_storage.py",
+      "sha256": "bea6637b509542797f4fd10ede405abc297d837632ec6f4d8f50c685b2feeb61"
+    },
+    {
+      "name": "infra_artifact_ledger/sqlite_store.py",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190"
+    },
+    {
+      "name": "infra_artifact_ledger/validation.py",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+    }
+  ],
+  "installed_walkthroughs": {
+    "ordinary-after": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 25
+    },
+    "polluted-after": {
+      "returncode": 0,
+      "result": "PASS",
+      "cli_calls": 25
+    },
+    "optimized-after": {
+      "returncode": 1,
+      "rejected_before_inputs": true
+    },
+    "optimized2-after": {
+      "returncode": 1,
+      "rejected_before_inputs": true
+    },
+    "snapshot": {
+      "result": "PASS",
+      "calls": [
+        {
+          "entry": "api",
+          "operation": "create",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "verify",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "api",
+          "operation": "check_restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "create",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "verify",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "restore",
+          "status": "PASS"
+        },
+        {
+          "entry": "cli",
+          "operation": "check_restore",
+          "status": "PASS"
+        }
+      ],
+      "NAS_run": false
+    }
+  },
+  "deployment_changed": false,
+  "NAS_business_executed": false,
+  "public_test": "tests/test_cli_output_channels.py",
+  "raw_logs": "retained privately; machine and workspace paths not published",
+  "raw_log_sha256": {
+    "before.stderr": "3f901eccbf2887f7c8298b04fe936bf0914c631ead429f3f3030304f7d23e633",
+    "before.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-tools.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-tools.stdout": "f07689306c6f19026108d40af7f03d5ccbf7b2e29b28b482bb76164409c7deb5",
+    "installed-test_cliall.py.stderr": "90648a33d62e9341495ac96690436139c9fedc78edea1352483f2ddc85e3a04f",
+    "installed-test_cliall.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-test_snapshot_cli.py.stderr": "98654e6f8fe0963cdedd378afe0ce1c1834068e83208c6cccc1373543da9e6e9",
+    "installed-test_snapshot_cli.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-test_snapshot_output_channels.py.stderr": "036487a04a998a407b15700fe43ea699140373348672c6199b9a0402354c3dea",
+    "installed-test_snapshot_output_channels.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-test_snapshot_review3_cli.py.stderr": "49c7a08c1ebbb42b6d022f3678558c03a3e1a8bb2dedc23c299cec97cf040b55",
+    "installed-test_snapshot_review3_cli.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "optimized-after.stderr": "4efc37ee3442f21f12200ba3a95ead5e724cf14dc206d961a65da64706f7e903",
+    "optimized-after.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "optimized2-after.stderr": "4efc37ee3442f21f12200ba3a95ead5e724cf14dc206d961a65da64706f7e903",
+    "optimized2-after.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ordinary-after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ordinary-after.stdout": "42d242f3e92388b31e9044deea58ecfe20d3a7e72902092285d9be856981462d",
+    "polluted-after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "polluted-after.stdout": "42d242f3e92388b31e9044deea58ecfe20d3a7e72902092285d9be856981462d",
+    "runtime-install.stderr": "1a2b13e9e0f878cd8c6cd11fca5fa1e05bfaf0b52d6ad074dc4713020604d8be",
+    "runtime-install.stdout": "e61236a413d8d41aee13f5b23b5408ab45a501311659c01247c72bfe4485cc33",
+    "runtime-venv.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runtime-venv.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "snapshot-after.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "snapshot-after.stdout": "be62d13ab2b8bd967cdc0162b0068802cc781e2c9127a3d263796d34cb001786",
+    "startup-regressions.stderr": "0b1c0a3f8b9a41e074d7f32fde32492b2416fb1e8e8b8ccdeb52c67e4071d805",
+    "startup-regressions.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "suite.stderr": "eb6bc07db28d428ba9b3e2618323ce4fff76d7b3ba9108f1319d69aa8df6bf7f",
+    "suite.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_cliall.py.stderr": "ee11d4c96f833e414ecd917bb82c45c3613c45d83930edc0ebbea4e627dd4606",
+    "test_cliall.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_snapshot_cli.py.stderr": "1fe70e92cb0a88b1ebb81102b5c9592d4a7d4a7c4dd54699675ccd8461f950f2",
+    "test_snapshot_cli.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_snapshot_output_channels.py.stderr": "4b3ead1fab5a1902b911c2c0a17a6471ff6fbb293b04dcc31ec7ce7a4e6d73f5",
+    "test_snapshot_output_channels.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_snapshot_review3_cli.py.stderr": "c852504825cb7bf3cfe3a2e0298fc834ceaf7a0730b4ca146f0aa8399306fcc9",
+    "test_snapshot_review3_cli.py.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wheel-build.stderr": "1a2b13e9e0f878cd8c6cd11fca5fa1e05bfaf0b52d6ad074dc4713020604d8be",
+    "wheel-build.stdout": "44bbe4d13c34b000693860354d87a9178aff1a1b37f4a9821f64a6085b30ae38"
+  },
+  "structural_checks": {
+    "status": "PASS",
+    "files": 331,
+    "file_types": {
+      ".json": 66,
+      ".md": 45,
+      ".mmd": 1,
+      ".py": 73,
+      ".svg": 1,
+      ".toml": 1,
+      ".txt": 142,
+      "<none>": 2
+    },
+    "local_links": 506,
+    "anchors": 39,
+    "public_shell_examples_syntax_checked": 23,
+    "tools_build_and_normative_unchanged": true,
+    "privacy_scan": "PASS",
+    "diff_check": "PASS"
+  }
+}

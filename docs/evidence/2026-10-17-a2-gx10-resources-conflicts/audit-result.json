@@ -1,0 +1,51 @@
+{
+  "API_calls": 49,
+  "NAS_inputs_unchanged": true,
+  "a2_overall": "PARTIAL",
+  "conflicts_report_sha256": "6effc23114fb920d4e92701f4286c094a7f35040558a3f464c0e8c4b36e0d33d",
+  "existing_target_refusals": 5,
+  "full_lifecycles": 11,
+  "independently_inspected_databases": 38,
+  "legal_boundary_points": 16,
+  "limit_rejections": 5,
+  "measurements": {
+    "metadata_bytes": {
+      "peak_rss_kib": 145188,
+      "wall_seconds": 18.29
+    },
+    "metadata_rows": {
+      "peak_rss_kib": 134608,
+      "wall_seconds": 23.36
+    },
+    "pages": {
+      "peak_rss_kib": 36324,
+      "wall_seconds": 65.58
+    },
+    "payload": {
+      "peak_rss_kib": 227760,
+      "wall_seconds": 15.53
+    },
+    "reference_bytes": {
+      "peak_rss_kib": 193004,
+      "wall_seconds": 26.82
+    },
+    "reference_rows": {
+      "peak_rss_kib": 170904,
+      "wall_seconds": 22.39
+    }
+  },
+  "portable_bytes": 781090,
+  "portable_files": 187,
+  "race_winners": {
+    "different_inputs": "A",
+    "same_input": "A"
+  },
+  "races": 2,
+  "resource_tests": 6,
+  "resources_report_sha256": "e6318707c48630faf3e082074f90ed09fb88a100ac5b380c26d5b31a6b250afa",
+  "retained_fixture_bytes": 9950647816,
+  "retained_fixture_files": 61,
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "status": "PASS",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293"
+}

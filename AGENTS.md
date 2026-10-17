@@ -2,7 +2,7 @@
 
 修改 README 图示时，先读[图示维护约定](docs/DEVELOPMENT.md#图示维护约定)：布局须突出主线和最终用途，并检查实际展示的文字与有向连线。
 
-本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与实机验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。所列 Linux x86_64 与 GX10 的 ext4 安装态本地合成闭环已通过；2026-10-17 又完成 GX10 + CIFS（SMB 3.1.1）的真实 NAS 合成保存与丢失恢复。剩余部署故障项未完成，整个 A2 仍为 PARTIAL。
+本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与实机验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。所列 Linux x86_64 与 GX10 的 ext4 安装态本地合成闭环已通过；2026-10-17 又完成 GX10 + CIFS（SMB 3.1.1）的真实 NAS 合成保存与丢失恢复。完整矩阵的最终证据对账尚未完成，整个 A2 仍为 PARTIAL。
 
 ## 当前任务接续（2026-10-15）
 
@@ -54,8 +54,16 @@ marker link 前后实际 SIGKILL 均按预期记录。278 个文件独立核对�
 15 个新恢复场景与 7 个核对场景通过，219 个文件和四个断链已取回独立核对。五个 unknown
 的当前目标为四个完整、一个无公开 DB；被杀及丢响应原调用不伪造结果。六种 sidecar（含断链）
 均拒绝，无关断链保留；三个目标暂存目录、两个双硬链接目标及两个 scratch 数据库继续保留。
-NAS 原快照只读、安装和挂载未变，产品代码未改。下一步核对累计矩阵中 T09 部署 RSS/耗时
-和 T11 目标冲突的证据缺口，复用已有适用结果；A2 仍为 PARTIAL，不以不断重跑故障替代完成判断。
+NAS 原快照只读、安装和挂载未变，产品代码未改。T09/T11 随后的补证见下一段；A2 仍为 PARTIAL，不以不断重跑故障替代完成判断。
+
+
+随后完成[GX10 资源边界与恢复目标冲突](docs/evidence/2026-10-17-a2-gx10-resources-conflicts/README.md)：
+六项真实 ext4 安装态资源测试分别测量 RSS/耗时；16 个合法边界点中 11 个完成闭环、五个超限拒绝，
+无跳过。五种既有恢复目标均保留，两组双进程竞争各只有一个完整胜出者。187 个普通文件与一个断链
+已取回；61 个大库及相关文件约 9.95 GB 保留在 GX10 私有持久目录，38 个数据库对象独立逐表核对。
+历史 D9 与当前固定源的 17 个运行模块中 16 个未变，唯一差异是已实测的 nsfs 挂载表解析；
+按具体职责复用已有验证。下一步做 T01–T15 最终证据对账并形成当前配置结论，只有明确缺口才补实验。
+当前仍为 PARTIAL，PR13 保持草稿；不自动合并，不把其他机器或硬件断电扩大为统一前置。
 
 接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
 `${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。

@@ -1,0 +1,39 @@
+{
+  "compile": "PASS",
+  "negative_probes": [
+    {
+      "probe": "zero_peak_RSS",
+      "reason": "Measurement range",
+      "status": "REJECTED"
+    },
+    {
+      "probe": "false_legal_boundary",
+      "reason": "Actual legal limit-minus/equal/plus observations",
+      "status": "REJECTED"
+    },
+    {
+      "probe": "classification_mock_restored",
+      "reason": "Remaining classification mock or extra test alteration",
+      "status": "REJECTED"
+    },
+    {
+      "probe": "two_race_winners",
+      "reason": "Conflict process exit/diagnostic",
+      "status": "REJECTED"
+    },
+    {
+      "probe": "wrong_winner_bytes",
+      "reason": "Winning DB or complete state differs",
+      "status": "REJECTED"
+    },
+    {
+      "probe": "changed_NAS_input",
+      "reason": "Independent NAS reference",
+      "status": "REJECTED"
+    }
+  ],
+  "positive_audit": "PASS before and after probes",
+  "remote_side_effects": false,
+  "status": "PASS",
+  "transport_hashes_and_related_reports_updated": true
+}

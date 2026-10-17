@@ -23,6 +23,10 @@ API/CLI 操作。随后修复 namespace 挂载表解析，固定 `d4ba0c6bd40fe0
 两次来源分开记录，旧失败保留；复用适用结果，继续真实 NAS 和尚未覆盖的部署故障项。
 Local Hand 常驻服务的 A2 端到端验收仍未执行；它不作为 Ledger 接续的统一前置。
 
+2026-10-17 已复用同一 GX10 安装完成 [CLI 响应丢失实测](docs/evidence/2026-10-17-a2-gx10-response-loss/README.md)：
+新合成范围内的 create/restore 各执行一次，通道失败后只读核对原对象，没有重复执行。
+它仅补齐 T08 的本地安装态子项；真实 NAS、T06 及 T08 的其余部署场景继续保持未完成。
+
 接续现场操作前，先读取已有私有部署记录；本机新记录的默认入口为
 `${XDG_STATE_HOME:-$HOME/.local/state}/infra-artifact-ledger/continuation.json`。
 这是操作者的接续约定，产品 CLI 不自动读取，也不新增授权或执行门槛。沿用已有登记位置，

@@ -1,0 +1,103 @@
+{
+  "format": "ledger-a2-installed-response-loss-evidence/v1",
+  "date": "2026-10-17",
+  "status": "PASS",
+  "scope": "GX10 installed local CLI create/restore response loss and original-object readback; partial T08 coverage",
+  "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+  "observed_main": "50c400481af415b5030298061407765f48a321b2",
+  "wheel_sha256": "b53461203a4b10c0e5df887af71185ae5798ddc9abcfaa37082ca2a9805ce293",
+  "environment": {
+    "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+    "sqlite": "3.45.1",
+    "platform": "Linux-6.17.0-1031-nvidia-aarch64-with-glibc2.39",
+    "machine": "aarch64",
+    "package_version": "0.2.0a1"
+  },
+  "installed_package_wheel_bytes": "MATCH",
+  "installed_modules_checked": 17,
+  "source_files_checked": 19,
+  "checker_sha256": "65ecdb5199588b13925b3b296fb275f250abc6e771869e0b9a65ded9d0b48d5b",
+  "cases": [
+    {
+      "operation": "create",
+      "exit": 9,
+      "stdout_reader_closed_before_spawn": true
+    },
+    {
+      "operation": "verify",
+      "exit": 0,
+      "stdout_reader_closed_before_spawn": false
+    },
+    {
+      "operation": "restore",
+      "exit": 9,
+      "stdout_reader_closed_before_spawn": true
+    },
+    {
+      "operation": "check-restore",
+      "exit": 0,
+      "stdout_reader_closed_before_spawn": false
+    }
+  ],
+  "create_manifest_digest_origin": "Derived after lost response; bounded original-directory read then verify. No pre-create trusted digest or historical T0 attestation.",
+  "fixture_summary": {
+    "counts": {
+      "artifacts": 2,
+      "blobs": 3,
+      "content_roots": 3,
+      "idempotency_records": 7,
+      "import_receipts": 1,
+      "manifests": 1,
+      "provenance_links": 2,
+      "versions": 4
+    },
+    "verified_blob_count": 3,
+    "verified_byte_length": 103
+  },
+  "independent_audit": {
+    "status": "PASS",
+    "source_commit": "d4ba0c6bd40fe06fa31d473e6f1f37d96d6bf23b",
+    "main_product_payload_matches_installed_source": true,
+    "retained_files_verified": 26,
+    "database_files": 3,
+    "all_sql_tables_and_payload_bytes_equal": true,
+    "table_rows": {
+      "ledger_format": 1,
+      "operations": 7,
+      "payloads": 3,
+      "records": 16,
+      "refs": 21
+    },
+    "blob_count": 3,
+    "payload_bytes": 103,
+    "idempotency_records": 7,
+    "multi_parent_merge_and_reused_content_verified": true,
+    "response_loss_exits": [
+      9,
+      9
+    ],
+    "readback_exits": [
+      0,
+      0
+    ],
+    "original_request_counts": {
+      "check-restore": 1,
+      "create": 1,
+      "restore": 1,
+      "verify": 1
+    },
+    "replayed_business": false,
+    "nas_executed": false,
+    "retained_evidence_unchanged": true
+  },
+  "limitations": [
+    "No NAS publish, mount loss, network interruption, or NAS-only restore executed.",
+    "Readback checks current bytes and semantics; it does not establish historical completion or physical durability.",
+    "No consumer workload, full T01-T15 coverage, or A2 completion claimed."
+  ],
+  "private_evidence": {
+    "retained_file_count": 26,
+    "raw_records_disclosed": false,
+    "original_data_and_failed_attempts_preserved": true
+  }
+}

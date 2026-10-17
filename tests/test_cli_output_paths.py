@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 
+import infra_artifact_ledger
 from infra_artifact_ledger import initialize
 from acceptance_helpers import append, create, encode
 
@@ -26,7 +27,7 @@ class CLIOutputPathTests(unittest.TestCase):
             ledger.execute(encode(request), payloads=payloads)
         self.original = self.database.read_bytes()
         self.environment = os.environ.copy()
-        self.environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1] / "src")
+        self.environment["PYTHONPATH"] = str(Path(infra_artifact_ledger.__file__).resolve().parents[1])
 
     def run_cli(self, *args, db=None, exit_code=0):
         response = subprocess.run(

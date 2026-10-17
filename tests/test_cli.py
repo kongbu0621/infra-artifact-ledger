@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 
+import infra_artifact_ledger
 from acceptance_helpers import append, create, encode, import_request, SCOPE
 
 
@@ -18,7 +19,7 @@ class CLITests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.database = str(self.root / "ledger.sqlite")
         self.environment = os.environ.copy()
-        self.environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1] / "src")
+        self.environment["PYTHONPATH"] = str(Path(infra_artifact_ledger.__file__).resolve().parents[1])
 
     def run_cli(self, *args, exit_code=0, db=True):
         command = [sys.executable, "-m", "infra_artifact_ledger", *args]

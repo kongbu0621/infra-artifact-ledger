@@ -14,6 +14,7 @@ import time
 import unittest
 from unittest.mock import patch
 
+import infra_artifact_ledger
 from infra_artifact_ledger import LedgerError, initialize, open as open_ledger
 
 try:
@@ -72,8 +73,9 @@ class AcceptanceCase(unittest.TestCase):
             payload_path = self.root / f"payload-{number}.json"
             payload_path.write_bytes(encode(locations))
         env = os.environ.copy()
-        source = str(Path(__file__).resolve().parents[1] / "src")
-        env["PYTHONPATH"] = os.pathsep.join(filter(None, [source, env.get("PYTHONPATH")]))
+        # Keep real subprocesses on the package under test, including when the
+        # parent imports an installed wheel instead of this checkout's source.
+        env["PYTHONPATH"] = str(Path(infra_artifact_ledger.__file__).resolve().parents[1])
         args = [sys.executable, str(Path(__file__).with_name("acceptance_helpers.py")),
                 mode, str(self.database), str(request_path), str(payload_path),
                 str(barrier or "-"), str(marker or "-")]

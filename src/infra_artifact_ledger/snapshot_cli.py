@@ -7,12 +7,12 @@ recovery API; a response-channel failure never rewrites its observed state.
 from __future__ import annotations
 
 import argparse
-import io
 import json
 import os
 import stat
 import sys
 
+from .cli import _write_channel
 from .snapshot_common import EXIT_CODES, RecoveryError, operation_budget
 from .snapshot_format import capture_storage_config, parse_json
 
@@ -166,31 +166,6 @@ def _error_response(error, operation):
         pass
     envelope["error"]["message"] = "The operation failed; diagnostic details could not be reported."
     return _encode(envelope)
-
-
-def _write_channel(stream, value):
-    """Write without leaving our bytes for a failing interpreter-exit flush."""
-    if stream is None:
-        raise OSError("Output channel is unavailable")
-    buffer = getattr(stream, "buffer", None)
-    raw = getattr(buffer, "raw", buffer)
-    if type(buffer) in (io.FileIO, io.BufferedWriter, io.BufferedRandom) and type(raw) is io.FileIO:
-        # Preserve a caller's pending output and stream ownership. Only known
-        # file buffers are bypassed; custom streams keep their write contract.
-        getattr(stream, "flush", buffer.flush)()
-        remaining = memoryview(value if isinstance(value, bytes) else value.encode("utf-8"))
-        while remaining:
-            written = os.write(raw.fileno(), remaining)
-            if written <= 0:
-                raise OSError("Incomplete output write")
-            remaining = remaining[written:]
-        return
-    output = buffer if isinstance(value, bytes) else stream
-    if output is None:
-        raise OSError("Binary output channel is unavailable")
-    if output.write(value) != len(value):
-        raise OSError("Incomplete output write")
-    output.flush()
 
 
 def _write_response(encoded):

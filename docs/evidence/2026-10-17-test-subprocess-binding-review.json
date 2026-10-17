@@ -1,0 +1,419 @@
+{
+  "review_parent_commit": "0a9b50c33c296032e03afbafd17d8bb232f4f34a",
+  "runtime_implementation_commit": "bf852937934dab9b2bf6061d19e7d030b9d54b19",
+  "finding": "Four subprocess test launchers could load checkout source or inherited PYTHONPATH instead of the parent imported package",
+  "prior_coverage_correction": {
+    "installation_interpreter_runs": 70,
+    "pure_installed": 48,
+    "source_or_mixed_child_tests": 22,
+    "original_logs_preserved": true
+  },
+  "before_supported_python": {
+    "python": "3.11.15",
+    "test_methods": 3,
+    "failed": 3,
+    "source_trap_raised": true
+  },
+  "after": {
+    "source_suite": {
+      "tag": "source-suite",
+      "returncode": 0,
+      "discovered": 461,
+      "passed": 440,
+      "skipped": 21
+    },
+    "installed_tests": 97,
+    "installed_groups": [
+      {
+        "tag": "installed-0",
+        "returncode": 0,
+        "discovered": 39,
+        "passed": 39,
+        "skipped": 0
+      },
+      {
+        "tag": "installed-1",
+        "returncode": 0,
+        "discovered": 24,
+        "passed": 24,
+        "skipped": 0
+      },
+      {
+        "tag": "installed-2",
+        "returncode": 0,
+        "discovered": 3,
+        "passed": 3,
+        "skipped": 0
+      },
+      {
+        "tag": "installed-3",
+        "returncode": 0,
+        "discovered": 14,
+        "passed": 14,
+        "skipped": 0
+      },
+      {
+        "tag": "installed-4",
+        "returncode": 0,
+        "discovered": 11,
+        "passed": 11,
+        "skipped": 0
+      },
+      {
+        "tag": "installed-5",
+        "returncode": 0,
+        "discovered": 6,
+        "passed": 6,
+        "skipped": 0
+      }
+    ],
+    "all_installed_passed": true,
+    "installed_adjacent_source_and_inherited_pythonpath_traps": true,
+    "new_regression_methods": 3,
+    "test_sets_overlap": true
+  },
+  "runtime": {
+    "platform": "Linux x86_64",
+    "python": "3.11.15",
+    "sqlite": "3.37.2"
+  },
+  "unchanged_product_modules": [
+    {
+      "name": "__init__.py",
+      "sha256": "5ee4422a569c4a755fc3c9bef7fb6f0aed4f73e73064abd8759e524854c3a7c1"
+    },
+    {
+      "name": "__main__.py",
+      "sha256": "4b777f71c41a7a1870d94d6617a3054e232ce5c1d9102149f32864aadfebb5f3"
+    },
+    {
+      "name": "_checkpoints.py",
+      "sha256": "63e081aa6b0f56a19f326794aca4e810a246b71ef66d25928bec6e8a490f9580"
+    },
+    {
+      "name": "cli.py",
+      "sha256": "c7ee9c6274dca9f66accef5c4e05141b0813adb8f18a0a0c8886ae96c3e86b40"
+    },
+    {
+      "name": "errors.py",
+      "sha256": "28b90ce01b1c0866e55d4d38e7e5543669c7ab1f0d383ce1525bd583ccf6ee1d"
+    },
+    {
+      "name": "fingerprint.py",
+      "sha256": "dc51637c3fb514da72742e2a3b5218843077a2748f0a02b64932713d492f238f"
+    },
+    {
+      "name": "portable.py",
+      "sha256": "6ba033be0c99638bf78e49e8a43ba97dee7a496cc5ea20435604cfdb107657ab"
+    },
+    {
+      "name": "records.py",
+      "sha256": "126119cd523f495fd4b86f6e3c777fffef1b86ef5c286f49904247426d379ac4"
+    },
+    {
+      "name": "recovery.py",
+      "sha256": "34705206dba34e143426a0fdfe4e050c7641aaded293a533483b1f4a5acf09a2"
+    },
+    {
+      "name": "service.py",
+      "sha256": "c11974ff86967c49e15c6be5a446ff8dd318e272d220b8e559e770d85f2d46ec"
+    },
+    {
+      "name": "snapshot_cli.py",
+      "sha256": "acf9b9cd18aa4577e2e8f56f54bacec719056d43e7fc5055cfa0b711738dc1ed"
+    },
+    {
+      "name": "snapshot_common.py",
+      "sha256": "5cd8c346a1a40479e2004025ac467650c617172b9f99be6474906e16df06d080"
+    },
+    {
+      "name": "snapshot_format.py",
+      "sha256": "7f9895f944e873aaebe7640ca2abc061ae664acddffff39e88b4581d7550ba9b"
+    },
+    {
+      "name": "snapshot_sqlite.py",
+      "sha256": "6a6bbf85e3bf94092fc30a97eae12687806609bc17a92a50f3cdb016b4b3bb0c"
+    },
+    {
+      "name": "snapshot_storage.py",
+      "sha256": "bea6637b509542797f4fd10ede405abc297d837632ec6f4d8f50c685b2feeb61"
+    },
+    {
+      "name": "sqlite_store.py",
+      "sha256": "f6bca14328c46cb3593fb152a02c42cbbbbe81cdd916ae150e7dd856afcd6190"
+    },
+    {
+      "name": "validation.py",
+      "sha256": "2fdf23ada4f32fa17af2934b4375af66eca85506b26668f14625e45d465b0155"
+    }
+  ],
+  "reused_wheel_sha256": "9fa26350aed118e41c92316fcd4d0b58703134b29c1dc2412def1854b69c1c91",
+  "test_files": [
+    {
+      "name": "tests/test_cli.py",
+      "sha256": "f17299a51e37a3273f11707ed349a8d1c34ecc2c9684bda87569606d19fedebe"
+    },
+    {
+      "name": "tests/test_cli_output_paths.py",
+      "sha256": "f3f3479dcc19acb41230532ed3ca37ca34307606d650652790a084faa95560f5"
+    },
+    {
+      "name": "tests/test_acceptance.py",
+      "sha256": "2356ddc0a4a8bf2eee5d8158a8f1f142624867b5f14569776acb1cbb7aab82b6"
+    },
+    {
+      "name": "tests/test_subprocess_binding.py",
+      "sha256": "126534657105cc2fb798538cd0d97be68709d3b0323bffaa59390df363cf4b74"
+    },
+    {
+      "name": "tests/test_response_boundaries.py",
+      "sha256": "0fdd1847b36ced7c5e19d86e88bb5648c25e7ae7918a4b1a69f624c96d0abdbb"
+    }
+  ],
+  "independent_diagnostics": {
+    "count": 16,
+    "cases": [
+      {
+        "kind": "create_artifact",
+        "mode": "buffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "create_artifact",
+        "mode": "unbuffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "create_artifact",
+        "mode": "full",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "create_artifact",
+        "mode": "nonblocking",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "append_version",
+        "mode": "buffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "append_version",
+        "mode": "unbuffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "append_version",
+        "mode": "full",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "append_version",
+        "mode": "nonblocking",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "import_bundle",
+        "mode": "buffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "import_bundle",
+        "mode": "unbuffered",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "import_bundle",
+        "mode": "full",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "import_bundle",
+        "mode": "nonblocking",
+        "exit": 1,
+        "stderr_sha256": "6e8eede0501cc40e62dcf7cd3fb7ef980b19c6fbaa8ddb19b8ba880998e98ccc",
+        "original_identity_recovered": true,
+        "replay_without_database_change": true
+      },
+      {
+        "kind": "successful_short_write",
+        "value_type": "str",
+        "write_calls": 6,
+        "exact_bytes": true
+      },
+      {
+        "kind": "successful_short_write",
+        "value_type": "bytes",
+        "write_calls": 6,
+        "exact_bytes": true
+      },
+      {
+        "kind": "a2_create_response_loss",
+        "exit": 9,
+        "stderr_sha256": "aef423fb0f21a41ab38b8762bc5edf4cf07c317b2e8ce269b96f6f1e9bcb3afa",
+        "current_object_verified": true,
+        "digest_source": "owned post-call manifest; not preknown"
+      },
+      {
+        "kind": "a2_restore_response_loss",
+        "exit": 9,
+        "stderr_sha256": "aef423fb0f21a41ab38b8762bc5edf4cf07c317b2e8ce269b96f6f1e9bcb3afa",
+        "current_object_verified": true,
+        "source_and_snapshot_unchanged": true
+      }
+    ],
+    "not_added_to_formal_test_count": true
+  },
+  "initial_diagnostic_python310": "retained; excluded from supported-environment acceptance; reproduced before and after under Python 3.11",
+  "deployment_changed": false,
+  "NAS_accessed": false,
+  "logs": "retained privately; no actual machine paths or fixture contents published",
+  "raw_log_sha256": {
+    "after.stderr": "7d78076093bf3c0747f56d80b7b4853099651cd09488503734bdcf08875d5d82",
+    "after.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after311.stderr": "834e512fbc97b743f84d6b94c37569b318ecac2dd8c08a0f2b4c309ea5b20bad",
+    "after311.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before.stderr": "7300b0016e7df2d87374dd0a04a827d6c6be6aeb496f6b33641c7d3dc57e33ca",
+    "before.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "before311.stderr": "a231b3334478fae2df7d3c372eb33c14c4cfc0c9fe90dd722a0e3961159a82d4",
+    "before311.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "independent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "independent.stdout": "6ac58be0dcabb083a2c1a7d3321b2456444c25aee16df358cb445d4cc695a5d8",
+    "installed-0.stderr": "ac5c00304821ae13cfd67f1b07b4e96c9e6fe2aa45bc352454566c3e2a4697ec",
+    "installed-0.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-1.stderr": "fe29325d273292ff7ac739d693126137883118a5fcae38fbc28480caf1f68745",
+    "installed-1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-2.stderr": "92f19eaca84a3ba32f7b428dd7f56b591de9f1c74c50d2415cba74df2720905e",
+    "installed-2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-3.stderr": "c59b61bdeec8a35600f538b0daf288bc981fa93d515b506ee63bed5ec83e88b5",
+    "installed-3.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-4.stderr": "8c4055e06ce642f3031830ffb9595eae07ea29ce6451002f95951ab7c0013086",
+    "installed-4.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "installed-5.stderr": "49c7a08c1ebbb42b6d022f3678558c03a3e1a8bb2dedc23c299cec97cf040b55",
+    "installed-5.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "response-boundary-before-executed.stderr": "aec1eebf7de7ef711e69e976b5a3338ab99498363f807a8e127a7691dbbc920a",
+    "response-boundary-before-executed.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "response-boundary-before.stderr": "cc0324b12f58ec5ea06725bf28d76d721bf1b934348d191cbb2e1fdad864b5e9",
+    "response-boundary-before.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "response-boundary-child-trap.stderr": "a17953fef9408f99085379ee290691b57202b60be03177c73533ddbccb44bd3e",
+    "response-boundary-child-trap.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "response-boundary-installed.stderr": "3c619dad8476b26491fb72ecd1a8f9407bf937cf6d598e2a3821fdb8e7316f89",
+    "response-boundary-installed.stdout": "fbbc6c863408b7deb84c902d2687489b82e89e143e53a1c11d3e519e22c35445",
+    "response-boundary-source.stderr": "1abfee02966b9c2df39083b16c73d8a29b00b93ea2710fcbf751112380df8d4f",
+    "response-boundary-source.stdout": "be68568513d17bee38dc975a9a3e8d06d19d79e3598a6632d83c68dd916a8291",
+    "source-suite.stderr": "d6609b581087218e93d5d17b4f054684ff43a60b17960af2ec17163d4939733d",
+    "source-suite.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "test_fix_commits": [
+    "cba9b7fce9731efcebbd5875bb5784f2e67ce9b0",
+    "2104ad94920f0bc7375f9f7357d4a2340e0f3d5c"
+  ],
+  "explicit_response_resource_recheck": {
+    "method_count": 1,
+    "before_failed_subcases": 3,
+    "original_limits_unchanged": true,
+    "after": {
+      "source": [
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 499999,
+          "response_bytes": 4278324,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 5.426,
+          "process_peak_rss_kib": 208904
+        },
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 500000,
+          "response_bytes": 4278333,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 5.372,
+          "process_peak_rss_kib": 231420
+        },
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 500001,
+          "response_bytes": 4278342,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 4.698,
+          "process_peak_rss_kib": 235512
+        }
+      ],
+      "installed": [
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 499999,
+          "response_bytes": 4278324,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 5.483,
+          "process_peak_rss_kib": 209476
+        },
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 500000,
+          "response_bytes": 4278333,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 5.359,
+          "process_peak_rss_kib": 231192
+        },
+        {
+          "case": "test_public_history_envelope_nodes_499999_500000_500001",
+          "response_nodes": 500001,
+          "response_bytes": 4278342,
+          "python": "3.11.15",
+          "sqlite": "3.37.2",
+          "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.35",
+          "elapsed_seconds": 4.738,
+          "process_peak_rss_kib": 231392
+        }
+      ]
+    },
+    "ordinary_suite_skips_this_method": true,
+    "after_full_suite_only_this_previously_skipped_method_changed": true
+  },
+  "pre_execution_diagnostic_failure": "Initial isolated direct-script invocation lacked the test-helper import path; no test ran. Corrected loader adds only tests, not src; original error retained."
+}

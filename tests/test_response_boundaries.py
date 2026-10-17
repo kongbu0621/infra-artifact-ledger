@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import gc
 import json
+import os
 from pathlib import Path
 import platform
 import resource
@@ -20,6 +21,7 @@ import tempfile
 import time
 import unittest
 
+import infra_artifact_ledger
 from infra_artifact_ledger import LedgerError, initialize
 from infra_artifact_ledger.validation import MAX_JSON, MAX_NODES, parse_json
 
@@ -121,6 +123,8 @@ class ActualResponseBoundaryTests(unittest.TestCase):
                         [sys.executable, "-m", "infra_artifact_ledger", "history",
                          "--db", str(database), "--artifact-id", ARTIFACT],
                         capture_output=True, check=False, timeout=60,
+                        env=dict(os.environ, PYTHONPATH=str(
+                            Path(infra_artifact_ledger.__file__).resolve().parents[1])),
                     )
                     self.assertEqual(result.stderr, b"")
                     response = parse_json(result.stdout)

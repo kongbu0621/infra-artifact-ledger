@@ -18,6 +18,19 @@
 
 例如，一份报告从 **v1 修改成 v2**，两版内容都保留，应用可以记录 v2 来自 v1。以后明确读取 v1，就能取回当时那一版。报告是否正确、是否通过审核、采用哪个版本，由应用决定；内容校验不证明来源真实。
 
+## 与其他组件的关系
+
+Ledger 负责保存成果与材料。Local Hand 已提供可选的归档接入；P、K 仍处于设计阶段，下表中它们对 Ledger 的使用是计划关系。
+
+| 组件 | 主要职责与本仓关系 |
+| --- | --- |
+| **infra-artifact-ledger** | 保存稳定身份、不可变版本、实际内容与来源关系，支持准确读回、校验和快照恢复 |
+| [infra-local-hand](https://github.com/kongbu0621/infra-local-hand) | 执行任务并返回结果；其可选 `local-hand-archive` 已能把成功封存的结果保存到 Ledger，再按准确版本读回；原任务状态仍由 Local Hand 管理 |
+| [control-production-plane（P）](https://github.com/kongbu0621/control-production-plane) | 计划中的生产消费者：经归档适配保存候选成果，按指定版本读回供审查和验收；生产推进与运行记录由 P 管理 |
+| [domain-operational-knowledge-core（K）](https://github.com/kongbu0621/domain-operational-knowledge-core) | 计划中的知识消费者：通过公共接口保存、读取原始材料并核对准确版本；候选、审查、知识状态与使用反馈由 K 管理 |
+
+这些使用方通过公共接口接入，各自保留自己的业务状态。其他应用也可独立使用 Ledger，无需安装 Local Hand、P 或 K；成果保存成功不代表生产验收通过或知识已经准入。
+
 ## 在应用中的位置
 
 下图表示接入关系。报告工具、知识库和 Agent 是可采用本组件的应用场景；各项目可以独立安装、各自保存 Ledger。

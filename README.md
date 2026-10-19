@@ -28,14 +28,14 @@
 
 ## 与其他组件的关系
 
-Ledger 负责保存成果与材料。Local Hand 已提供可选的归档接入；P 已有运行记录核心，K 仍处于设计阶段；下表中它们对 Ledger 的使用是计划关系。
+Ledger 负责保存成果与材料。Local Hand 已提供归档接入；P 已实际保存并按准确版本读回候选成果供验收，K 已实际保存、读取知识材料，并接通 P 的知识采用、使用反馈及明确学习候选投递。各组件分别管理自己的业务状态。
 
 | 组件 | 主要职责与本仓关系 |
 | --- | --- |
 | **infra-artifact-ledger** | 保存稳定身份、不可变版本、实际内容与来源关系，支持准确读回、校验和快照恢复 |
 | [infra-local-hand](https://github.com/kongbu0621/infra-local-hand) | 执行任务并返回结果；其可选 `local-hand-archive` 已能把成功封存的结果保存到 Ledger，再按准确版本读回；原任务状态仍由 Local Hand 管理 |
-| [control-production-plane（P）](https://github.com/kongbu0621/control-production-plane) | 计划中的生产消费者：经归档适配保存候选成果，按指定版本读回供审查和验收；生产推进与运行记录由 P 管理 |
-| [domain-operational-knowledge-core（K）](https://github.com/kongbu0621/domain-operational-knowledge-core) | 计划中的知识消费者：通过公共接口保存、读取原始材料并核对准确版本；候选、审查、知识状态与使用反馈由 K 管理 |
+| [control-production-plane（P）](https://github.com/kongbu0621/control-production-plane) | 已接入的生产消费者：经归档适配保存候选成果，按指定版本读回、核对实际内容并用于验收；生产推进与运行记录由 P 管理 |
+| [domain-operational-knowledge-core（K）](https://github.com/kongbu0621/domain-operational-knowledge-core) | 已接入的知识消费者：通过公共接口保存、读取原始材料并核对准确版本；材料支撑候选、明确审查、采用和反馈，知识状态由 K 管理 |
 
 这些使用方通过公共接口接入，各自保留自己的业务状态。其他应用也可独立使用 Ledger，无需安装 Local Hand、P 或 K；成果保存成功不代表生产验收通过或知识已经准入。
 
@@ -100,7 +100,8 @@ flowchart TD
 | 有界完整导出 / 导入 | 已有同实现之间的搬运验证 |
 | 一致快照、本地校验与新目录恢复 | 已有实现；所列 Linux x86_64 与 GX10 aarch64 环境的安装态本地闭环通过 |
 | 真实 NAS 保存与丢失恢复 | 所列 GX10 + CIFS 配置内验收完成，含故障、冲突及状态延续；硬件断电等未测边界见兼容表 |
-| 两类真实应用采用、独立第二实现兼容 | 待验证 |
+| P/K 真实消费 | 已有成果准确读回、知识材料与使用反馈、学习候选投递的现场记录；范围见[开发记录](docs/DEVELOPMENT.md#消费者接入状态2026-10-19) |
+| A3 两类消费者完整验收、A4 独立第二实现兼容 | 尚未完成；独立 Generic Agent 真实消费及独立第二实现仍待各自验证 |
 
 具体软件、Python、SQLite、文件系统组合和证据以[兼容表](docs/COMPATIBILITY.md)为准；本地结果不代表所有平台或 NAS 配置可用。当前 alpha 适合在已验证范围内评估和试用。
 

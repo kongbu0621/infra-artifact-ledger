@@ -26,7 +26,12 @@ Local Hand 当前源码与修复后的 Ledger 联合通过 86 项消费者检查
 随后从本地修复候选 `d83b665760dfc683fb60bccfcf99189ee231dba2` 离线构建 wheel，
 与修复后的 Local Hand 一同安装到全新独立环境；17 个 Ledger 模块的 Git／wheel／
 安装字节一致。安装态同组 74 项仍为 73 通过、1 个相同环境跳过；三个真实隔离
-挂载脚本通过，实际模块均来自新安装。该候选尚未推送或合并，现有运行安装未切换。
+挂载脚本通过，实际模块均来自新安装。该轮结束时候选尚未推送或合并，现有运行安装未切换。
+
+随后 Owner 明确允许上传本批修复。上述准确提交已保留原身份上传至
+[PR #15](https://github.com/kongbu0621/infra-artifact-ledger/pull/15)，与
+[Local Hand #55](https://github.com/kongbu0621/infra-local-hand/pull/55) 配对审阅。
+本次仅更新审阅分支及交付记录，未合并或切换运行安装。
 
 ## 消费者接入状态（2026-10-19）
 

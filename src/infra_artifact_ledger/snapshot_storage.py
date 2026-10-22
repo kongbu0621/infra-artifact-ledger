@@ -389,7 +389,16 @@ def _reject_input_alias(candidate: Directory, readonly_input: Directory) -> None
             continue
         # A stacked mount can hide this projection. Compare the object currently
         # visible through the input, not just device numbers or path strings.
-        fd = _walk_directory(projected)
+        try:
+            fd = _walk_directory(projected)
+        except RecoveryError as error:
+            if error.code == "NOT_FOUND":
+                # A covering mount may omit this lower mount's projected
+                # descendant altogether. An absent path cannot expose the
+                # candidate; still check every other view and both bindings.
+                continue
+            # Permission, link and I/O failures do not prove separation.
+            raise
         primary = None
         try:
             if _identity(os.fstat(fd)) == candidate.identity:

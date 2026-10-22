@@ -80,6 +80,43 @@ class SnapshotAliasContainmentTests(unittest.TestCase):
         self.exercise(scratch, readonly, [base, hidden, visible, alias],
                       {"/primary/restore/attached/retained": (2052, 90)}, reject=False)
 
+    def test_missing_hidden_mount_projection_does_not_reject_independent_scratch(self):
+        base = mount(1, "8:2", "/", "/")
+        hidden = mount(2, "8:2", "/lower", "/primary/restore/attached")
+        visible = mount(3, "8:2", "/upper", "/primary/restore/attached")
+        alias = mount(4, "8:2", "/lower/retained", "/outside/scratch")
+        readonly = directory("/primary/restore", (2050, 10), base)
+        scratch = directory("/outside/scratch", (2050, 20), alias)
+        missing = RecoveryError("NOT_FOUND", "Hidden projection does not exist")
+        with patch.object(storage, "_mounts", return_value=(base, hidden, visible, alias)), \
+                patch.object(storage, "_walk_directory", side_effect=missing) as walk, \
+                patch.object(storage.os, "close") as close:
+            self.assertIsNone(storage._reject_input_alias(scratch, readonly))
+        walk.assert_called_once_with(Path("/primary/restore/attached/retained"))
+        close.assert_not_called()
+        self.assertEqual(scratch.check.call_count, 2)
+        self.assertEqual(readonly.check.call_count, 2)
+
+    def test_missing_hidden_projection_does_not_skip_another_visible_alias(self):
+        base = mount(1, "8:2", "/", "/")
+        hidden = mount(2, "8:2", "/lower", "/primary/restore/attached")
+        visible = mount(3, "8:2", "/upper", "/primary/restore/attached")
+        alias = mount(4, "8:2", "/lower/retained", "/outside/scratch")
+        other_alias = mount(5, "8:2", "/lower/retained", "/primary/restore/other")
+        readonly = directory("/primary/restore", (2050, 10), base)
+        scratch = directory("/outside/scratch", (2050, 20), alias)
+        missing = RecoveryError("NOT_FOUND", "Hidden projection does not exist")
+        with patch.object(storage, "_mounts", return_value=(base, hidden, visible, alias, other_alias)), \
+                patch.object(storage, "_walk_directory", side_effect=(missing, 10000)) as walk, \
+                patch.object(storage.os, "fstat", return_value=SimpleNamespace(st_dev=2050, st_ino=20)), \
+                patch.object(storage.os, "close") as close:
+            with self.assertRaises(RecoveryError) as caught:
+                storage._reject_input_alias(scratch, readonly)
+        self.assertEqual(caught.exception.code, "INVALID_INPUT")
+        self.assertEqual([call.args[0] for call in walk.call_args_list], [
+            Path("/primary/restore/attached/retained"), Path("/primary/restore/other")])
+        close.assert_called_once_with(10000)
+
     def test_complete_root_bind_input_preserves_physical_containment(self):
         base = mount(1, "8:2", "/", "/")
         input_alias = mount(2, "8:2", "/", "/root-bind")

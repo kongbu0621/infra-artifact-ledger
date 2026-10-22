@@ -174,7 +174,8 @@ def _manifest(directory, expected, budget):
 
 
 @contextmanager
-def _validated_snapshot(snapshot, expected, scratch, config, context, *, destination_path=None):
+def _validated_snapshot(snapshot, expected, scratch, config, context, *,
+                        destination_path=None, destination_parent=None):
     """Hold source handles while validating the one private copied database."""
     context.checkpoint("verify")
     with storage.open_directory(snapshot, budget=context.budget, storage_config=config) as source:
@@ -185,6 +186,9 @@ def _validated_snapshot(snapshot, expected, scratch, config, context, *, destina
             _scratch_outside_input(destination_path, source.path)
         if source.identity == scratch.identity:
             raise RecoveryError("INVALID_INPUT", "Scratch directory aliases the read-only snapshot.")
+        storage._reject_input_alias(scratch, source)
+        if destination_parent is not None:
+            storage._reject_input_alias(destination_parent, source)
         manifest, raw, marker_raw = _manifest(source, expected, context.budget)
         with _owned_file(source.open_file("ledger.sqlite", single_link=True)) as fd:
             initial = os.fstat(fd)
@@ -328,7 +332,8 @@ def restore(*, snapshot, target_dir, expected_manifest_sha256, scratch_parent, s
             if _entry_exists(parent, target_path.name):
                 raise RecoveryError("TARGET_EXISTS", "Restore target already exists.", publication_state="not_applicable")
             with _validated_snapshot(source_path, expected, scratch, config, context,
-                                     destination_path=parent.path / target_path.name) as (manifest, raw, _, private):
+                                     destination_path=parent.path / target_path.name,
+                                     destination_parent=parent) as (manifest, raw, _, private):
                 with parent.mkdir(target_path.name) as target:
                     with storage.temporary_directory(target, context.budget) as staged:
                         _copy_database(private, staged, manifest["database"], context)
@@ -372,6 +377,7 @@ def check_restore(*, target_dir, expected_database_sha256, scratch_parent):
             _scratch_outside_input(scratch.path, target.path)
             if target.identity == scratch.identity:
                 raise RecoveryError("INVALID_INPUT", "Scratch directory aliases the read-only target.")
+            storage._reject_input_alias(scratch, target)
             if any(_entry_exists(target, name) for name in _SIDECARS):
                 raise RecoveryError("INTEGRITY_FAILURE", "Restore target contains SQLite sidecars.", "verify")
             with _owned_file(target.open_file("ledger.sqlite", single_link=False)) as fd:

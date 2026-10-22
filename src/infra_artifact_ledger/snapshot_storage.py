@@ -371,6 +371,38 @@ def open_directory(value, *, budget: Budget, storage_config: dict | None = None)
         raise
 
 
+def _reject_input_alias(candidate: Directory, readonly_input: Directory) -> None:
+    """Reject writable directories visible inside an input through mount aliases."""
+    candidate.check()
+    readonly_input.check()
+    if candidate.identity == readonly_input.identity or _under(candidate.path, readonly_input.path):
+        raise _error("INVALID_INPUT", "Writable directory aliases the read-only input.")
+    # Project the held directory's filesystem location through all current mount
+    # views. This also covers a different-device child mount inside the input.
+    location = Path(candidate.mount.root) / candidate.path.relative_to(candidate.mount.point)
+    for mount in _mounts():
+        candidate.budget.check("validate")
+        if mount.device != candidate.mount.device or not _under(location, Path(mount.root)):
+            continue
+        projected = Path(mount.point) / location.relative_to(mount.root)
+        if not _under(projected, readonly_input.path):
+            continue
+        # A stacked mount can hide this projection. Compare the object currently
+        # visible through the input, not just device numbers or path strings.
+        fd = _walk_directory(projected)
+        primary = None
+        try:
+            if _identity(os.fstat(fd)) == candidate.identity:
+                raise _error("INVALID_INPUT", "Writable directory aliases the read-only input.")
+        except BaseException as error:
+            primary = error
+            raise
+        finally:
+            _close_preserving_error(lambda: os.close(fd), primary)
+    candidate.check()
+    readonly_input.check()
+
+
 def _remove_owned_contents(directory: Directory) -> None:
     """Clean only an owned temporary directory, with no link traversal."""
     directory.check()

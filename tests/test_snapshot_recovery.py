@@ -587,12 +587,22 @@ class SnapshotRecoveryTests(unittest.TestCase):
         original = storage.open_directory
         alias_target = snapshot
         def return_alias(value, **kwargs):
-            # Model a same-inode alias while retaining actual directory handles.
-            return original(alias_target if Path(value) == self.scratch else value, **kwargs)
+            # Keep the distinct alias path and the actual input directory handle.
+            # A textual overlap check alone must not satisfy this regression.
+            directory = original(alias_target if Path(value) == self.scratch else value, **kwargs)
+            if Path(value) == self.scratch:
+                directory.path = self.scratch
+            return directory
         with patch.object(storage, "open_directory", return_alias):
-            self.assert_error("INVALID_INPUT", "not_applicable", recovery.verify,
-                              snapshot=snapshot, expected_manifest_sha256=created["data"]["manifest_sha256"],
-                              scratch_parent=self.scratch)
+            for function, extras, state in (
+                (recovery.verify, {}, "not_applicable"),
+                (recovery.publish, {"storage_config": self.storage_config()}, "not_published"),
+                (recovery.restore, {"target_dir": self.root / "new"}, "not_published"),
+            ):
+                with self.subTest(operation=function.__name__):
+                    self.assert_error("INVALID_INPUT", state, function,
+                                      snapshot=snapshot, expected_manifest_sha256=created["data"]["manifest_sha256"],
+                                      scratch_parent=self.scratch, **extras)
         restored = self.restore_snapshot(created)
         alias_target = Path(restored["data"]["database_path"]).parent
         with patch.object(storage, "open_directory", return_alias):
@@ -601,6 +611,32 @@ class SnapshotRecoveryTests(unittest.TestCase):
                               scratch_parent=self.scratch)
         self.assertEqual({p.name for p in snapshot.iterdir()}, {"ledger.sqlite", "manifest.json", "COMMITTED.json"})
         self.assertEqual({p.name for p in alias_target.iterdir()}, {"ledger.sqlite"})
+
+    def test_restore_parent_alias_cannot_modify_readonly_snapshot(self):
+        created = self.create_snapshot()
+        snapshot = Path(created["data"]["snapshot_path"])
+        before = {p.name: p.read_bytes() for p in snapshot.iterdir()}
+        alias = self.root / "snapshot-alias"
+        original = storage.open_directory
+        def return_alias(value, **kwargs):
+            directory = original(snapshot if Path(value) == alias else value, **kwargs)
+            if Path(value) == alias:
+                # Model a stable bind alias: another path, same opened dev/inode.
+                directory.path = alias
+            return directory
+        with patch.object(storage, "open_directory", return_alias), \
+                patch.object(storage, "temporary_directory",
+                             side_effect=AssertionError("alias must be rejected before writes")) as temporary:
+            self.assert_error("INVALID_INPUT", "not_published", recovery.restore,
+                              snapshot=snapshot, target_dir=alias / "restored",
+                              expected_manifest_sha256=created["data"]["manifest_sha256"],
+                              scratch_parent=self.scratch)
+            temporary.assert_not_called()
+        self.assertEqual({p.name: p.read_bytes() for p in snapshot.iterdir()}, before)
+        self.assertFalse((snapshot / "restored").exists())
+        self.assertEqual(list(self.scratch.iterdir()), [])
+        self.assertEqual(self.verify_snapshot(created)["status"], "OK")
+        self.assertEqual(self.restore_snapshot(created)["status"], "OK")
 
     def test_real_default_classification_rejects_unsupported_sandbox_filesystem(self):
         fd = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY)

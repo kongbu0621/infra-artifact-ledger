@@ -141,8 +141,9 @@ def _mount_for(target: Path, fd_mount_id: int) -> Mount:
     candidates = [m for m in _mounts() if _under(target, Path(m.point))]
     if not candidates:
         raise _error("UNSUPPORTED_STORAGE", "Path has no matching mount")
-    depth = max(len(Path(m.point).parts) for m in candidates)
-    candidates = [m for m in candidates if len(Path(m.point).parts) == depth]
+    # The kernel identifies the mount actually reached by the held descriptor.
+    # A deeper mountinfo row may belong to a child hidden by a later parent
+    # mount, so lexical depth must not override the observed mount identity.
     matches = [m for m in candidates if m.mount_id == fd_mount_id]
     if len(matches) != 1:
         raise _error("UNSUPPORTED_STORAGE", "Path and open descriptor have different mounts")
@@ -371,6 +372,42 @@ def open_directory(value, *, budget: Budget, storage_config: dict | None = None)
         raise
 
 
+def _open_projected_directory(readonly_input: Directory, projected: Path) -> int | None:
+    """Open a visible directory, or prove a missing/regular entry blocks it."""
+    descriptor = None
+    primary = None
+    try:
+        descriptor = os.dup(readonly_input.fd)
+        for component in projected.relative_to(readonly_input.path).parts:
+            readonly_input.budget.check("validate")
+            try:
+                before = os.stat(component, dir_fd=descriptor, follow_symlinks=False)
+            except FileNotFoundError:
+                return None
+            if stat.S_ISREG(before.st_mode):
+                # A covering mount may replace the old projected directory
+                # with an ordinary file. It cannot expose a directory alias.
+                return None
+            if not stat.S_ISDIR(before.st_mode):
+                raise _error("UNSUPPORTED_STORAGE", "Projected directory contains a non-directory entry")
+            child = os.open(component, _DIR_FLAGS, dir_fd=descriptor)
+            previous, descriptor = descriptor, child
+            os.close(previous)
+            if _identity(os.fstat(descriptor)) != _identity(before):
+                raise _error("IO_ERROR", "Projected directory binding changed")
+        result, descriptor = descriptor, None
+        return result
+    except OSError as exc:
+        primary = _io_error(exc)
+        raise primary from exc
+    except BaseException as exc:
+        primary = exc
+        raise
+    finally:
+        if descriptor is not None:
+            _close_preserving_error(lambda: os.close(descriptor), primary)
+
+
 def _reject_input_alias(candidate: Directory, readonly_input: Directory) -> None:
     """Reject writable directories visible inside an input through mount aliases."""
     candidate.check()
@@ -389,16 +426,10 @@ def _reject_input_alias(candidate: Directory, readonly_input: Directory) -> None
             continue
         # A stacked mount can hide this projection. Compare the object currently
         # visible through the input, not just device numbers or path strings.
-        try:
-            fd = _walk_directory(projected)
-        except RecoveryError as error:
-            if error.code == "NOT_FOUND":
-                # A covering mount may omit this lower mount's projected
-                # descendant altogether. An absent path cannot expose the
-                # candidate; still check every other view and both bindings.
-                continue
-            # Permission, link and I/O failures do not prove separation.
-            raise
+        fd = _open_projected_directory(readonly_input, projected)
+        if fd is None:
+            # Keep checking other views and both bindings after a hidden view.
+            continue
         primary = None
         try:
             if _identity(os.fstat(fd)) == candidate.identity:

@@ -65,9 +65,10 @@ class MountParsingTests(unittest.TestCase):
             "20 10 0:4 mnt:[4026532001] /data/archive rw - nsfs nsfs rw\n")
         target = Path("/data/archive")
         with mock.patch.object(storage, "_mounts", return_value=mounts):
-            # Dropping the unsupported row would incorrectly select the parent.
+            # The held fd identifies the visible mount. A hidden deeper record
+            # must not override it, and unknown fd identities never fall back.
             with self.assertRaises(RecoveryError) as caught:
-                storage._mount_for(target, 10)
+                storage._mount_for(target, 99)
             self.assertEqual(caught.exception.code, "UNSUPPORTED_STORAGE")
             selected = storage._mount_for(target, 20)
         self.assertEqual(selected, mounts[1])
@@ -155,16 +156,23 @@ class StorageTests(unittest.TestCase):
                 wrong[field] = "/mismatch" if field != "fs_type" else "cifs"
                 self.assert_code("UNSUPPORTED_STORAGE", lambda: storage.open_directory(self.base, budget=self.budget, storage_config=wrong))
 
-    def test_deepest_mount_and_fd_id_are_both_required(self):
+    def test_held_mount_id_remains_authoritative_with_hidden_deeper_records(self):
         child_mount = storage.Mount(self.mount_id + 1, 1, "0:2", "/", str(self.base), "ext4", "submount")
         with mock.patch.object(storage, "_mounts", return_value=(self.mount, child_mount)):
-            self.assert_code("UNSUPPORTED_STORAGE", self.directory)
+            with self.directory() as directory:
+                self.assertEqual(directory.mount, self.mount)
+                directory.check()
         with self.directory() as directory:
             with mock.patch.object(storage, "_fd_mount_id", return_value=self.mount_id + 1):
                 self.assert_code("UNSUPPORTED_STORAGE", directory.check)
             with mock.patch.object(storage, "_mounts", return_value=(storage.Mount(
                     self.mount_id, 1, "0:1", "/changed", "/", "ext4", "synthetic-device"),)):
                 self.assert_code("UNSUPPORTED_STORAGE", directory.check)
+
+    def test_fd_mount_id_must_cover_the_actual_path(self):
+        unrelated = storage.Mount(self.mount_id, 1, "0:1", "/", "/unrelated", "ext4", "synthetic")
+        with mock.patch.object(storage, "_mounts", return_value=(unrelated,)):
+            self.assert_code("UNSUPPORTED_STORAGE", self.directory)
 
     def test_mkdir_is_exclusive_for_directory_file_and_dangling_link(self):
         with self.directory() as parent:

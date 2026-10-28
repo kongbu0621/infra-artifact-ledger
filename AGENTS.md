@@ -4,6 +4,12 @@
 
 本仓库建设独立的 Artifact Ledger。先阅读 [README](README.md)、[需求](docs/REQUIREMENTS.md)、[架构](docs/ARCHITECTURE.md)、[实施计划](docs/IMPLEMENTATION_PLAN.md) 和 [公共接口](docs/INTERFACE_PROFILE.md)。当前软件为 `0.2.0a1` alpha，保留 A1 原接口，已有 A2 create/publish/verify/restore/check_restore 五个恢复入口实现；wire 合同仍为 `candidate`，不意味着稳定发布。A1 历史证据见 [A1 验证记录](docs/A1_VALIDATION.md)，A2 Cloud 与实机验证、固定源提交及未测项见 [A2 验证记录](docs/A2_VALIDATION.md) 与 [兼容表](docs/COMPATIBILITY.md)。所列 Linux x86_64 与 GX10 的 ext4 安装态本地合成闭环已通过；2026-10-17 又完成 GX10 + CIFS（SMB 3.1.1）的真实 NAS 合成保存与丢失恢复。最终对账现已完成，A2 S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；详见[最终记录](docs/evidence/2026-10-17-a2-final-reconciliation/README.md)。下列历史段落的 PARTIAL 只表示各轮结束时状态。
 
+## A4 当前接续（2026-10-29）
+
+已按 Owner 的继续推进指令完成 A4 公共合同核对与最小方案准备；入口为 [需求 §6](docs/REQUIREMENTS.md#6-a4-当前需求与验收范围2026-10-29)、[架构 §7](docs/ARCHITECTURE.md#7-a4-第二实现方案2026-10-29)、[实施计划 §7](docs/IMPLEMENTATION_PLAN.md#7-a4-实施与验收准备2026-10-29)。B 拟在仓内独立构建安装，实现 A1 公共读写与 portable 合同；当前尚无 B 实现或验收，不声称可替代 A2 生产安装。
+
+下一实现步骤是新合成数据上的 A 导出 → B 导入/准确读回 → B 新增版本闭环，完整验收标准见计划。A3 沿用已完成记录；不重跑 P 或 Generic Agent，不以 Local Hand 升级为前置。此次准备未更改两台机器已有安装、服务、数据或私有接续指针；历史段落保留原时点状态。
+
 ## 当前任务接续（2026-10-15）
 
 新会话先读取 [开发与接续记录的当前主任务与接续点](docs/DEVELOPMENT.md#当前主任务与接续点2026-10-15)。

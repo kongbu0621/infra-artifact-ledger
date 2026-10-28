@@ -313,7 +313,8 @@ class ContractTests(unittest.TestCase):
         self.assertTrue(self.ledger.execute(wire(create()))['replayed'])
 
     def cli(self, *args, stdout=subprocess.PIPE):
-        return subprocess.run([sys.executable, '-m', 'infra_artifact_ledger', *args],
+        isolation = ['-I'] if sys.flags.isolated else []
+        return subprocess.run([sys.executable, *isolation, '-m', 'infra_artifact_ledger', *args],
                               stdout=stdout, stderr=subprocess.PIPE, check=False)
 
     def test_cli_control_key_roundtrip_and_no_overwrite(self):
@@ -339,7 +340,8 @@ class ContractTests(unittest.TestCase):
     def test_two_processes_same_request_have_one_durable_result(self):
         path = self.root/'same-request.json'
         path.write_bytes(wire(create()))
-        command = [sys.executable, '-m', 'infra_artifact_ledger', 'write',
+        isolation = ['-I'] if sys.flags.isolated else []
+        command = [sys.executable, *isolation, '-m', 'infra_artifact_ledger', 'write',
                    '--db', str(self.db), '--request', str(path)]
         processes = [subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(2)]
         codes, responses = [], []

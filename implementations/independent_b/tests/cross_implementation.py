@@ -62,6 +62,17 @@ def portable_metadata(bundle):
     return json.loads(base64.b64decode(json.loads(bundle['package_utf8'])['metadata']['data']))
 
 
+def assert_import_preserved(actual, expected):
+    # Import adds exactly its own receipt and operation; every incoming immutable
+    # record, original timestamp and successful result must survive verbatim.
+    for name, values in expected.items():
+        if name not in ('import_receipts', 'idempotency_records'):
+            assert actual[name] == values, name
+        else:
+            assert len(actual[name]) == len(values) + 1, name
+            assert all(value in actual[name] for value in values), name
+
+
 def worker(mode, root):
     import infra_artifact_ledger as public
     # -I plus separate environments excludes repository paths and PYTHONPATH.
@@ -77,10 +88,29 @@ def worker(mode, root):
                 ('../logical-only', 'blob:empty', b''),
                 ('e\u0301', 'blob:same-bytes-other-id', b'Original\x00\xff\n')]
     if mode == 'seed-a':
-        with public.initialize(a_db) as ledger:
+        # Include branching/merge history, reused bytes, an empty Artifact and
+        # an actual successful import in A before exporting to B.
+        with public.initialize(root / 'a-source.sqlite') as ledger:
             ledger.execute(wire(create()))
+            empty = create()
+            empty['body']['artifact']['artifact_id'] = 'artifact:empty'
+            empty['idempotency_key'] = 'create:empty'
+            ledger.execute(wire(empty))
             ledger.execute(wire(append('original', [], original)),
                            payloads={identity: raw for _, identity, raw in original})
+            for version, parents in [('left', ['version:original']),
+                                     ('right', ['version:original']),
+                                     ('merge', ['version:right', 'version:left'])]:
+                ledger.execute(wire(append(version, parents, original)), payloads={})
+            source = ledger.export_bundle()
+            (root / 'source.package').write_bytes(source['package_utf8'])
+            (root / 'source.descriptor').write_bytes(source['descriptor_utf8'])
+        original_import = request('import_bundle', dict(import_receipt_id='receipt:a-original'), 'import-source')
+        (root / 'import-a-original.json').write_bytes(wire(original_import))
+        with public.initialize(a_db) as ledger:
+            result = ledger.execute(wire(original_import), package=source['package_utf8'],
+                                    descriptor=source['descriptor_utf8'])
+            (root / 'import-a-result.json').write_bytes(wire(result))
             bundle = ledger.export_bundle()
             (root / 'a-metadata.json').write_bytes(wire(portable_metadata(bundle)))
             (root / 'original-history.json').write_bytes(wire(ledger.get_history('artifact:cross')))
@@ -103,18 +133,32 @@ def worker(mode, root):
                          '--package', root / 'a.package', '--descriptor', root / 'a.descriptor')
         assert result['replayed'] is False
         with public.open(b_db) as ledger:
+            assert_import_preserved(portable_metadata(ledger.export_bundle()),
+                                    json.loads((root / 'a-metadata.json').read_bytes()))
             assert ledger.get_history('artifact:cross') == json.loads((root / 'original-history.json').read_bytes())
+            assert ledger.get_history('artifact:empty')['versions'] == []
             for _, identity, raw in original:
                 assert ledger.read_blob(identity) == raw
             for old in (create(), append('original', [], original)):
                 replay = ledger.execute(wire(old), **({'payloads': {identity: raw for _, identity, raw in original}}
                     if old['operation_kind'] == 'append_version' else {}))
                 assert replay['replayed'] is True
+            def replay_original_import():
+                before_replay = portable_metadata(ledger.export_bundle())
+                replay = ledger.execute((root / 'import-a-original.json').read_bytes(),
+                                        package=(root / 'source.package').read_bytes(),
+                                        descriptor=(root / 'source.descriptor').read_bytes())
+                expected_result = json.loads((root / 'import-a-result.json').read_bytes())
+                expected_result['replayed'] = True
+                assert replay == expected_result
+                assert portable_metadata(ledger.export_bundle()) == before_replay
+            replay_original_import()
             new_contents = [('new/文件', 'blob:b-new', b'B independently appended\n'), original[0]]
-            new = append('b-new', ['version:original'], new_contents)
+            new = append('b-new', ['version:merge'], new_contents)
             # Reused bytes remain part of the closure, with no need to retransmit.
             new['body']['blobs'] = [item for item in new['body']['blobs'] if item['blob_ref'] == 'blob:b-new']
             ledger.execute(wire(new), payloads={'blob:b-new': b'B independently appended\n'})
+            replay_original_import()
             replay = ledger.execute(wire(imported), package=(root / 'a.package').read_bytes(),
                                     descriptor=(root / 'a.descriptor').read_bytes())
             assert replay['replayed'] is True and replay['recorded_at'] == result['recorded_at']
@@ -123,13 +167,13 @@ def worker(mode, root):
             (root / 'b.descriptor').write_bytes(bundle['descriptor_utf8'])
             (root / 'b-metadata.json').write_bytes(wire(portable_metadata(bundle)))
             (root / 'b-history.json').write_bytes(wire(ledger.get_history('artifact:cross')))
-            assert ledger.verify()['counts']['versions'] == 2
+            assert ledger.verify()['counts']['versions'] == 5
     elif mode == 'reopen-b':
         # A different process with no source checkout available reads persisted B bytes.
         with public.open(b_db) as ledger:
             assert ledger.read_blob('blob:b-new') == b'B independently appended\n'
             assert ledger.get_history('artifact:cross') == json.loads((root / 'b-history.json').read_bytes())
-            assert ledger.verify()['counts']['import_receipts'] == 1
+            assert ledger.verify()['counts']['import_receipts'] == 2
     else:
         before = sha(b_db.read_bytes())
         try:
@@ -150,12 +194,7 @@ def worker(mode, root):
             # Every imported immutable record/op is retained, with exactly one new
             # receipt and successful operation for this import.
             expected_meta = json.loads((root / 'b-metadata.json').read_bytes())
-            for name, values in expected_meta.items():
-                if name not in ('import_receipts', 'idempotency_records'):
-                    assert actual[name] == values, name
-                else:
-                    assert len(actual[name]) == len(values) + 1
-                    assert all(value in actual[name] for value in values), name
+            assert_import_preserved(actual, expected_meta)
             assert ledger.verify()['verified_blob_count'] == 4
     return dict(step=mode, status='PASS', python=platform.python_version(),
                 distribution=expected, installed_module=True)

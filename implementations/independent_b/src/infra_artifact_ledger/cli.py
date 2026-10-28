@@ -1,10 +1,11 @@
 """Thin file/argument adapter; all write semantics go through execute()."""
 import argparse
 import os
+import stat
 import sys
 from . import contract as c
 from . import initialize, open as open_ledger
-from .storage import publish
+from .storage import path_value, publish
 
 EXITS = {**dict.fromkeys(('INVALID_INPUT', 'UNSUPPORTED_VERSION', 'UNSUPPORTED_PROFILE', 'RESOURCE_LIMIT'), 2),
          'NOT_FOUND': 3, 'IDENTITY_CONFLICT': 4, 'IDEMPOTENCY_CONFLICT': 4,
@@ -18,11 +19,19 @@ class Parser(argparse.ArgumentParser):
 
 def read_file(path, maximum):
     try:
-        with open(path, 'rb') as stream:
+        # Nonblocking open permits fstat to reject FIFOs without waiting for a
+        # writer. Freeze bytes from this same regular-file descriptor.
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        with os.fdopen(fd, 'rb') as stream:
+            info = os.fstat(stream.fileno())
+            c.require(stat.S_ISREG(info.st_mode), 'input must be a regular file')
+            c.bounded(info.st_size, maximum, 'input file bytes')
             raw = stream.read(maximum + 1)
         c.bounded(len(raw), maximum, 'input file bytes')
         return raw
-    except (OSError, ValueError) as exc:
+    except ValueError as exc:
+        raise c.LedgerError('INVALID_INPUT', 'invalid input path') from exc
+    except OSError as exc:
         raise c.LedgerError('IO_ERROR', 'input file read failed') from exc
 
 
@@ -51,6 +60,18 @@ def parser():
 
 
 def run(args):
+    if args.command in ('read-blob', 'export'):
+        # Check every destination before opening or publishing anything. Even
+        # absent SQLite sidecars are reserved by the active database.
+        destinations = (args.output,) if args.command == 'read-blob' else (args.package, args.descriptor)
+        try:
+            database = path_value(args.db).resolve()
+            protected = {str(database) + suffix for suffix in ('', '-journal', '-wal', '-shm')}
+            for destination in destinations:
+                c.require(str(path_value(destination).resolve()) not in protected,
+                          'output overlaps database or SQLite sidecar')
+        except (OSError, RuntimeError) as exc:
+            raise c.LedgerError('INVALID_INPUT', 'cannot resolve output path') from exc
     ledger = initialize(args.db) if args.command == 'init' else open_ledger(args.db)
     result, write_identity = None, {}
     try:

@@ -385,6 +385,9 @@ def check_bytes(record_value, raw):
 
 
 def success_data(data):
-    bounded(len(encode({'status': 'OK', 'commit_state': 'not_applicable', 'data': data})) + 1,
-            DOCUMENT, 'response bytes')
+    raw = encode({'status': 'OK', 'commit_state': 'not_applicable', 'data': data})
+    bounded(len(raw) + 1, DOCUMENT, 'response bytes')
+    # Valid separate writes can accumulate into an over-limit history. Apply
+    # the same structural limits to the complete response, not only inputs.
+    _preflight(raw.decode('utf-8'))
     return data

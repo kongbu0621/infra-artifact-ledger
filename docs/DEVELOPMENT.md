@@ -4,6 +4,42 @@
 
 本文的接续说明从 README 迁入；详细验证、失败现场和审批记录仍保留在各自原文档中。文档整理不新增执行结果，也不改变已有授权、产品接口或验收状态。
 
+## A4 独立 B 首个闭环（2026-10-29）
+
+按 Owner“继续推进、重新检查并直接修复”的指令，在已提交方案 `daf22e7` 后实现仓内独立 B。需求与架构范围保持为 A1 candidate 公共 API/CLI 和 portable，不引入新服务或拆出新仓库。B 源码、构建说明与可复现检查位于 [`implementations/independent_b/`](../implementations/independent_b/README.md)。A 的根 `src/` 与构建配置未改变。
+
+**结论：首个独立安装态互通闭环通过；A4 整体仍为 PARTIAL。** A3 的原 P / Generic Agent 证据继续有效，完整生产资格仍未取得。本轮没有使用或更改原 P 实例、原成果、现有业务安装、服务、NAS、凭据或原部署接续指针。
+
+### 来源与安装
+
+- A 源码：`daf22e793521476eab02b272cce05f9a473fedee`；独立 wheel 为 `infra-artifact-ledger 0.2.0a1`，SHA-256 `0cc40598434acfeb8da865f473843ff8445ea3ab2766ca88d4b67c0cab82f97a`。
+- B 源码：`8e99c2518000a113c3af7fc18486653e40070b90`；从该提交的 Git archive 单独构建 `infra-artifact-ledger-b 0.1.0a1`，wheel SHA-256 `2e4a95f53377ae99240810dd76ee711e2ead071834afac106f53757226e31104`。七个运行模块在提交、wheel 和实际安装中逐字节一致。
+- 现场为 GX10 / Linux aarch64 / Python 3.12.3。新建独立构建环境及 A/B 验收环境，从仓库外用 `python -I` 调用安装包；B 环境不存在 A 发行包，模块来源确为各自 `site-packages`。沿用固定 setuptools 84.0.0 / wheel 0.48.0，运行时无第三方依赖。
+- 独立的是 Ledger 校验、指纹、portable、事务及存储逻辑；共享 Python/SQLite 基础，不声称第三方作者、另一语言或另一数据库引擎的独立性。
+
+### 实际验证与修复
+
+| 检查 | 实际结果及范围 |
+| --- | --- |
+| 语法编译、公共接口与失败路径 | 源码与最终独立安装各 33 项通过；覆盖三类写入、准确查询、内容验证、空包/空内容、Unicode/逻辑键、同字节不同 ID、多父引用顺序、控制字符 key、严格 JSON、冲突与回滚等已列用例 |
+| A→B→全新 A | A 的 Manifest、来源关系、原版本和实际 bytes 导入 B 后逐项一致；B 重放 A 原 create/append，随后追加新版本；B 导出的全部历史在全新 A 中一致，仅追加该次 import 的 Receipt/操作记录 |
+| 原导入接续 | B 新增版本后，原请求/原包仍收敛原 Receipt 与时间；另用新 key/新 Receipt 导入旧历史按完整历史差异拒绝；独立 B 公共检查验证后者 |
+| 重启读取 | B 进程退出后另起隔离进程，旧/新历史和新内容准确读回；元数据查询不替代 payload 校验 |
+| 真实容量子项 | 64 MiB Blob 保存并读回，超一字节拒绝；复用四个不同 BlobRef 的 256 MiB 闭包可提交，五个的 320 MiB 闭包拒绝，重复引用同一 BlobRef 只计一次；320 MiB 历史可以留在库中，完整导出因超过 payload 限额拒绝；8 MiB 请求及 500,000 JSON 节点边界另有专项检查 |
+| 容量实测 | 最终安装态容量进程耗时 3.474 秒，Linux `ru_maxrss` 为 284,736 KiB；这是上述合成用例的实测峰值，不是整个 profile 的最大内存承诺 |
+| 故障与提交状态 | 提交前注入失败可确认回滚；COMMIT 确认丢失和无法确认回滚报告 unknown，再从公共入口核对；CLI 响应管道断开后原提交仍可查询；已知成功后的关闭失败保留 committed 和原身份 |
+| 独立格式 | A/B 拒绝互开对方物理数据库；B 在交给 SQLite 前检查固定格式头，外来数据库与现存 journal 保持；只能以 portable 互通 |
+
+复核时直接修复了中断后连接复用、已提交后 CLI 关闭失败的状态保留、损坏 payload 的有界读取，以及外来数据库在格式拒绝前可能触发日志恢复的问题。另区分“重传输入错误”与“原持久内容损坏”：前者 not_committed，后者在原请求重放时 committed 并保留原结果引用。
+
+双进程同请求竞争曾真实复现打开阶段的 SQLite 锁被误报 `INTEGRITY_FAILURE`（退出 5）；实际只有另一个进程提交。修正为 BUSY 后，相同竞争用例连续 20 次通过，另补独占写锁下 open 的确定性回归，最终 33 项安装态检查通过。首轮失败及修正后的输出均保留，没有把旧失败改成成功。注入异常、锁竞争和响应丢失不等于设备断电或所有 I/O 故障已验收。
+
+原始日志、构建/安装输出、实际模块摘要、合成包与最终容量数据库保存在本机仓库忽略的私有 A4 验收目录；不提交机器路径或原始输出。公开复现入口为 B 的 `tests/test_public_contract.py`、`tests/test_failures.py`、`tests/cross_implementation.py` 与 `tests/resource_probe.py`。
+
+### 尚未完成
+
+[完整矩阵](IMPLEMENTATION_PLAN.md#7-a4-实施与验收准备2026-10-29)尚有缺口：包含空 Artifact、完整分支/多父历史与历史 Receipt 的组合搬运；B 重放 A 原 import 请求；七类身份及历史冲突的完整枚举；各响应、metadata、package、descriptor、字符串与容量阈值的全部边界；更多并发与输出/I/O 故障。Python 3.11、其他平台、真实掉电和 B 的 A2 能力均未验证，A2 也不在 B 本轮实现范围。不能从本轮 33 项或首个闭环推出全部 A1 profile 兼容、A4 完成或生产可替换。接续优先补这些具体缺口，复用已通过的输入与证据，不重跑 A2/A3。
+
 ## A4 公共合同与最小方案准备（2026-10-29）
 
 在 GX10 当前主干 `ef669ba97f859a03ae0d6d05d0dccd7bbb76f4ef` 上核对公共接口，以及 A 的请求指纹、portable 编解码、事务/重放/导入和存储边界。确认 A3 已在记录范围内完成，当前缺口是独立第二实现的实际搬运与行为证据。
@@ -157,7 +193,7 @@ PR14 后续检查修复测试子进程的来源绑定，并更正上轮“70 项
 | A1 本地 Ledger | Python 库、JSON CLI、本地 SQLite 及有界完整搬运已有 alpha 实现与验证 | [授权与范围](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) · [验证记录](A1_VALIDATION.md) |
 | A2 快照与恢复 | S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；累计证据与未测边界见最终对账 | [授权与范围](a2/GATE.md) · [验证记录](A2_VALIDATION.md) |
 | A3 真实消费者 | Code Driver/P 与独立 Generic Agent 的实际采用及留证已在所列任务与实现范围内验收完成；K/P 同一工作流不重复计类 | [两类消费者验收](A3_CODE_DRIVER_CONSUMPTION.md) · [独立 Agent 消费](A3_GENERIC_AGENT_CONSUMPTION.md) · [历史准备](A3_CONSUMER_PREPARATION.md) |
-| A4 独立第二实现 | 公共合同与最小方案已准备；B 实现和安装态验收未执行 | [实施与验收准备](IMPLEMENTATION_PLAN.md#7-a4-实施与验收准备2026-10-29) |
+| A4 独立第二实现 | 独立 B 首个安装态互通及继续写入闭环通过；完整矩阵仍为 PARTIAL | [首个闭环记录](#a4-独立-b-首个闭环2026-10-29) |
 
 A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2 已在所列配置内验收完成；A3 两类真实消费者已按上述范围验收，A4 尚未完成，各阶段分别取得证据。
 

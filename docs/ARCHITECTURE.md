@@ -72,11 +72,11 @@ A1 不做自动 migration、覆盖式 rollback 或 live SQLite 的普通文件�
 
 ## 7. A4 第二实现方案（2026-10-29）
 
-状态：实现方案，尚无 B 运行证据。为验证 [A4 需求](REQUIREMENTS.md#6-a4-当前需求与验收范围2026-10-29)，选择仓内独立安装包，沿用 Python 3.11+ 标准库与 SQLite 的事务能力。独立的是 Ledger 行为实现；本方案不声称第三方独立作者、不同语言或不同数据库引擎的兼容性。
+状态：下述方案已形成独立 B 代码，并完成首个 Linux aarch64 / Python 3.12 安装态闭环；完整 A4 尚未验收，见[本轮记录](DEVELOPMENT.md#a4-独立-b-首个闭环2026-10-29)。为验证 [A4 需求](REQUIREMENTS.md#6-a4-当前需求与验收范围2026-10-29)，选择仓内独立安装包，沿用 Python 3.11+ 标准库与 SQLite 的事务能力。独立的是 Ledger 行为实现；本方案不声称第三方独立作者、不同语言或不同数据库引擎的兼容性。
 
 不新增仓库、网络服务、后端注册框架或对象存储。另换数据库会增加持久化协议和运维工作，而当前缺口是第二套 Ledger 逻辑对公共合同的实际符合性。B 独立编写请求解析、字段与引用验证、指纹编码、冲突/重放、事务、查询及 portable 编解码；不能导入、复制改名或通过子进程委托 A 的对应实现。
 
-拟放置于 `implementations/independent_b/`，拥有自己的构建配置和源码；发行包名拟为 `infra-artifact-ledger-b`。它在独立虚拟环境提供同名公共 `infra_artifact_ledger` 库与 `artifact-ledger` CLI，保留现有调用签名与 envelope；不得与 A 安装到同一环境。A 的根构建继续只打包现有 `src/`。这些路径与包均为方案，不代表已经存在或部署。
+实现位于 [`implementations/independent_b/`](../implementations/independent_b/README.md)，拥有自己的构建配置和源码；发行包名为 `infra-artifact-ledger-b`。它在独立虚拟环境提供同名公共 `infra_artifact_ledger` 库与 `artifact-ledger` CLI，保留现有调用签名与 envelope；不得与 A 安装到同一环境。A 的根构建继续只打包现有 `src/`。本轮只在新的隔离验收环境安装 B，没有替换已有 A 业务安装或服务。
 
 B 的持久化采用独立格式标记、owned-object 表（ID、kind、原记录及 Blob 的实际 bytes）和幂等结果表。引用从不可变记录推导与验证，不复用 A 的引用索引或表布局。所有新增对象、内容、Receipt 与幂等结果共同提交；每次写入在事务内重查身份和重放，读取/导出使用一致视图。输入和输出限额沿用合同，不将 metadata 导出上限误用为数据库总容量上限。格式标记须区分 A/B；相同本地 schema 版本数字不意味着数据库文件可互开。
 

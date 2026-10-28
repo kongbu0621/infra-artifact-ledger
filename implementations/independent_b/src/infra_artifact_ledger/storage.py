@@ -59,7 +59,11 @@ def connect(path):
                   'B format marker', 'UNSUPPORTED_VERSION')
         return db
     except BaseException:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            # Cleanup must not replace the original open/format failure.
+            pass
         raise
 
 

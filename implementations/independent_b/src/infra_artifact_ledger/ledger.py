@@ -58,7 +58,13 @@ class Ledger:
         return self
 
     def __exit__(self, kind, value, traceback):
-        self.close()
+        try:
+            self.close()
+        except Exception:
+            # Preserve the operation's error, especially committed/unknown
+            # outcomes. A standalone close failure must still reach the caller.
+            if kind is None:
+                raise
 
     @contextmanager
     def _view(self):

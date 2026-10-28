@@ -101,7 +101,8 @@ flowchart TD
 | 一致快照、本地校验与新目录恢复 | 已有实现；所列 Linux x86_64 与 GX10 aarch64 环境的安装态本地闭环通过 |
 | 真实 NAS 保存与丢失恢复 | 所列 GX10 + CIFS 配置内验收完成，含故障、冲突及状态延续；硬件断电等未测边界见兼容表 |
 | P/K 真实消费 | 已有成果准确读回、知识材料与使用反馈、学习候选投递的现场记录；范围见[开发记录](docs/DEVELOPMENT.md#消费者接入状态2026-10-19) |
-| A3 两类消费者完整验收、A4 独立第二实现兼容 | 尚未完成；独立编码助手已有[一次直接 CLI 真实消费](docs/A3_GENERIC_AGENT_CONSUMPTION.md)，Code Driver 侧完整证据仍待对账，独立第二实现仍待验证 |
+| A3 两类真实消费者 | Code Driver/P 与独立 Generic Agent 的实际采用及留证已在所列任务与实现范围内验收完成，见[两类消费者验收](docs/A3_CODE_DRIVER_CONSUMPTION.md) |
+| A4 独立第二实现兼容 | 尚未完成；同一实现的不同消费者或安装不代表第二实现兼容 |
 
 具体软件、Python、SQLite、文件系统组合和证据以[兼容表](docs/COMPATIBILITY.md)为准；本地结果不代表所有平台或 NAS 配置可用。当前 alpha 适合在已验证范围内评估和试用。
 

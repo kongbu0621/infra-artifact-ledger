@@ -2,6 +2,8 @@
 
 状态：Owner 已批准的 A1 需求基线，当前实现为 `0.1.0a1` alpha；Decision Authority：Owner。本文保留目标与验收要求，具体授权及冻结文档提交以 [Gate](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) 为准；实现证据见 [验证记录](A1_VALIDATION.md) 与 [兼容表](COMPATIBILITY.md)。
 
+本文的版本与阶段表保留 A1 需求冻结时的历史基线。当前实现与验收状态见 [README](../README.md) 和 [开发记录](DEVELOPMENT.md)；2026-10-28 的 [A3 两类消费者验收](A3_CODE_DRIVER_CONSUMPTION.md)已完成所列实际采用及留证要求，不改写下文原需求或扩大 A4 范围。
+
 ## 1. 问题与使用者
 
 个人开发者、团队和其他应用需要保存数字制品的稳定身份、完整版本历史和精确内容。仅保存文件路径、文件名或模型对话，无法可靠回答“这次消费了哪个版本、内容是否完整、失败重试是否重复登记、换实现后是否仍指向原来的对象”。

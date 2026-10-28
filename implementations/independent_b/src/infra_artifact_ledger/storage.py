@@ -126,10 +126,17 @@ def publish(path, raw):
     stage = None
     try:
         fd, stage = tempfile.mkstemp(prefix='.ledger-b-output-', dir=target.parent)
-        with os.fdopen(fd, 'wb') as stream:
+        with os.fdopen(fd, 'w+b') as stream:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
+            stream.seek(0)
+            for offset in range(0, len(raw), 1048576):
+                expected = raw[offset:offset + 1048576]
+                c.require(stream.read(len(expected)) == expected,
+                          'output content verification failed', 'INTEGRITY_FAILURE')
+            c.require(stream.read(1) == b'',
+                      'output length verification failed', 'INTEGRITY_FAILURE')
         os.link(stage, target)
         sync_directory(target.parent)
     except FileExistsError as exc:

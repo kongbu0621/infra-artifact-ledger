@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools==84.0.0", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "infra-artifact-ledger-b"
+version = "0.1.0a1"
+description = "Independent B implementation of the Artifact Ledger A1 candidate contract"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.scripts]
+artifact-ledger = "infra_artifact_ledger.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

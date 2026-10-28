@@ -11,6 +11,7 @@ def unpack(package, descriptor):
     c.fields(desc, ('transport_version', 'package_byte_length', 'package_digest'))
     c.require(desc['transport_version'] == c.VERSION, 'transport version', 'UNSUPPORTED_VERSION')
     c.integer(desc['package_byte_length'])
+    c.bounded(desc['package_byte_length'], c.PACKAGE, 'package bytes')
     c.digest_shape(desc['package_digest'])
     c.require(len(package) == desc['package_byte_length'] and c.digest(package) == desc['package_digest'],
               'package descriptor mismatch', 'INTEGRITY_FAILURE')

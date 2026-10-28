@@ -1,5 +1,6 @@
 """Thin file/argument adapter; all write semantics go through execute()."""
 import argparse
+import errno
 import os
 import stat
 import sys
@@ -22,16 +23,21 @@ def read_file(path, maximum):
         # Nonblocking open permits fstat to reject FIFOs without waiting for a
         # writer. Freeze bytes from this same regular-file descriptor.
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
-        with os.fdopen(fd, 'rb') as stream:
-            info = os.fstat(stream.fileno())
+        try:
+            info = os.fstat(fd)
             c.require(stat.S_ISREG(info.st_mode), 'input must be a regular file')
             c.bounded(info.st_size, maximum, 'input file bytes')
-            raw = stream.read(maximum + 1)
+            with os.fdopen(fd, 'rb', closefd=False) as stream:
+                raw = stream.read(maximum + 1)
+        finally:
+            os.close(fd)
         c.bounded(len(raw), maximum, 'input file bytes')
         return raw
     except ValueError as exc:
         raise c.LedgerError('INVALID_INPUT', 'invalid input path') from exc
     except OSError as exc:
+        if exc.errno == errno.ENAMETOOLONG:
+            raise c.LedgerError('INVALID_INPUT', 'invalid input path') from exc
         raise c.LedgerError('IO_ERROR', 'input file read failed') from exc
 
 

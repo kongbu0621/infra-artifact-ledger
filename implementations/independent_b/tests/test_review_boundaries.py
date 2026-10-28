@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 from infra_artifact_ledger import LedgerError, initialize
-from test_public_contract import append, create, wire
+from test_public_contract import append, create, import_request, wire
 
 
 def nodes(value):
@@ -90,6 +90,81 @@ class ReviewBoundaryTests(unittest.TestCase):
                 process.kill()
                 process.communicate()
         self.assertEqual(self.ledger.verify()['counts']['artifacts'], 0)
+
+    def test_payload_input_paths_reject_invalid_names_without_consuming_request(self):
+        self.ledger.execute(wire(create()))
+        request = self.root/'request.json'
+        request.write_bytes(wire(append(raw=b'payload')))
+        mapping = self.root/'payloads.json'
+        name_limit = os.pathconf(self.root, 'PC_NAME_MAX')
+        path_limit = os.pathconf(self.root, 'PC_PATH_MAX')
+        invalid_paths = [str(self.root/('x'*(name_limit+1))),
+                         str(self.root)+'/x'*(path_limit//2),
+                         str(self.root/'nul')+'\x00', str(self.root)]
+        before = self.db.read_bytes()
+        for path in invalid_paths:
+            with self.subTest(path_length=len(path), directory=path == str(self.root)):
+                mapping.write_bytes(wire([dict(blob_ref='blob:one', input_path=path)]))
+                result = self.cli('write', '--db', self.db, '--request', request, '--payload-map', mapping)
+                self.assertEqual((result.returncode, json.loads(result.stdout)['code'],
+                                  json.loads(result.stdout)['commit_state']),
+                                 (2, 'INVALID_INPUT', 'not_committed'), result.stdout)
+                self.assertEqual(self.db.read_bytes(), before)
+        # A missing regular input is still an I/O failure, not a malformed name.
+        mapping.write_bytes(wire([dict(blob_ref='blob:one', input_path=str(self.root/'absent'))]))
+        result = self.cli('write', '--db', self.db, '--request', request, '--payload-map', mapping)
+        self.assertEqual(json.loads(result.stdout)['code'], 'IO_ERROR')
+        self.assertEqual(self.db.read_bytes(), before)
+        # At and below the actual filesystem name limit, the original operation
+        # succeeds once and replays: paths are transport, not operation identity.
+        for index, size in enumerate((name_limit-1, name_limit)):
+            payload = self.root/('x'*size)
+            payload.write_bytes(b'payload')
+            mapping.write_bytes(wire([dict(blob_ref='blob:one', input_path=str(payload))]))
+            result = self.cli('write', '--db', self.db, '--request', request, '--payload-map', mapping)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertEqual(json.loads(result.stdout)['replayed'], bool(index))
+        self.assertEqual(self.ledger.verify()['counts']['idempotency_records'], 2)
+        self.assertEqual(self.ledger.read_blob('blob:one'), b'payload')
+
+    def test_import_descriptor_declared_length_limit_precedes_integrity_check(self):
+        self.seed()
+        bundle = self.ledger.export_bundle()
+        descriptor = json.loads(bundle['descriptor_utf8'])
+        request = wire(import_request())
+        request_path, package_path, descriptor_path = (self.root/name for name in
+                                                      ('request.json', 'package.json', 'descriptor.json'))
+        request_path.write_bytes(request)
+        package_path.write_bytes(bundle['package_utf8'])
+        limit = 384*1048576
+        cases = [(limit-1, 'INTEGRITY_FAILURE', 5), (limit, 'INTEGRITY_FAILURE', 5),
+                 (limit+1, 'RESOURCE_LIMIT', 2), (9007199254740991, 'RESOURCE_LIMIT', 2),
+                 (9007199254740992, 'INVALID_INPUT', 2), (-1, 'INVALID_INPUT', 2),
+                 (True, 'INVALID_INPUT', 2), (1.0, 'INVALID_INPUT', 2)]
+        with initialize(self.root/'target.sqlite') as target:
+            before = (self.root/'target.sqlite').read_bytes()
+            for length, code, exit_code in cases:
+                with self.subTest(length=length, type=type(length).__name__):
+                    raw = wire(dict(descriptor, package_byte_length=length))
+                    with self.assertRaises(LedgerError) as caught:
+                        target.execute(request, package=bundle['package_utf8'], descriptor=raw)
+                    self.assertEqual((caught.exception.code, caught.exception.commit_state),
+                                     (code, 'not_committed'))
+                    descriptor_path.write_bytes(raw)
+                    result = self.cli('write', '--db', self.root/'target.sqlite', '--request', request_path,
+                                      '--package', package_path, '--descriptor', descriptor_path)
+                    self.assertEqual((result.returncode, json.loads(result.stdout)['code'],
+                                      json.loads(result.stdout)['commit_state']),
+                                     (exit_code, code, 'not_committed'), result.stdout)
+                    self.assertEqual((self.root/'target.sqlite').read_bytes(), before)
+            descriptor_path.write_bytes(bundle['descriptor_utf8'])
+            result = self.cli('write', '--db', self.root/'target.sqlite', '--request', request_path,
+                              '--package', package_path, '--descriptor', descriptor_path)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertFalse(json.loads(result.stdout)['replayed'])
+            replay = target.execute(request, package=bundle['package_utf8'], descriptor=bundle['descriptor_utf8'])
+            self.assertTrue(replay['replayed'])
+            self.assertEqual(target.read_blob('blob:one'), b'original')
 
     def test_history_response_at_node_limit_and_one_over(self):
         # Each input and each version is valid; the combined response is what

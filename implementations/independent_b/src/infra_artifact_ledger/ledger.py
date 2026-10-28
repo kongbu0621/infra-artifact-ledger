@@ -19,8 +19,7 @@ def _read(method):
             exc.commit_state = 'not_applicable'
             raise
         except sqlite3.Error as exc:
-            code = 'BUSY' if _busy(exc) else 'INTEGRITY_FAILURE'
-            raise c.LedgerError(code, 'database read failed') from exc
+            raise c.LedgerError(storage.read_error_code(exc), 'database read failed') from exc
         except (OSError, ValueError) as exc:
             raise c.LedgerError('IO_ERROR', 'read failed') from exc
     return call

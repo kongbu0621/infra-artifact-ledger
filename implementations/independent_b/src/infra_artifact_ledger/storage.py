@@ -113,11 +113,21 @@ def open_connection(path):
     except FileNotFoundError as exc:
         raise c.LedgerError('NOT_FOUND', 'database does not exist') from exc
     except sqlite3.DatabaseError as exc:
-        if (getattr(exc, 'sqlite_errorcode', 0) & 255) in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
-            raise c.LedgerError('BUSY', 'database open is locked') from exc
-        raise c.LedgerError('INTEGRITY_FAILURE', 'unreadable B database') from exc
+        raise c.LedgerError(read_error_code(exc), 'database open failed') from exc
     except OSError as exc:
         raise c.LedgerError('IO_ERROR', 'database open failed') from exc
+
+
+def read_error_code(exc):
+    # Extended SQLite codes retain their primary category in the low byte.
+    # An unavailable disk or denied access is not evidence of corrupt data.
+    code = getattr(exc, 'sqlite_errorcode', 0) & 255
+    if code in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
+        return 'BUSY'
+    if code in (sqlite3.SQLITE_IOERR, sqlite3.SQLITE_FULL, sqlite3.SQLITE_CANTOPEN,
+                sqlite3.SQLITE_READONLY, sqlite3.SQLITE_PERM):
+        return 'IO_ERROR'
+    return 'INTEGRITY_FAILURE'
 
 
 def publish(path, raw):

@@ -30,6 +30,14 @@
 
 固定提交的 13 个 Python 文件通过优化级别 0/1/2 编译；从该提交构建的新 B wheel SHA-256 为 `68da35c0cc1539d1acaeebd0e65bf13a31408922f57b60f96fe22cde15e1b6b0`。七个运行模块与提交、wheel、隔离安装逐字节一致，RECORD 通过；仓外 `-I` 及伪包隔离下的安装态检查、组合 A→B→全新 A 与新进程读回通过。A 安装复用已核验版本，A 源码、公共合同与事务模型未改动，已有业务环境保持原状。
 
+同日读取链复核实际复现 B 将 SQLite I/O/访问故障误报为完整性损坏。修复 `c89313a81ae44dea5cfcb9da044876e82659835e` 统一 open 与六个公共读取入口的错误分类：IOERR（含扩展码）、FULL、CANTOPEN、READONLY、PERM 返回 IO_ERROR，BUSY/LOCKED 返回 BUSY，损坏、非数据库及模式检查失败继续拒绝为 INTEGRITY_FAILURE；纯读取的 commit_state 保持 not_applicable。未改写事务的提交/回滚判断，也未放宽数据校验。
+
+三项新增回归在修复前记录 **79 个失败子例**，修复后源码和新独立安装各 **44 项通过、零跳过**。覆盖 11 类错误在 BEGIN/SELECT 与六个读取 API 的 132 个组合、11 个打开失败，以及实际 CLI 子进程的错误 envelope/退出码。核对数据库字节和原操作不变、事务退出、故障移除后同一连接继续读取及再次打开成功。这些是受控 SQLite 错误注入，不能当作真实磁盘故障或掉电耐久性证明。
+
+另通过公共 API 在新合成库中补查：Artifact、Version、ContentRoot、Blob、Manifest、ProvenanceLink、ImportReceipt 七类 owned ID 的 42 组有序跨类型碰撞全部按 IDENTITY_CONFLICT/not_committed 拒绝，目标数据库字节、导出内容及原操作保持；三个完整但不同的历史（传入子集、超集、不同分支）均拒绝，原导入请求仍可重放，导出内容保持不变。378 次嵌套请求形状替换未发现未处理异常或拒绝后的库变更，其中六次仍是合法请求并正常提交；该补查不声称覆盖全部字段语义。修复前安装与本次固定安装分别留下结果，不能将这些子项当作全部 immutable 字段、Receipt 与幂等冲突的穷举。
+
+固定提交的 14 个 Python 文件通过优化级别 0/1/2 编译，新 B wheel SHA-256 为 `cd0250db68ac28d50fd68b80a1011575e329c81524a565400a3d8064f4edeb2f`；七个运行模块与 Git 提交、wheel 和实际安装逐字节一致，RECORD 通过。仓外 `-I` 与伪包隔离下执行安装态回归，组合 A→B→全新 A、B 新进程准确读回及上述补查通过。仍为 Linux aarch64 / Python 3.12.3 / SQLite 3.45.1；A 复用原独立安装，A 源码与公共合同未改，现有业务环境未升级。
+
 **A4 整体仍为 PARTIAL。** 七类身份/历史冲突、各尺寸阈值及更多并发/I/O 故障的完整矩阵、Python 3.11 等仍待验；未取得完整生产资格。原 Blob/闭包容量专项继续绑定下节的原版本，本轮未重复执行。未重做 A2/A3、重放 P/Generic Agent、升级 Local Hand、切换服务或开启 NAS 作业。修复前后日志、准确 wheel、模块摘要及新合成互通文件另存于忽略的私有 A4 目录，不覆盖旧证据。
 
 ## A4 独立 B 首个闭环（2026-10-29）

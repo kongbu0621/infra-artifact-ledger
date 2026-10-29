@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import sqlite3
 import stat
-import sys
 import tempfile
 from urllib.parse import quote
 from . import contract as c
@@ -58,13 +57,16 @@ def connect(path):
         c.require(db.execute('SELECT name FROM b_format').fetchall() == [('independent-b-v1',)],
                   'B format marker', 'UNSUPPORTED_VERSION')
         return db
-    except BaseException:
-        try:
-            db.close()
-        except Exception:
-            # Cleanup must not replace the original open/format failure.
-            pass
+    except BaseException as exc:
+        _close_after_failure(db, exc)
         raise
+
+
+def _close_after_failure(db, primary):
+    try:
+        db.close()
+    except BaseException as cleanup:
+        primary.add_note('Database close also failed: ' + type(cleanup).__name__)
 
 
 def sync_directory(path):
@@ -81,6 +83,8 @@ def initialize_connection(path):
         c.require(not os.path.lexists(candidate), 'database target exists', 'IDENTITY_CONFLICT')
     stage = None
     published = False
+    opened = None
+    primary = None
     try:
         fd, stage = tempfile.mkstemp(prefix='.ledger-b-', dir=path.parent)
         os.close(fd)
@@ -89,7 +93,10 @@ def initialize_connection(path):
             db.execute('PRAGMA synchronous=FULL')
             db.executescript('BEGIN IMMEDIATE;' + SCHEMA
                 + f'PRAGMA application_id={APPLICATION_ID}; PRAGMA user_version=1; COMMIT;')
-        finally:
+        except BaseException as exc:
+            _close_after_failure(db, exc)
+            raise
+        else:
             db.close()
         with open(stage, 'rb') as source:
             os.fsync(source.fileno())
@@ -97,15 +104,27 @@ def initialize_connection(path):
         os.link(stage, path)
         published = True
         sync_directory(path.parent)
-        return connect(path)
+        opened = connect(path)
+        return opened
     except FileExistsError as exc:
-        raise c.LedgerError('IDENTITY_CONFLICT', 'database target exists') from exc
+        primary = c.LedgerError('IDENTITY_CONFLICT', 'database target exists')
+        raise primary from exc
     except (OSError, sqlite3.Error) as exc:
-        raise c.LedgerError('IO_ERROR', 'database initialization failed',
-                           details={'target_published': published}) from exc
+        primary = c.LedgerError('IO_ERROR', 'database initialization failed',
+                                details={'target_published': published})
+        raise primary from exc
+    except BaseException as exc:
+        primary = exc
+        raise
     finally:
         if stage is not None:
-            _remove_stage(stage)
+            try:
+                _remove_stage(stage, primary)
+            except BaseException as exc:
+                # A failed finally prevents the caller receiving this handle.
+                if opened is not None:
+                    _close_after_failure(opened, exc)
+                raise
 
 
 def open_connection(path):
@@ -140,6 +159,7 @@ def publish(path, raw):
     """Publish one complete new file. A two-file export is not an atomic pair."""
     target = path_value(path)
     stage = None
+    primary = None
     try:
         fd, stage = tempfile.mkstemp(prefix='.ledger-b-output-', dir=target.parent)
         with os.fdopen(fd, 'w+b') as stream:
@@ -156,18 +176,26 @@ def publish(path, raw):
         os.link(stage, target)
         sync_directory(target.parent)
     except FileExistsError as exc:
-        raise c.LedgerError('IDENTITY_CONFLICT', 'output target exists') from exc
+        primary = c.LedgerError('IDENTITY_CONFLICT', 'output target exists')
+        raise primary from exc
     except OSError as exc:
-        raise c.LedgerError('IO_ERROR', 'output publication failed') from exc
+        primary = c.LedgerError('IO_ERROR', 'output publication failed')
+        raise primary from exc
+    except BaseException as exc:
+        primary = exc
+        raise
     finally:
         if stage is not None:
-            _remove_stage(stage)
+            _remove_stage(stage, primary)
 
 
-def _remove_stage(path):
-    active_exception = sys.exc_info()[0] is not None
+def _remove_stage(path, primary=None):
     try:
         os.unlink(path)
-    except OSError as exc:
-        if not active_exception:
+    except BaseException as exc:
+        if primary is not None:
+            primary.add_note('Temporary file cleanup also failed: ' + type(exc).__name__)
+        elif isinstance(exc, OSError):
             raise c.LedgerError('IO_ERROR', 'temporary file cleanup failed') from exc
+        else:
+            raise

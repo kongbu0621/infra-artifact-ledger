@@ -292,16 +292,21 @@ def _dispatch(args):
         encoded = canonical_bytes(result) + b"\n"
         if len(encoded) > MAX_JSON:
             raise LedgerError("RESOURCE_LIMIT", "Response exceeds the complete JSON envelope limit.")
-    except Exception as caught:
+    except BaseException as caught:
         error = caught
     finally:
         if handle is not None:
             try:
                 handle.close()
-            except Exception as caught:
+            except BaseException as caught:
                 if error is None:
                     error = caught
+                else:
+                    error.add_note("Ledger close also failed: " + type(caught).__name__)
     if error is not None:
+        # Preserve interruption identity; only ordinary failures become JSON.
+        if not isinstance(error, Exception):
+            raise error
         if result is not None and result.get("status") == "COMMITTED":
             raise _committed_error(error, result, request) from error
         if isinstance(error, LedgerError):

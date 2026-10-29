@@ -80,17 +80,22 @@ def run(args):
             raise c.LedgerError('INVALID_INPUT', 'cannot resolve output path') from exc
     ledger = initialize(args.db) if args.command == 'init' else open_ledger(args.db)
     result, write_identity = None, {}
+    primary = None
     try:
         result = _run(args, ledger, write_identity)
         return result
+    except BaseException as exc:
+        primary = exc
+        raise
     finally:
-        # Cleanup cannot turn a known commit into a not_committed result.
-        active_exception = sys.exc_info()[0] is not None
+        # Track this call's failure, not an exception handled by its caller.
         try:
             ledger.close()
-        except c.LedgerError as exc:
-            if not active_exception:
-                if result is not None and result.get('status') == 'COMMITTED':
+        except BaseException as exc:
+            if primary is not None:
+                primary.add_note('Ledger close also failed: ' + type(exc).__name__)
+            else:
+                if isinstance(exc, c.LedgerError) and result is not None and result.get('status') == 'COMMITTED':
                     exc.commit_state = 'committed'
                     exc.details = dict(write_identity, result_ref=result['result_ref'],
                                        recorded_at=result['recorded_at'])

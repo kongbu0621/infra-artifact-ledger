@@ -168,6 +168,13 @@ def assert_metadata(ledger, expected):
         verified_blob_count=len(expected['blobs']),
         verified_byte_length=sum(item['byte_length'] for item in expected['blobs'])))
 
+    # Export/verify can succeed even when the public Blob reader is faulty.
+    # Check every Blob at import, append, replay and post-restart readback.
+    for record in expected['blobs']:
+        raw = ledger.read_blob(record['blob_ref'])
+        assert type(raw) is bytes, 'read_blob must return bytes'
+        assert len(raw) == record['byte_length'] and sha(raw) == record['digest'], 'Blob readback differs'
+
 
 def assert_import_preserved(ledger, incoming, value, response):
     receipt = dict(import_receipt_id=value['body']['import_receipt_id'],
@@ -190,10 +197,6 @@ def assert_replay(ledger, value, kwargs, expected):
     # Preserve the original request/package, but compare committed state rather
     # than requiring byte-identical export JSON wrapping across separate reads.
     assert_metadata(ledger, expected)
-    for record in expected['blobs']:
-        raw = ledger.read_blob(record['blob_ref'])
-        assert type(raw) is bytes
-        assert len(raw) == record['byte_length'] and sha(raw) == record['digest']
 
 
 def assert_append_committed(ledger, before, value, response):

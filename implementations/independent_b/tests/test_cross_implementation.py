@@ -243,6 +243,28 @@ class CrossAcceptanceTests(unittest.TestCase):
                     with self.assertRaises(AssertionError):
                         cross.assert_metadata(self.target, self.expected)
 
+    def test_metadata_checks_every_blob_readback(self):
+        value = cross.append('empty', ['version:original'], [('empty', 'blob:empty', b'')])
+        response = self.target.execute(cross.wire(value), payloads={'blob:empty': b''})
+        expected = cross.assert_append_committed(self.target, self.expected, value, response)
+        read = self.target.read_blob
+        cross.assert_metadata(self.target, expected)
+        for identity, raw in [('blob:original', b'original'), ('blob:empty', b'')]:
+            changes = [('bytearray', bytearray(raw)), ('memoryview', memoryview(raw)),
+                       ('missing', None), ('long', raw + b'X')]
+            if raw:
+                changes += [('changed', b'X' + raw[1:]), ('short', raw[:-1])]
+            for defect, bad in changes:
+                def changed(ref):
+                    return bad if ref == identity else read(ref)
+                # Exported payloads, records and verify remain correct; the
+                # public readback itself must reject wrong types/content.
+                with self.subTest(blob=identity, defect=defect), patch.object(
+                        self.target, 'read_blob', side_effect=changed):
+                    with self.assertRaises(AssertionError):
+                        cross.assert_metadata(self.target, expected)
+        cross.assert_metadata(self.target, expected)
+
     def test_replay_rejects_changed_records_or_bytes(self):
         raw = self.payload[0][2]
         for changed in (b'X' + raw[1:], raw[:-1], raw + b'X', bytearray(raw)):

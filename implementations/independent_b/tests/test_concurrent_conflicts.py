@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import infra_artifact_ledger as public
 
@@ -167,7 +168,9 @@ class ConcurrentConflictTests(unittest.TestCase):
             self.assertEqual(self.wire(ledger.get_history(artifact['artifact_id'])),
                 self.wire(dict(artifact=artifact, versions=versions, provenance_links=provenance)))
         for identity, raw in payloads.items():
-            self.assertEqual(ledger.read_blob(identity), raw)
+            actual = ledger.read_blob(identity)
+            self.assertIs(type(actual), bytes, identity)
+            self.assertEqual(actual, raw)
 
     def exercise(self, calls, conflict):
         for number in range(3):
@@ -209,6 +212,7 @@ class ConcurrentConflictTests(unittest.TestCase):
                     with self.assertRaises(public.LedgerError) as caught:
                         ledger.execute(self.wire(value), **kwargs)
                     self.assert_error(caught.exception, conflict)
+                    self.assert_state(ledger, expected, payloads)
                     value, kwargs = calls[winner]
                     self.assert_response(ledger.execute(self.wire(value), **kwargs), operation, True)
                     self.assert_state(ledger, expected, payloads)
@@ -218,6 +222,22 @@ class ConcurrentConflictTests(unittest.TestCase):
     def test_create_same_key_different_request(self):
         self.exercise([(self.create('artifact:left', key='race'), {}),
                        (self.create('artifact:right', key='race'), {})], 'IDEMPOTENCY_CONFLICT')
+
+    def test_readback_rejects_bytes_like_values(self):
+        with public.initialize(self.root / 'readback.sqlite') as ledger:
+            ledger.execute(self.wire(self.create()))
+            request, kwargs = self.append_call('readback')
+            ledger.execute(self.wire(request), **kwargs)
+            expected = self.metadata(ledger.export_bundle())
+            self.assert_state(ledger, expected, kwargs['payloads'])
+            read_blob = ledger.read_blob
+            for convert in (bytearray, memoryview):
+                with self.subTest(return_type=convert.__name__):
+                    with patch.object(ledger, 'read_blob',
+                                      side_effect=lambda ref: convert(read_blob(ref))):
+                        with self.assertRaises(AssertionError):
+                            self.assert_state(ledger, expected, kwargs['payloads'])
+            self.assert_state(ledger, expected, kwargs['payloads'])
 
     def test_create_same_id_different_keys(self):
         self.exercise([(self.create('artifact:new', key='left'), {}),

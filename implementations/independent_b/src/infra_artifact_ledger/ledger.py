@@ -402,7 +402,11 @@ class Ledger:
                     exc.details = details
                 raise
             if isinstance(exc, sqlite3.Error):
-                code = 'BUSY' if _busy(exc) and state == 'not_committed' else 'IO_ERROR'
+                native = getattr(exc, 'sqlite_errorcode', 0) & 255
+                if native in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CONSTRAINT):
+                    code = 'INTEGRITY_FAILURE'
+                else:
+                    code = 'BUSY' if _busy(exc) and state == 'not_committed' else 'IO_ERROR'
             else:
                 code = 'IO_ERROR' if isinstance(exc, OSError) else 'INTERNAL_ERROR'
             raise c.LedgerError(code, 'ledger operation failed', state, details) from exc

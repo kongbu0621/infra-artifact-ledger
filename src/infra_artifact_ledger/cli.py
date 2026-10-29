@@ -112,7 +112,8 @@ def _read_file(path, limit, label):
     _valid_path(path, label)
     try:
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
-        with os.fdopen(descriptor, "rb") as stream:
+        stream = os.fdopen(descriptor, "rb")
+        try:
             info = os.fstat(stream.fileno())
             if not stat.S_ISREG(info.st_mode):
                 raise LedgerError("INVALID_INPUT", f"{label} must refer to a regular file.")
@@ -122,6 +123,14 @@ def _read_file(path, limit, label):
             data = stream.read(limit + 1)
             if len(data) > limit:
                 raise LedgerError("RESOURCE_LIMIT", f"{label} exceeds its serialized byte limit.")
+        except BaseException as primary:
+            try:
+                stream.close()
+            except BaseException as cleanup:
+                primary.add_note("Input close also failed: " + type(cleanup).__name__)
+            raise
+        else:
+            stream.close()
             return data
     except (ValueError, UnicodeError) as error:
         raise LedgerError("INVALID_INPUT", f"{label} is not a readable operating-system path.") from error

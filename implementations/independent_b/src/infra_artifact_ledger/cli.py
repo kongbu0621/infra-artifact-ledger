@@ -6,7 +6,7 @@ import stat
 import sys
 from . import contract as c
 from . import initialize, open as open_ledger
-from .storage import path_value, publish
+from .storage import _closing, path_value, publish
 
 EXITS = {**dict.fromkeys(('INVALID_INPUT', 'UNSUPPORTED_VERSION', 'UNSUPPORTED_PROFILE', 'RESOURCE_LIMIT'), 2),
          'NOT_FOUND': 3, 'IDENTITY_CONFLICT': 4, 'IDEMPOTENCY_CONFLICT': 4,
@@ -27,11 +27,17 @@ def read_file(path, maximum):
             info = os.fstat(fd)
             c.require(stat.S_ISREG(info.st_mode), 'input must be a regular file')
             c.bounded(info.st_size, maximum, 'input file bytes')
-            with os.fdopen(fd, 'rb', closefd=False) as stream:
+            with _closing(os.fdopen(fd, 'rb', closefd=False)) as stream:
                 raw = stream.read(maximum + 1)
-        finally:
+                c.bounded(len(raw), maximum, 'input file bytes')
+        except BaseException as primary:
+            try:
+                os.close(fd)
+            except BaseException as cleanup:
+                primary.add_note('Input descriptor close also failed: ' + type(cleanup).__name__)
+            raise
+        else:
             os.close(fd)
-        c.bounded(len(raw), maximum, 'input file bytes')
         return raw
     except ValueError as exc:
         raise c.LedgerError('INVALID_INPUT', 'invalid input path') from exc

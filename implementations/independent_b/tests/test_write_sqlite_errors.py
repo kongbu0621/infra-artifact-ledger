@@ -2,7 +2,7 @@
 
 Faults affect new synthetic databases only; A and B use the same public oracle.
 """
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import json
 from pathlib import Path
 import sqlite3
@@ -16,6 +16,7 @@ import infra_artifact_ledger as implementation
 from infra_artifact_ledger import LedgerError, initialize, open as open_ledger
 from cross_implementation import assert_metadata, assert_replay, portable_metadata
 from test_public_contract import append, create, import_request, wire
+from test_failures import ConnectionFault
 
 
 class SQLiteFault:
@@ -108,21 +109,90 @@ class WriteSQLiteErrorTests(unittest.TestCase):
     def test_real_sqlite_constraint_rolls_back_and_original_request_can_continue(self):
         owner, attribute = connection_slot(self.ledger)
         db = getattr(owner, attribute)
-        table = 'b_objects' if hasattr(self.ledger, '_db') else 'records'
+        # Fail the operation insert after owned records have been inserted.
+        table = 'b_operations' if hasattr(self.ledger, '_db') else 'operations'
         request = create(artifact='artifact:new', key='new')
-        db.execute(f"CREATE TEMP TRIGGER reject_insert BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT, 'synthetic constraint'); END")
-        try:
-            with self.assertRaises(LedgerError) as caught:
-                self.ledger.execute(wire(request))
-            self.assertEqual((caught.exception.code, caught.exception.commit_state), ('INTEGRITY_FAILURE', 'not_committed'))
-            self.assertEqual(caught.exception.__cause__.sqlite_errorcode, sqlite3.SQLITE_CONSTRAINT_TRIGGER)
-            self.assertFalse(db.in_transaction)
-        finally:
-            db.execute('DROP TRIGGER reject_insert')
-        self.assert_preserved()
+        for action in ('ABORT', 'ROLLBACK'):
+            with self.subTest(action=action):
+                db.execute(f"CREATE TEMP TRIGGER reject_insert BEFORE INSERT ON {table} BEGIN SELECT RAISE({action}, 'synthetic constraint'); END")
+                try:
+                    with self.assertRaises(LedgerError) as caught:
+                        self.ledger.execute(wire(request))
+                    self.assertEqual((caught.exception.code, caught.exception.commit_state), ('INTEGRITY_FAILURE', 'not_committed'))
+                    self.assertEqual(caught.exception.__cause__.sqlite_errorcode, sqlite3.SQLITE_CONSTRAINT_TRIGGER)
+                    self.assertFalse(db.in_transaction)
+                    # No retained writer lock may survive either rollback path.
+                    with closing(sqlite3.connect(self.path, timeout=0, isolation_level=None)) as observer:
+                        observer.execute('BEGIN IMMEDIATE')
+                        observer.execute('ROLLBACK')
+                    self.assert_preserved()
+                finally:
+                    db.execute('DROP TRIGGER reject_insert')
         result = self.ledger.execute(wire(request))
         self.assertIs(result['replayed'], False)
         self.assertEqual(self.ledger.execute(wire(request)), {**result, 'replayed': True})
+
+    def test_begin_failure_releases_lock_and_preserves_original_results(self):
+        owner, attribute = connection_slot(self.ledger)
+        real = getattr(owner, attribute)
+        request, kwargs = self.calls[0]
+        for after in (False, True):
+            for interrupt in (False, True):
+                with self.subTest(after=after, interrupt=interrupt):
+                    fault = ConnectionFault(real, 'BEGIN IMMEDIATE', after=after, interrupt=interrupt)
+                    try:
+                        with patch.object(owner, attribute, fault):
+                            with self.assertRaises(KeyboardInterrupt if interrupt else LedgerError) as caught:
+                                self.ledger.execute(wire(request), **kwargs)
+                        if not interrupt:
+                            self.assertEqual((caught.exception.code, caught.exception.commit_state), ('IO_ERROR', 'not_committed'))
+                        self.assertFalse(real.in_transaction)
+                        with closing(sqlite3.connect(self.path, timeout=0, isolation_level=None)) as observer:
+                            observer.execute('BEGIN IMMEDIATE')
+                            observer.execute('ROLLBACK')
+                        # Reuse this handle, without close masking a leaked lock.
+                        self.assert_preserved()
+                        with open_ledger(self.path) as reopened:
+                            assert_metadata(reopened, self.expected)
+                    finally:
+                        if real.in_transaction:
+                            real.execute('ROLLBACK')
+
+    def test_begin_busy_and_unconfirmed_cleanup_are_distinct(self):
+        owner, attribute = connection_slot(self.ledger)
+        real = getattr(owner, attribute)
+        request, kwargs = self.calls[0]
+        with closing(sqlite3.connect(self.path, timeout=0, isolation_level=None)) as writer:
+            writer.execute('BEGIN IMMEDIATE')
+            try:
+                with self.assertRaises(LedgerError) as caught:
+                    self.ledger.execute(wire(request), **kwargs)
+                self.assertEqual((caught.exception.code, caught.exception.commit_state), ('BUSY', 'not_committed'))
+                self.assertFalse(real.in_transaction)
+            finally:
+                writer.execute('ROLLBACK')
+        self.assert_preserved()
+        fault = ConnectionFault(real, 'BEGIN IMMEDIATE', after=True, rollback_fails=True)
+        try:
+            with patch.object(owner, attribute, fault):
+                with self.assertRaises(LedgerError) as caught:
+                    self.ledger.execute(wire(request), **kwargs)
+            self.assertEqual((caught.exception.code, caught.exception.commit_state), ('DURABILITY_UNKNOWN', 'unknown'))
+        finally:
+            self.ledger.close()
+            self.ledger = open_ledger(self.path)
+            self.assert_preserved()
+
+    def test_closed_handle_remains_uncommitted(self):
+        self.ledger.close()
+        request, kwargs = self.calls[0]
+        try:
+            with self.assertRaises(LedgerError) as caught:
+                self.ledger.execute(wire(request), **kwargs)
+            self.assertEqual((caught.exception.code, caught.exception.commit_state), ('IO_ERROR', 'not_committed'))
+        finally:
+            self.ledger = open_ledger(self.path)
+            self.assert_preserved()
 
     def test_unconfirmed_new_write_rollback_remains_unknown(self):
         request = create(artifact='artifact:new', key='new')

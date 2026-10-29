@@ -263,6 +263,10 @@ class Ledger:
             if 'request_fingerprint' in request:
                 c.digest_shape(request['request_fingerprint'])
                 c.require(request['request_fingerprint'] == fingerprint, 'request fingerprint', 'INVALID_INPUT')
+            # Include BEGIN acknowledgement failures in cleanup, without
+            # claiming a transaction already active on this handle. Reading
+            # the state first also rejects a closed handle before any attempt.
+            started = not self._db.in_transaction
             self._db.execute('BEGIN IMMEDIATE')
             started = True
             original = self._operation(triple)
@@ -385,9 +389,14 @@ class Ledger:
                     pass
             elif started:
                 try:
-                    if not self._db.in_transaction:
+                    active = self._db.in_transaction
+                    if not active and attempted_commit:
                         raise RuntimeError('transaction outcome unavailable')
-                    self._db.execute('ROLLBACK')
+                    # SQLite may have already rolled back a failed statement.
+                    # Before COMMIT was attempted, inactivity is not an
+                    # ambiguous commit; an active transaction still needs rollback.
+                    if active:
+                        self._db.execute('ROLLBACK')
                     if self._db.in_transaction:
                         raise RuntimeError('rollback incomplete')
                 except Exception as rollback_error:

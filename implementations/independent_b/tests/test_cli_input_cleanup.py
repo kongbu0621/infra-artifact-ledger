@@ -85,8 +85,106 @@ class CLIInputCleanupTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 os.fstat(fd)
         self.assertTrue(all(stream.real.closed and stream.closes == 1 for stream in streams))
-        # B retains fd ownership; A transfers ownership to its file object.
-        self.assertEqual(len(closes), 1 if hasattr(cli, 'read_file') else 0)
+        # Both readers retain fd ownership through file-object construction.
+        self.assertEqual(len(closes), 1)
+
+    def test_directory_input_is_rejected_without_descriptor_leak(self):
+        original_open = os.open
+        descriptors = []
+
+        def opening(*args, **kwargs):
+            fd = original_open(*args, **kwargs)
+            descriptors.append(fd)
+            return fd
+
+        try:
+            for attempt in range(8):
+                with self.subTest(attempt=attempt):
+                    with patch.object(cli.os, 'open', opening):
+                        with self.assertRaises(LedgerError) as caught:
+                            self.read(self.root, 3)
+                    with self.assertRaises(OSError):
+                        os.fstat(descriptors[-1])
+                    self.assertEqual(caught.exception.code, 'INVALID_INPUT')
+        finally:
+            # Release leaked descriptors when this regression runs on old code.
+            for fd in set(descriptors):
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+        self.assertEqual(self.read(self.input, 3), b'abc')
+
+    def test_file_object_creation_failure_keeps_descriptor_ownership(self):
+        original_open, original_fdopen = os.open, os.fdopen
+        for stage in ('before', 'after'):
+            for kind in (OSError, MemoryError, KeyboardInterrupt, SystemExit):
+                with self.subTest(stage=stage, error=kind.__name__):
+                    primary = kind('file object construction')
+                    descriptors, unrelated = [], []
+
+                    def opening(*args, **kwargs):
+                        fd = original_open(*args, **kwargs)
+                        descriptors.append(fd)
+                        return fd
+
+                    def wrapping(fd, *args, **kwargs):
+                        if stage == 'after':
+                            original_fdopen(fd, *args, **kwargs).close()
+                            # If ownership was transferred and then closed, the OS
+                            # can reuse that number before the exception handler.
+                            unrelated.append(original_open(self.input, os.O_RDONLY))
+                        raise primary
+
+                    try:
+                        with patch.object(cli.os, 'open', opening), patch.object(cli.os, 'fdopen', wrapping):
+                            with self.assertRaises(BaseException) as caught:
+                                self.read(self.input, 3)
+                        if kind is OSError:
+                            self.assertIsInstance(caught.exception, LedgerError)
+                            self.assertEqual(caught.exception.code, 'IO_ERROR')
+                            self.assertIs(caught.exception.__cause__, primary)
+                        else:
+                            self.assertIs(caught.exception, primary)
+                        self.assertEqual(len(descriptors), 1)
+                        for fd in unrelated:
+                            self.assertEqual(os.read(fd, 3), b'abc')
+                        self.assertNotIn(descriptors[0], unrelated)
+                        with self.assertRaises(OSError):
+                            os.fstat(descriptors[0])
+                    finally:
+                        for fd in set(descriptors + unrelated):
+                            try:
+                                os.close(fd)
+                            except OSError:
+                                pass
+                    self.assertEqual(self.read(self.input, 3), b'abc')
+
+    def test_creation_failure_survives_descriptor_cleanup_error(self):
+        original_close = os.close
+        for kind in (OSError, MemoryError, KeyboardInterrupt, SystemExit):
+            primary = kind('file object construction')
+            closed = []
+
+            def closing(fd):
+                original_close(fd)
+                closed.append(fd)
+                raise KeyboardInterrupt('secondary descriptor cleanup')
+
+            with self.subTest(error=kind.__name__):
+                with patch.object(cli.os, 'fdopen', side_effect=primary), patch.object(cli.os, 'close', closing):
+                    with self.assertRaises(BaseException) as caught:
+                        self.read(self.input, 3)
+                if kind is OSError:
+                    self.assertIsInstance(caught.exception, LedgerError)
+                    self.assertEqual(caught.exception.code, 'IO_ERROR')
+                    self.assertIs(caught.exception.__cause__, primary)
+                else:
+                    self.assertIs(caught.exception, primary)
+                self.assertEqual(len(closed), 1)
+                with self.assertRaises(OSError):
+                    os.fstat(closed[0])
+                self.assertTrue(getattr(primary, '__notes__', []))
 
     def test_validation_failure_survives_both_cleanup_layers(self):
         fifo = self.root / 'fifo'
@@ -148,7 +246,7 @@ class CLIInputCleanupTests(unittest.TestCase):
         self.assertEqual(self.read(self.input, 3), b'abc')
 
     def test_cli_rejects_without_write_and_original_request_can_continue(self):
-        for mode in ('size', 'read', 'close'):
+        for mode in ('size', 'read', 'close', 'directory'):
             with self.subTest(mode=mode):
                 db = self.root / (mode + '.sqlite')
                 with initialize(db) as ledger:
@@ -163,9 +261,10 @@ class CLIInputCleanupTests(unittest.TestCase):
                         stream.truncate(maximum + 1)
                 primary = OSError('original read') if mode == 'read' else None
                 cleanup = KeyboardInterrupt('secondary close') if mode != 'close' else OSError('standalone close')
-                args = ['write', '--db', str(db), '--request', str(self.input)]
+                input_path = self.root if mode == 'directory' else self.input
+                args = ['write', '--db', str(db), '--request', str(input_path)]
                 with tempfile.TemporaryFile('w+', encoding='utf-8') as output:
-                    with input_fault(self.input, cleanup, primary) as observed, patch.object(cli.sys, 'stdout', output):
+                    with input_fault(input_path, cleanup, primary) as observed, patch.object(cli.sys, 'stdout', output):
                         try:
                             status = cli.main(args)
                         except BaseException as error:
@@ -174,12 +273,14 @@ class CLIInputCleanupTests(unittest.TestCase):
                     output.seek(0)
                     result = json.loads(output.read())
                 self.assertEqual((status, result['status'], result['code'], result['commit_state']),
-                                 (2 if mode == 'size' else 1, 'ERROR',
-                                  'RESOURCE_LIMIT' if mode == 'size' else 'IO_ERROR', 'not_committed'))
+                                 (2 if mode in ('size', 'directory') else 1, 'ERROR',
+                                  {'size': 'RESOURCE_LIMIT', 'directory': 'INVALID_INPUT'}.get(mode, 'IO_ERROR'),
+                                  'not_committed'))
                 self.assertEqual(db.read_bytes(), before)
                 with open_ledger(db) as ledger:
                     self.assertEqual(ledger.export_bundle(), baseline)
                 self.input.write_bytes(request)
+                args[-1] = str(self.input)
                 with tempfile.TemporaryFile('w+', encoding='utf-8') as output, patch.object(cli.sys, 'stdout', output):
                     self.assertEqual(cli.main(args), 0)
                     output.seek(0)

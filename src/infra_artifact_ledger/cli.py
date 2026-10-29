@@ -112,25 +112,36 @@ def _read_file(path, limit, label):
     _valid_path(path, label)
     try:
         descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0))
-        stream = os.fdopen(descriptor, "rb")
+        # Keep the descriptor owned here even if file-object construction fails.
+        # A failed wrapper may already have closed its partial file object.
         try:
-            info = os.fstat(stream.fileno())
+            info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode):
                 raise LedgerError("INVALID_INPUT", f"{label} must refer to a regular file.")
             if info.st_size > limit:
                 raise LedgerError("RESOURCE_LIMIT", f"{label} exceeds its serialized byte limit.")
-            # One bounded immutable snapshot is used for validation AND submit.
-            data = stream.read(limit + 1)
-            if len(data) > limit:
-                raise LedgerError("RESOURCE_LIMIT", f"{label} exceeds its serialized byte limit.")
+            stream = os.fdopen(descriptor, "rb", closefd=False)
+            try:
+                # One bounded immutable snapshot is used for validation AND submit.
+                data = stream.read(limit + 1)
+                if len(data) > limit:
+                    raise LedgerError("RESOURCE_LIMIT", f"{label} exceeds its serialized byte limit.")
+            except BaseException as primary:
+                try:
+                    stream.close()
+                except BaseException as cleanup:
+                    primary.add_note("Input close also failed: " + type(cleanup).__name__)
+                raise
+            else:
+                stream.close()
         except BaseException as primary:
             try:
-                stream.close()
+                os.close(descriptor)
             except BaseException as cleanup:
-                primary.add_note("Input close also failed: " + type(cleanup).__name__)
+                primary.add_note("Input descriptor close also failed: " + type(cleanup).__name__)
             raise
         else:
-            stream.close()
+            os.close(descriptor)
             return data
     except (ValueError, UnicodeError) as error:
         raise LedgerError("INVALID_INPUT", f"{label} is not a readable operating-system path.") from error

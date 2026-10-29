@@ -128,7 +128,9 @@ def read_error_code(exc):
     code = getattr(exc, 'sqlite_errorcode', 0) & 255
     if code in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
         return 'BUSY'
-    if code in (sqlite3.SQLITE_IOERR, sqlite3.SQLITE_FULL, sqlite3.SQLITE_CANTOPEN,
+    # Python rejects closed or foreign-thread handles without a SQLite code.
+    # Those connection errors do not establish stored-data corruption.
+    if code in (0, sqlite3.SQLITE_IOERR, sqlite3.SQLITE_FULL, sqlite3.SQLITE_CANTOPEN,
                 sqlite3.SQLITE_READONLY, sqlite3.SQLITE_PERM):
         return 'IO_ERROR'
     return 'INTEGRITY_FAILURE'

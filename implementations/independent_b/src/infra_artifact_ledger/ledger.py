@@ -208,7 +208,7 @@ class Ledger:
     def execute(self, request_utf8, *, payloads=None, package=None, descriptor=None):
         started = attempted_commit = committed = False
         original = None
-        replay_content_failed = False
+        replaying = False
         try:
             request = c.parse(request_utf8)
             c.fields(request, ('profile', 'contract_version', 'operation_kind',
@@ -278,11 +278,12 @@ class Ledger:
                 for identity in blob_ids:
                     if identity in frozen:
                         c.check_bytes(objects[identity][1], frozen[identity])
-                    try:
-                        self._blob(identity)
-                    except c.LedgerError as failure:
-                        replay_content_failed = failure.code == 'INTEGRITY_FAILURE'
-                        raise
+                # Validate every supplied byte before classifying this as a
+                # replay of the known commit. Bad retransmissions are rejected
+                # inputs; stored-content and cleanup failures cannot undo it.
+                replaying = True
+                for identity in blob_ids:
+                    self._blob(identity)
                 self._db.execute('ROLLBACK')
                 started = False
                 return _response(original, True)
@@ -361,8 +362,15 @@ class Ledger:
         except BaseException as exc:
             state = 'not_committed'
             details = None
-            if committed:
-                state, details = 'committed', _identity_details(op)
+            if committed or replaying:
+                state, details = 'committed', _identity_details(original if replaying else op)
+                try:
+                    if started and self._db.in_transaction:
+                        self._db.execute('ROLLBACK')
+                except Exception:
+                    # Cleanup cannot make an already confirmed commit unknown
+                    # or replace the original replay error/interruption.
+                    pass
             elif started:
                 try:
                     if not self._db.in_transaction:
@@ -376,8 +384,6 @@ class Ledger:
                 raise c.LedgerError('DURABILITY_UNKNOWN', 'commit outcome unavailable', 'unknown') from exc
             if not isinstance(exc, Exception):
                 raise
-            if original is not None and replay_content_failed:
-                state, details = 'committed', _identity_details(original)
             if isinstance(exc, c.LedgerError):
                 exc.commit_state = state
                 if details is not None:

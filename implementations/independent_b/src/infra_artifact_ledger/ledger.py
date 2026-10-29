@@ -71,7 +71,15 @@ class Ledger:
         self._db.execute('BEGIN')
         try:
             yield
-        finally:
+        except BaseException:
+            try:
+                self._db.execute('ROLLBACK')
+            except Exception:
+                # A read's primary error must survive failed cleanup, including
+                # when the storage layer has already ended the transaction.
+                pass
+            raise
+        else:
             self._db.execute('ROLLBACK')
 
     def _objects(self):

@@ -20,6 +20,7 @@ class Parser(argparse.ArgumentParser):
 
 def read_file(path, maximum):
     try:
+        c.require(bool(os.fspath(path)), 'input path must be nonempty')
         # Nonblocking open permits fstat to reject FIFOs without waiting for a
         # writer. Freeze bytes from this same regular-file descriptor.
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)

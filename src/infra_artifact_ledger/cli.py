@@ -5,6 +5,7 @@ Content files are explicitly named by the caller and published without replace.
 """
 
 import argparse
+import errno
 import hashlib
 import io
 import os
@@ -146,6 +147,8 @@ def _read_file(path, limit, label):
     except (ValueError, UnicodeError) as error:
         raise LedgerError("INVALID_INPUT", f"{label} is not a readable operating-system path.") from error
     except OSError as error:
+        if error.errno == errno.ENAMETOOLONG:
+            raise LedgerError("INVALID_INPUT", f"{label} is not a readable operating-system path.") from error
         raise LedgerError("IO_ERROR", f"Could not read {label}.") from error
 
 

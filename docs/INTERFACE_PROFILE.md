@@ -119,6 +119,8 @@ append 的传入 bytes 与待登记内容闭包分别计量。相同 BlobRef 被
 
 下表是 alpha 实现遵循的规范接口要求；库与 CLI 使用同一语义校验与提交路径，CLI 只处理参数和文件传输。实际构建和调用方式见 [USAGE](USAGE.md)；表格本身不代替运行证据。
 
+CLI 的请求、查询、payload-map、payload、package 和 descriptor 输入文件路径必须非空、可由操作系统表示并指向普通文件。空路径、含 NUL、无法编码或超过操作系统路径长度限制返回 `INVALID_INPUT`；文件不存在、权限或存储 I/O 故障保留 `IO_ERROR`，不把读取失败改报成输入格式错误。
+
 Python 包根 `infra_artifact_ledger` 必须公开导出 `initialize`、`open` 和 `LedgerError`。`initialize(path)` / `open(path)` 为包级函数，返回 Ledger handle；下表其余库操作均为该 handle 的方法。消费者无需导入内部 `service` 或 `sqlite_store` 模块，也不依赖内部 handle 类的路径。
 
 | 库操作 | CLI 候选命令 | 行为 |

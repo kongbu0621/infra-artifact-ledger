@@ -243,6 +243,51 @@ class CrossAcceptanceTests(unittest.TestCase):
                     with self.assertRaises(AssertionError):
                         cross.assert_metadata(self.target, self.expected)
 
+    def test_metadata_checks_complete_history(self):
+        expected = copy.deepcopy(self.expected)
+        for name, parents in [('left', ['version:original']), ('right', ['version:original']),
+                              ('merge', ['version:right', 'version:left'])]:
+            value = cross.append(name, parents, self.payload)
+            value['body']['blobs'] = []  # Reuse the already committed Blob.
+            response = self.target.execute(cross.wire(value), payloads={})
+            expected = cross.assert_append_committed(self.target, expected, value, response)
+        cross.assert_metadata(self.target, expected)
+        read = self.target.get_history
+        full = read('artifact:cross')
+        empty = read('artifact:empty')
+        cases = []
+        def add(label, change, identity='artifact:cross'):
+            history = copy.deepcopy(empty if identity == 'artifact:empty' else full)
+            change(history)
+            cases.append((label, identity, history))
+        add('missing-artifact', lambda h: h.pop('artifact'))
+        add('wrong-artifact', lambda h: h['artifact'].update(namespace_ref='namespace:wrong'))
+        add('missing-versions', lambda h: h.update(versions=[]))
+        add('duplicate-version', lambda h: h['versions'].append(copy.deepcopy(h['versions'][0])))
+        add('foreign-version', lambda h: h['versions'][0].update(artifact_id='artifact:empty'))
+        add('version-order', lambda h: h['versions'].reverse())
+        def reversed_parents(history):
+            version, = [v for v in history['versions'] if v['version_id'] == 'version:merge']
+            version['parent_version_refs'].reverse()
+        add('parent-order', reversed_parents)
+        add('missing-provenance', lambda h: h.update(provenance_links=[]))
+        add('duplicate-provenance', lambda h: h['provenance_links'].append(
+            copy.deepcopy(h['provenance_links'][0])))
+        add('provenance-order', lambda h: h['provenance_links'].reverse())
+        add('wrong-provenance', lambda h: h['provenance_links'][0].update(subject_version_ref='version:other'))
+        add('unexpected-field', lambda h: h.update(unexpected=True))
+        add('empty-artifact', lambda h: h['artifact'].update(namespace_ref='namespace:wrong'), 'artifact:empty')
+        add('empty-versions', lambda h: h.update(versions=copy.deepcopy(full['versions'])), 'artifact:empty')
+        add('empty-provenance', lambda h: h.update(provenance_links=copy.deepcopy(full['provenance_links'])),
+            'artifact:empty')
+        for label, identity, wrong in cases:
+            def changed(ref):
+                return copy.deepcopy(wrong) if ref == identity else read(ref)
+            with self.subTest(defect=label), patch.object(self.target, 'get_history', side_effect=changed):
+                with self.assertRaises(AssertionError):
+                    cross.assert_metadata(self.target, expected)
+        cross.assert_metadata(self.target, expected)
+
     def test_metadata_checks_every_blob_readback(self):
         value = cross.append('empty', ['version:original'], [('empty', 'blob:empty', b'')])
         response = self.target.execute(cross.wire(value), payloads={'blob:empty': b''})

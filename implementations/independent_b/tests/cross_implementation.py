@@ -142,6 +142,18 @@ def assert_response(response, operation, replayed):
     assert response['replayed'] is replayed
 
 
+def history_for(metadata, artifact_id):
+    # Derive the public history from expected records, not another history call.
+    artifact, = [item for item in metadata['artifacts'] if item['artifact_id'] == artifact_id]
+    versions = sorted((item for item in metadata['versions'] if item['artifact_id'] == artifact_id),
+                      key=lambda item: item['version_id'])
+    version_ids = {item['version_id'] for item in versions}
+    provenance = sorted((item for item in metadata['provenance_links']
+                         if item['subject_version_ref'] in version_ids),
+                        key=lambda item: item['provenance_id'])
+    return dict(artifact=artifact, versions=versions, provenance_links=provenance)
+
+
 def assert_metadata(ledger, expected):
     def normalized(metadata):
         metadata = copy.deepcopy(metadata)
@@ -159,6 +171,9 @@ def assert_metadata(ledger, expected):
         for record in expected[collection]:
             records[record[identity]] = record
             assert wire(ledger.get_record(kind, record[identity])) == wire(record)
+    for artifact in expected['artifacts']:
+        identity = artifact['artifact_id']
+        assert wire(ledger.get_history(identity)) == wire(history_for(expected, identity)), 'history differs'
     for operation in expected['idempotency_records']:
         assert wire(ledger.get_operation(operation['idempotency_scope_ref'],
             operation['operation_kind'], operation['idempotency_key'])) == wire(dict(
@@ -254,11 +269,11 @@ def worker(mode, root):
         with public.initialize(a_db) as ledger:
             result = ledger.execute(wire(original_import), package=source['package_utf8'],
                                     descriptor=source['descriptor_utf8'])
-            assert_import_preserved(ledger, portable_metadata(source), original_import, result)
+            expected_meta = assert_import_preserved(ledger, portable_metadata(source), original_import, result)
             (root / 'import-a-result.json').write_bytes(wire(result))
             bundle = ledger.export_bundle()
             (root / 'a-metadata.json').write_bytes(wire(portable_metadata(bundle)))
-            (root / 'original-history.json').write_bytes(wire(ledger.get_history('artifact:cross')))
+            (root / 'original-history.json').write_bytes(wire(history_for(expected_meta, 'artifact:cross')))
             assert ledger.verify()['verified_blob_count'] == 3
         # Exercise installed CLI export, then consume those exact files in B.
         call_cli('export', '--db', a_db, '--package', root / 'a.package', '--descriptor', root / 'a.descriptor')
@@ -306,7 +321,7 @@ def worker(mode, root):
             # The checked output's actual array order participates in the next
             # import fingerprint, even though record-set comparison ignores it.
             (root / 'b-metadata.json').write_bytes(wire(portable_metadata(bundle)))
-            (root / 'b-history.json').write_bytes(wire(ledger.get_history('artifact:cross')))
+            (root / 'b-history.json').write_bytes(wire(history_for(expected_meta, 'artifact:cross')))
             assert ledger.verify()['counts']['versions'] == 5
     elif mode == 'reopen-b':
         # A different process with no source checkout available reads persisted B bytes.

@@ -90,6 +90,76 @@ class CrossAcceptanceTests(unittest.TestCase):
                     with self.assertRaises(AssertionError):
                         cross.assert_append_committed(target, before, value, response)
 
+    def test_replay_accepts_equivalent_export_wrapping(self):
+        original = self.target.export_bundle()
+        package = json.dumps(json.loads(original['package_utf8']), indent=2,
+                             ensure_ascii=False).encode()
+        wrapped = dict(package_utf8=package, descriptor_utf8=cross.wire(dict(
+            transport_version='0.1.0', package_byte_length=len(package),
+            package_digest=cross.sha(package))))
+        self.assertNotEqual(wrapped, original)
+        # A real public import accepts this alternate wire representation.
+        with initialize(self.root / 'wrapped.sqlite') as reader:
+            value = cross.request('import_bundle', dict(import_receipt_id='receipt:wrapped'), 'wrapped')
+            response = reader.execute(cross.wire(value), package=wrapped['package_utf8'],
+                                      descriptor=wrapped['descriptor_utf8'])
+            cross.assert_import_preserved(reader, cross.portable_metadata(original), value, response)
+        calls = []
+        execute = self.target.execute
+        def replay(raw, **kwargs):
+            calls.append((raw, kwargs))
+            return execute(raw, **kwargs)
+        with patch.object(self.target, 'execute', side_effect=replay), patch.object(
+                self.target, 'export_bundle', side_effect=[original, wrapped, original, wrapped]):
+            cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+            cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+        self.assertEqual(calls, [(cross.wire(self.value), self.kwargs)] * 2)
+
+    def test_metadata_preserves_json_number_types(self):
+        actual = cross.portable_metadata(self.target.export_bundle())
+        corrupted = copy.deepcopy(actual)
+        corrupted['blobs'][0]['byte_length'] = float(corrupted['blobs'][0]['byte_length'])
+        with self.subTest(location='export'), patch.object(cross, 'portable_metadata', return_value=corrupted):
+            with self.assertRaises(AssertionError):
+                cross.assert_metadata(self.target, self.expected)
+        read = self.target.get_record
+        def wrong_record(kind, identity):
+            record = read(kind, identity)
+            if kind == 'blob':
+                record = {**record, 'byte_length': float(record['byte_length'])}
+            return record
+        with self.subTest(location='record'), patch.object(self.target, 'get_record', side_effect=wrong_record):
+            with self.assertRaises(AssertionError):
+                cross.assert_metadata(self.target, self.expected)
+        report = self.target.verify()
+        for group, field, bad in [('counts', 'versions', True), ('counts', 'artifacts', 2.0),
+                                 (None, 'verified_blob_count', True),
+                                 (None, 'verified_byte_length', float(report['verified_byte_length']))]:
+            with self.subTest(group=group, field=field):
+                changed = copy.deepcopy(report)
+                (changed if group is None else changed[group])[field] = bad
+                with patch.object(self.target, 'verify', return_value=changed):
+                    with self.assertRaises(AssertionError):
+                        cross.assert_metadata(self.target, self.expected)
+
+    def test_replay_rejects_changed_records_or_bytes(self):
+        raw = self.payload[0][2]
+        for changed in (b'X' + raw[1:], raw[:-1], raw + b'X', bytearray(raw)):
+            with self.subTest(payload=changed), patch.object(self.target, 'read_blob', return_value=changed):
+                with self.assertRaises(AssertionError):
+                    cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+        execute = self.target.execute
+        def extra_record(raw, **kwargs):
+            response = execute(raw, **kwargs)
+            extra = cross.create()
+            extra['body']['artifact']['artifact_id'] = 'artifact:unrequested'
+            extra['idempotency_key'] = 'unrequested'
+            execute(cross.wire(extra))
+            return response
+        with patch.object(self.target, 'execute', side_effect=extra_record):
+            with self.assertRaises(AssertionError):
+                cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+
     def test_import_fingerprint_keeps_original_record_array_order(self):
         incoming = copy.deepcopy(self.incoming)
         incoming['artifacts'].reverse()

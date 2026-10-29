@@ -103,20 +103,22 @@ def assert_metadata(ledger, expected):
             metadata[name] = sorted(metadata[name], key=wire)
         return metadata
     expected = normalized(expected)
-    assert normalized(portable_metadata(ledger.export_bundle())) == expected
+    # JSON distinguishes integer counts/lengths from floats and booleans;
+    # Python container equality alone would accept True == 1 == 1.0.
+    assert wire(normalized(portable_metadata(ledger.export_bundle()))) == wire(expected)
     records = {}
     for kind, collection, identity in COLLECTIONS:
         for record in expected[collection]:
             records[record[identity]] = record
-            assert ledger.get_record(kind, record[identity]) == record
+            assert wire(ledger.get_record(kind, record[identity])) == wire(record)
     for operation in expected['idempotency_records']:
-        assert ledger.get_operation(operation['idempotency_scope_ref'],
-            operation['operation_kind'], operation['idempotency_key']) == dict(
-                idempotency_record=operation, result=records[operation['result_ref']])
-    assert ledger.verify() == dict(
+        assert wire(ledger.get_operation(operation['idempotency_scope_ref'],
+            operation['operation_kind'], operation['idempotency_key'])) == wire(dict(
+                idempotency_record=operation, result=records[operation['result_ref']]))
+    assert wire(ledger.verify()) == wire(dict(
         counts={key: len(value) for key, value in expected.items() if isinstance(value, list)},
         verified_blob_count=len(expected['blobs']),
-        verified_byte_length=sum(item['byte_length'] for item in expected['blobs']))
+        verified_byte_length=sum(item['byte_length'] for item in expected['blobs'])))
 
 
 def assert_import_preserved(ledger, incoming, value, response):
@@ -135,10 +137,15 @@ def assert_import_preserved(ledger, incoming, value, response):
 def assert_replay(ledger, value, kwargs, expected):
     operation, = [item for item in expected['idempotency_records'] if all(
         item[key] == value[key] for key in ('idempotency_scope_ref', 'operation_kind', 'idempotency_key'))]
-    before = ledger.export_bundle()
     response = ledger.execute(wire(value), **kwargs)
     assert_response(response, operation, True)
-    assert ledger.export_bundle() == before
+    # Preserve the original request/package, but compare committed state rather
+    # than requiring byte-identical export JSON wrapping across separate reads.
+    assert_metadata(ledger, expected)
+    for record in expected['blobs']:
+        raw = ledger.read_blob(record['blob_ref'])
+        assert type(raw) is bytes
+        assert len(raw) == record['byte_length'] and sha(raw) == record['digest']
 
 
 def assert_append_committed(ledger, before, value, response):

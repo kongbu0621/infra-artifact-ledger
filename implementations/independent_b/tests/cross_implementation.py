@@ -60,7 +60,55 @@ def call_cli(*args):
 
 
 def portable_metadata(bundle):
-    return json.loads(base64.b64decode(json.loads(bundle['package_utf8'])['metadata']['data']))
+    # Independently check each export's transport, even on intermediate replay
+    # checks that are not followed by an import into the other implementation.
+    def parsed(raw):
+        assert type(raw) is bytes
+        def unique(pairs):
+            result = {}
+            for key, value in pairs:
+                assert key not in result, 'duplicate JSON key'
+                result[key] = value
+            return result
+        def invalid_constant(value):
+            raise AssertionError('non-JSON number: ' + value)
+        return json.loads(raw.decode('utf-8'), object_pairs_hook=unique,
+                          parse_constant=invalid_constant)
+
+    def decoded(entry, blob_ref=None):
+        raw = base64.b64decode(entry['data'], validate=True)
+        expected = dict(encoding='base64', data=base64.b64encode(raw).decode('ascii'),
+                        byte_length=len(raw), digest=sha(raw))
+        if blob_ref is not None:
+            expected['blob_ref'] = blob_ref
+        assert wire(entry) == wire(expected), 'invalid transport entry'
+        return raw
+
+    assert set(bundle) == {'package_utf8', 'descriptor_utf8'}
+    raw = bundle['package_utf8']
+    descriptor = parsed(bundle['descriptor_utf8'])
+    assert type(raw) is bytes
+    assert wire(descriptor) == wire(dict(transport_version='0.1.0',
+        package_byte_length=len(raw), package_digest=sha(raw))), 'invalid descriptor'
+    package = parsed(raw)
+    assert set(package) == {'transport_version', 'profile', 'metadata', 'payloads'}
+    assert package['transport_version'] == '0.1.0'
+    assert package['profile'] == 'bounded-local-v0.1'
+    metadata = parsed(decoded(package['metadata']))
+    blobs = {item['blob_ref']: item for item in metadata['blobs']
+             if item['payload_availability'] == 'available'}
+    assert type(package['payloads']) is list
+    seen = set()
+    for entry in package['payloads']:
+        identity = entry['blob_ref']
+        assert identity in blobs and identity not in seen, 'unexpected/duplicate payload'
+        payload = decoded(entry, identity)
+        record = blobs[identity]
+        assert wire(dict(byte_length=record['byte_length'], digest=record['digest'])) == wire(
+            dict(byte_length=len(payload), digest=sha(payload))), 'payload differs from Blob'
+        seen.add(identity)
+    assert seen == set(blobs), 'missing payload'
+    return metadata
 
 
 COLLECTIONS = (

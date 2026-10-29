@@ -11,6 +11,12 @@ from infra_artifact_ledger import initialize
 import cross_implementation as cross
 
 
+def packaged(package):
+    raw = cross.wire(package)
+    return dict(package_utf8=raw, descriptor_utf8=cross.wire(dict(
+        transport_version='0.1.0', package_byte_length=len(raw), package_digest=cross.sha(raw))))
+
+
 class CrossAcceptanceTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -92,11 +98,16 @@ class CrossAcceptanceTests(unittest.TestCase):
 
     def test_replay_accepts_equivalent_export_wrapping(self):
         original = self.target.export_bundle()
-        package = json.dumps(json.loads(original['package_utf8']), indent=2,
-                             ensure_ascii=False).encode()
+        package = json.loads(original['package_utf8'])
+        metadata = json.dumps(cross.portable_metadata(original), indent=2,
+                              ensure_ascii=False).encode()
+        package['metadata'] = dict(encoding='base64', data=base64.b64encode(metadata).decode(),
+                                   byte_length=len(metadata), digest=cross.sha(metadata))
+        package = json.dumps(package, indent=2, ensure_ascii=False).encode()
         wrapped = dict(package_utf8=package, descriptor_utf8=cross.wire(dict(
             transport_version='0.1.0', package_byte_length=len(package),
             package_digest=cross.sha(package))))
+        wrapped['descriptor_utf8'] = json.dumps(json.loads(wrapped['descriptor_utf8']), indent=2).encode()
         self.assertNotEqual(wrapped, original)
         # A real public import accepts this alternate wire representation.
         with initialize(self.root / 'wrapped.sqlite') as reader:
@@ -114,6 +125,96 @@ class CrossAcceptanceTests(unittest.TestCase):
             cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
             cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
         self.assertEqual(calls, [(cross.wire(self.value), self.kwargs)] * 2)
+
+    def test_replay_checks_export_descriptor(self):
+        original = self.target.export_bundle()
+        descriptor = json.loads(original['descriptor_utf8'])
+        for field, value in [('transport_version', 'wrong'), ('package_digest', cross.sha(b'wrong')),
+                             ('package_byte_length', len(original['package_utf8']) + 1),
+                             ('package_byte_length', float(len(original['package_utf8']))),
+                             ('unexpected', True)]:
+            changed = dict(original, descriptor_utf8=cross.wire({**descriptor, field: value}))
+            with self.subTest(field=field, value=value), patch.object(
+                    self.target, 'export_bundle', return_value=changed):
+                with self.assertRaises(AssertionError):
+                    cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+        with patch.object(self.target, 'export_bundle', return_value=dict(
+                original, descriptor_utf8=b'{}')):
+            with self.assertRaises(AssertionError):
+                cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+
+    def test_replay_checks_metadata_and_payload_transport(self):
+        original = json.loads(self.target.export_bundle()['package_utf8'])
+        def rejected(package):
+            with patch.object(self.target, 'export_bundle', return_value=packaged(package)):
+                with self.assertRaises((AssertionError, ValueError)):
+                    cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+        for location in ('metadata', 'payload'):
+            entry = original['metadata'] if location == 'metadata' else original['payloads'][0]
+            for field, value in [('encoding', 'wrong'), ('digest', cross.sha(b'wrong')),
+                                 ('byte_length', entry['byte_length'] + 1),
+                                 ('byte_length', float(entry['byte_length'])),
+                                 ('data', entry['data'] + '\n'), ('data', entry['data'] + '='),
+                                 ('unexpected', True)]:
+                changed = copy.deepcopy(original)
+                target = changed['metadata'] if location == 'metadata' else changed['payloads'][0]
+                target[field] = value
+                with self.subTest(location=location, field=field, value=value):
+                    rejected(changed)
+        for defect in ('missing', 'duplicate', 'extra', 'changed-bytes', 'noncanonical-base64'):
+            changed = copy.deepcopy(original)
+            if defect == 'missing':
+                changed['payloads'] = []
+            elif defect == 'duplicate':
+                changed['payloads'].append(copy.deepcopy(changed['payloads'][0]))
+            elif defect == 'extra':
+                changed['payloads'].append({**changed['payloads'][0], 'blob_ref': 'blob:unrequested'})
+            else:
+                # Self-consistent transport must still match the metadata Blob.
+                raw = b'X' + self.payload[0][2][1:]
+                entry = changed['payloads'][0]
+                entry.update(data=base64.b64encode(raw).decode(), byte_length=len(raw), digest=cross.sha(raw))
+                if defect == 'noncanonical-base64':
+                    # Same original bytes; nonzero unused padding bits are invalid.
+                    entry.update(original['payloads'][0])
+                    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+                    data = entry['data']
+                    self.assertTrue(data.endswith('='))
+                    entry['data'] = data[:-2] + alphabet[alphabet.index(data[-2]) + 1] + '='
+                    self.assertEqual(base64.b64decode(entry['data']), self.payload[0][2])
+            with self.subTest(defect=defect):
+                rejected(changed)
+        # Rejected synthetic exports do not change the real installation/state.
+        cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
+        with initialize(self.root / 'empty.sqlite') as empty:
+            self.assertEqual(cross.portable_metadata(empty.export_bundle())['blobs'], [])
+
+    def test_export_json_is_strict_utf8_without_duplicate_keys(self):
+        original = self.target.export_bundle()
+        for layer in ('descriptor', 'package', 'metadata'):
+            for defect in ('duplicate-key', 'utf16'):
+                package = json.loads(original['package_utf8'])
+                raw = (original['descriptor_utf8'] if layer == 'descriptor' else
+                       original['package_utf8'] if layer == 'package' else
+                       base64.b64decode(package['metadata']['data']))
+                if defect == 'duplicate-key':
+                    first, = list(json.loads(raw).items())[:1]
+                    raw = cross.wire(dict([first]))[:-1] + b',' + raw[1:]
+                else:
+                    raw = raw.decode().encode('utf-16')
+                if layer == 'descriptor':
+                    changed = dict(original, descriptor_utf8=raw)
+                elif layer == 'package':
+                    changed = dict(package_utf8=raw, descriptor_utf8=cross.wire(dict(
+                        transport_version='0.1.0', package_byte_length=len(raw), package_digest=cross.sha(raw))))
+                else:
+                    package['metadata'].update(data=base64.b64encode(raw).decode(),
+                                               byte_length=len(raw), digest=cross.sha(raw))
+                    changed = packaged(package)
+                with self.subTest(layer=layer, defect=defect), patch.object(
+                        self.target, 'export_bundle', return_value=changed):
+                    with self.assertRaises((AssertionError, ValueError)):
+                        cross.assert_replay(self.target, self.value, self.kwargs, self.expected)
 
     def test_metadata_preserves_json_number_types(self):
         actual = cross.portable_metadata(self.target.export_bundle())

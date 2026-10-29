@@ -5,6 +5,7 @@ Run with --a-python /isolated/a/bin/python --b-python /isolated/b/bin/python
 """
 import argparse
 import base64
+import copy
 import hashlib
 import importlib.metadata
 import json
@@ -62,15 +63,100 @@ def portable_metadata(bundle):
     return json.loads(base64.b64decode(json.loads(bundle['package_utf8'])['metadata']['data']))
 
 
-def assert_import_preserved(actual, expected):
-    # Import adds exactly its own receipt and operation; every incoming immutable
-    # record, original timestamp and successful result must survive verbatim.
-    for name, values in expected.items():
-        if name not in ('import_receipts', 'idempotency_records'):
-            assert actual[name] == values, name
-        else:
-            assert len(actual[name]) == len(values) + 1, name
-            assert all(value in actual[name] for value in values), name
+COLLECTIONS = (
+    ('artifact', 'artifacts', 'artifact_id'),
+    ('version', 'versions', 'version_id'),
+    ('content_root', 'content_roots', 'content_root_ref'),
+    ('blob', 'blobs', 'blob_ref'),
+    ('manifest', 'manifests', 'manifest_ref'),
+    ('provenance_link', 'provenance_links', 'provenance_id'),
+    ('import_receipt', 'import_receipts', 'import_receipt_id'),
+)
+
+
+def operation_for(value, result_ref, recorded_at, bundle=None):
+    # Compute the expected fingerprint from the request/input, never the output.
+    body = value['body'] if bundle is None else dict(
+        import_receipt_id=value['body']['import_receipt_id'], bundle=bundle)
+    operation = {key: value[key] for key in
+                 ('idempotency_scope_ref', 'operation_kind', 'idempotency_key')}
+    operation.update(result_ref=result_ref, recorded_at=recorded_at,
+        request_fingerprint=sha(wire(dict(contract_version=value['contract_version'],
+            idempotency_scope_ref=value['idempotency_scope_ref'],
+            operation_kind=value['operation_kind'], body=body))))
+    return operation
+
+
+def assert_response(response, operation, replayed):
+    assert response == dict(status='COMMITTED', commit_state='committed',
+        operation_kind=operation['operation_kind'], result_ref=operation['result_ref'],
+        recorded_at=operation['recorded_at'], replayed=replayed)
+    assert response['replayed'] is replayed
+
+
+def assert_metadata(ledger, expected):
+    def normalized(metadata):
+        metadata = copy.deepcopy(metadata)
+        metadata.setdefault('import_receipts', [])
+        # Top-level records are sets; nested parent/manifest order is meaningful.
+        for name in [item[1] for item in COLLECTIONS] + ['idempotency_records']:
+            metadata[name] = sorted(metadata[name], key=wire)
+        return metadata
+    expected = normalized(expected)
+    assert normalized(portable_metadata(ledger.export_bundle())) == expected
+    records = {}
+    for kind, collection, identity in COLLECTIONS:
+        for record in expected[collection]:
+            records[record[identity]] = record
+            assert ledger.get_record(kind, record[identity]) == record
+    for operation in expected['idempotency_records']:
+        assert ledger.get_operation(operation['idempotency_scope_ref'],
+            operation['operation_kind'], operation['idempotency_key']) == dict(
+                idempotency_record=operation, result=records[operation['result_ref']])
+    assert ledger.verify() == dict(
+        counts={key: len(value) for key, value in expected.items() if isinstance(value, list)},
+        verified_blob_count=len(expected['blobs']),
+        verified_byte_length=sum(item['byte_length'] for item in expected['blobs']))
+
+
+def assert_import_preserved(ledger, incoming, value, response):
+    receipt = dict(import_receipt_id=value['body']['import_receipt_id'],
+        recorded_at=response['recorded_at'],
+        imported_artifact_refs=sorted(item['artifact_id'] for item in incoming['artifacts']))
+    operation = operation_for(value, receipt['import_receipt_id'], receipt['recorded_at'], incoming)
+    assert_response(response, operation, False)
+    expected = copy.deepcopy(incoming)
+    expected.setdefault('import_receipts', []).append(receipt)
+    expected['idempotency_records'].append(operation)
+    assert_metadata(ledger, expected)
+    return expected
+
+
+def assert_replay(ledger, value, kwargs, expected):
+    operation, = [item for item in expected['idempotency_records'] if all(
+        item[key] == value[key] for key in ('idempotency_scope_ref', 'operation_kind', 'idempotency_key'))]
+    before = ledger.export_bundle()
+    response = ledger.execute(wire(value), **kwargs)
+    assert_response(response, operation, True)
+    assert ledger.export_bundle() == before
+
+
+def assert_append_committed(ledger, before, value, response):
+    # This scenario supplies new records and references an already imported Blob.
+    expected = copy.deepcopy(before)
+    when = response['recorded_at']
+    version = {**value['body']['version'], 'recorded_at': when}
+    expected['versions'].append(version)
+    for kind, collection, identity in COLLECTIONS[2:-1]:
+        for record in value['body'][collection]:
+            assert all(old[identity] != record[identity] for old in before[collection])
+            expected[collection].append({**record, 'recorded_at': when}
+                                       if kind == 'provenance_link' else copy.deepcopy(record))
+    operation = operation_for(value, version['version_id'], when)
+    expected['idempotency_records'].append(operation)
+    assert_response(response, operation, False)
+    assert_metadata(ledger, expected)
+    return expected
 
 
 def worker(mode, root):
@@ -110,6 +196,7 @@ def worker(mode, root):
         with public.initialize(a_db) as ledger:
             result = ledger.execute(wire(original_import), package=source['package_utf8'],
                                     descriptor=source['descriptor_utf8'])
+            assert_import_preserved(ledger, portable_metadata(source), original_import, result)
             (root / 'import-a-result.json').write_bytes(wire(result))
             bundle = ledger.export_bundle()
             (root / 'a-metadata.json').write_bytes(wire(portable_metadata(bundle)))
@@ -131,40 +218,35 @@ def worker(mode, root):
         call_cli('init', '--db', b_db)
         result = call_cli('write', '--db', b_db, '--request', root / 'import-b.json',
                          '--package', root / 'a.package', '--descriptor', root / 'a.descriptor')
-        assert result['replayed'] is False
         with public.open(b_db) as ledger:
-            assert_import_preserved(portable_metadata(ledger.export_bundle()),
-                                    json.loads((root / 'a-metadata.json').read_bytes()))
+            expected_meta = assert_import_preserved(ledger,
+                json.loads((root / 'a-metadata.json').read_bytes()), imported, result)
             assert ledger.get_history('artifact:cross') == json.loads((root / 'original-history.json').read_bytes())
             assert ledger.get_history('artifact:empty')['versions'] == []
             for _, identity, raw in original:
                 assert ledger.read_blob(identity) == raw
             for old in (create(), append('original', [], original)):
-                replay = ledger.execute(wire(old), **({'payloads': {identity: raw for _, identity, raw in original}}
-                    if old['operation_kind'] == 'append_version' else {}))
-                assert replay['replayed'] is True
+                assert_replay(ledger, old, {'payloads': {identity: raw for _, identity, raw in original}}
+                    if old['operation_kind'] == 'append_version' else {}, expected_meta)
             def replay_original_import():
-                before_replay = portable_metadata(ledger.export_bundle())
-                replay = ledger.execute((root / 'import-a-original.json').read_bytes(),
-                                        package=(root / 'source.package').read_bytes(),
-                                        descriptor=(root / 'source.descriptor').read_bytes())
-                expected_result = json.loads((root / 'import-a-result.json').read_bytes())
-                expected_result['replayed'] = True
-                assert replay == expected_result
-                assert portable_metadata(ledger.export_bundle()) == before_replay
+                assert_replay(ledger, json.loads((root / 'import-a-original.json').read_bytes()),
+                    dict(package=(root / 'source.package').read_bytes(),
+                         descriptor=(root / 'source.descriptor').read_bytes()), expected_meta)
             replay_original_import()
             new_contents = [('new/文件', 'blob:b-new', b'B independently appended\n'), original[0]]
             new = append('b-new', ['version:merge'], new_contents)
             # Reused bytes remain part of the closure, with no need to retransmit.
             new['body']['blobs'] = [item for item in new['body']['blobs'] if item['blob_ref'] == 'blob:b-new']
-            ledger.execute(wire(new), payloads={'blob:b-new': b'B independently appended\n'})
+            response = ledger.execute(wire(new), payloads={'blob:b-new': b'B independently appended\n'})
+            expected_meta = assert_append_committed(ledger, expected_meta, new, response)
             replay_original_import()
-            replay = ledger.execute(wire(imported), package=(root / 'a.package').read_bytes(),
-                                    descriptor=(root / 'a.descriptor').read_bytes())
-            assert replay['replayed'] is True and replay['recorded_at'] == result['recorded_at']
+            assert_replay(ledger, imported, dict(package=(root / 'a.package').read_bytes(),
+                descriptor=(root / 'a.descriptor').read_bytes()), expected_meta)
             bundle = ledger.export_bundle()
             (root / 'b.package').write_bytes(bundle['package_utf8'])
             (root / 'b.descriptor').write_bytes(bundle['descriptor_utf8'])
+            # The checked output's actual array order participates in the next
+            # import fingerprint, even though record-set comparison ignores it.
             (root / 'b-metadata.json').write_bytes(wire(portable_metadata(bundle)))
             (root / 'b-history.json').write_bytes(wire(ledger.get_history('artifact:cross')))
             assert ledger.verify()['counts']['versions'] == 5
@@ -173,7 +255,7 @@ def worker(mode, root):
         with public.open(b_db) as ledger:
             assert ledger.read_blob('blob:b-new') == b'B independently appended\n'
             assert ledger.get_history('artifact:cross') == json.loads((root / 'b-history.json').read_bytes())
-            assert ledger.verify()['counts']['import_receipts'] == 2
+            assert_metadata(ledger, json.loads((root / 'b-metadata.json').read_bytes()))
     else:
         before = sha(b_db.read_bytes())
         try:
@@ -184,17 +266,15 @@ def worker(mode, root):
             raise AssertionError('A opened B physical format')
         assert sha(b_db.read_bytes()) == before
         with public.initialize(final_db) as ledger:
-            ledger.execute(wire(request('import_bundle', dict(import_receipt_id='receipt:final-a'), 'import-b')),
-                           package=(root / 'b.package').read_bytes(), descriptor=(root / 'b.descriptor').read_bytes())
+            final_import = request('import_bundle', dict(import_receipt_id='receipt:final-a'), 'import-b')
+            result = ledger.execute(wire(final_import), package=(root / 'b.package').read_bytes(),
+                                    descriptor=(root / 'b.descriptor').read_bytes())
             assert ledger.get_history('artifact:cross') == json.loads((root / 'b-history.json').read_bytes())
             assert ledger.read_blob('blob:b-new') == b'B independently appended\n'
             for _, identity, raw in original:
                 assert ledger.read_blob(identity) == raw
-            actual = portable_metadata(ledger.export_bundle())
-            # Every imported immutable record/op is retained, with exactly one new
-            # receipt and successful operation for this import.
             expected_meta = json.loads((root / 'b-metadata.json').read_bytes())
-            assert_import_preserved(actual, expected_meta)
+            assert_import_preserved(ledger, expected_meta, final_import, result)
             assert ledger.verify()['verified_blob_count'] == 4
     return dict(step=mode, status='PASS', python=platform.python_version(),
                 distribution=expected, installed_module=True)

@@ -17,6 +17,15 @@ from test_public_contract import append, create, import_request, repackage, sha,
 
 KINDS = ('artifact', 'version', 'content_root', 'blob', 'manifest',
          'provenance_link', 'import_receipt')
+COLLECTIONS = (
+    ('artifact', 'artifacts', 'artifact_id'),
+    ('version', 'versions', 'version_id'),
+    ('content_root', 'content_roots', 'content_root_ref'),
+    ('blob', 'blobs', 'blob_ref'),
+    ('manifest', 'manifests', 'manifest_ref'),
+    ('provenance_link', 'provenance_links', 'provenance_id'),
+    ('import_receipt', 'import_receipts', 'import_receipt_id'),
+)
 OTHER_TIME = '2000-01-01T00:00:00.000000Z'
 
 
@@ -95,6 +104,31 @@ class ImportConflictTests(unittest.TestCase):
 
     def snapshot(self, ledger):
         return ledger.export_bundle(), ledger.verify()
+
+    def assert_bundle_preserved(self, ledger, bundle):
+        """Compare every public record and actual byte, not just row counts."""
+        expected = metadata(bundle)
+        records = {}
+        for kind, collection, identity in COLLECTIONS:
+            for record in expected[collection]:
+                records[record[identity]] = record
+                self.assertEqual(ledger.get_record(kind, record[identity]), record)
+        for artifact in expected['artifacts']:
+            versions = sorted((item for item in expected['versions']
+                               if item['artifact_id'] == artifact['artifact_id']),
+                              key=lambda item: item['version_id'])
+            version_ids = {item['version_id'] for item in versions}
+            provenance = sorted((item for item in expected['provenance_links']
+                                 if item['subject_version_ref'] in version_ids),
+                                key=lambda item: item['provenance_id'])
+            self.assertEqual(ledger.get_history(artifact['artifact_id']),
+                             dict(artifact=artifact, versions=versions, provenance_links=provenance))
+        for operation in expected['idempotency_records']:
+            self.assertEqual(self.operation(ledger, operation),
+                             dict(idempotency_record=operation, result=records[operation['result_ref']]))
+        for payload in json.loads(bundle['package_utf8'])['payloads']:
+            self.assertEqual(ledger.read_blob(payload['blob_ref']),
+                             base64.b64decode(payload['data'], validate=True))
 
     def operation(self, ledger, request):
         return ledger.get_operation(request['idempotency_scope_ref'],
@@ -177,8 +211,11 @@ class ImportConflictTests(unittest.TestCase):
             with self.subTest(field=field):
                 request = import_request('receipt:' + field, 'source:empty')
                 request[field] = value
+                retained = self.target.export_bundle()
                 result = self.target.execute(wire(request), **arguments(self.bundle))
                 self.assertFalse(result['replayed'])
+                self.assert_bundle_preserved(self.target, retained)
+                self.assert_bundle_preserved(self.target, self.bundle)
                 before = self.snapshot(self.target)
                 self.assertEqual(self.target.execute(wire(request), **arguments(self.bundle)),
                                  {**result, 'replayed': True})
@@ -198,6 +235,7 @@ class ImportConflictTests(unittest.TestCase):
 
     def test_identical_history_converges_and_replays_without_duplicate_rows(self):
         first = self.import_source()
+        retained = self.target.export_bundle()
         before = self.target.verify()['counts']
         def reverse_collections(meta):
             for value in meta.values():
@@ -208,8 +246,8 @@ class ImportConflictTests(unittest.TestCase):
         expected = {**before, 'import_receipts': before['import_receipts'] + 1,
                     'idempotency_records': before['idempotency_records'] + 1}
         self.assertEqual(self.target.verify()['counts'], expected)
-        for request, _ in self.originals:
-            self.assertEqual(self.operation(self.target, request), self.operation(self.source, request))
+        self.assert_bundle_preserved(self.target, retained)
+        self.assert_bundle_preserved(self.target, self.bundle)
         receipt = self.target.get_record('import_receipt', 'receipt:next')
         self.assertEqual(receipt['imported_artifact_refs'], ['alternate:artifact', 'source:artifact'])
         before_replay = self.snapshot(self.target)
@@ -263,6 +301,8 @@ class ImportConflictTests(unittest.TestCase):
                         self.assertEqual(self.snapshot(reopened), before)
                         result = reopened.execute(wire(import_request()), **arguments(self.bundle))
                         self.assertFalse(result['replayed'])
+                        self.assert_bundle_preserved(reopened, before[0])
+                        self.assert_bundle_preserved(reopened, self.bundle)
                         committed = self.snapshot(reopened)
                         self.assertEqual(reopened.execute(wire(import_request()), **arguments(self.bundle)),
                                          {**result, 'replayed': True})
@@ -293,6 +333,8 @@ class ImportConflictTests(unittest.TestCase):
                              ('DURABILITY_UNKNOWN', 'unknown'))
         with open_ledger(self.path) as target:
             original = self.operation(target, import_request())['idempotency_record']
+            self.assert_bundle_preserved(target, before[0])
+            self.assert_bundle_preserved(target, self.bundle)
             committed = self.snapshot(target)
             replay = target.execute(wire(import_request()), **arguments(self.bundle))
             self.assertTrue(replay['replayed'])

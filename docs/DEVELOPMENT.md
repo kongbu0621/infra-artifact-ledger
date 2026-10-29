@@ -4,6 +4,28 @@
 
 本文的接续说明从 README 迁入；详细验证、失败现场和审批记录仍保留在各自原文档中。文档整理不新增执行结果，也不改变已有授权、产品接口或验收状态。
 
+## A4 冲突请求多进程验收（2026-10-29）
+
+按 Owner 的继续推进指令补 A4-09 的冲突请求竞争，新增 [`test_concurrent_conflicts.py`](../implementations/independent_b/tests/test_concurrent_conflicts.py)。本批仅增加验收与接续记录，没有发现需要修改的运行实现；B 继续使用已安装的 `cebf69441666a01a1c752627df06d511b50f38b6`（发行版本 `0.1.0a1`），A 继续使用已有项目环境中的 `0.2.0a1`。两套环境分开，均从仓库外用 `-I` 运行，并核对父子进程实际导入路径；没有新建虚拟环境或安装包。
+
+| 竞争请求 | 最终判定 |
+| --- | --- |
+| create 同幂等三元组、不同 Artifact | 一个新提交；另一输入最终 IDEMPOTENCY_CONFLICT |
+| create 同 Artifact ID、不同 key | 一个新提交；另一输入最终 IDENTITY_CONFLICT |
+| append 同幂等三元组、不同版本及内容 | 一个新提交；另一输入最终 IDEMPOTENCY_CONFLICT |
+| append 同 Version ID、不同 key 及内容 | 一个新提交；另一输入最终 IDENTITY_CONFLICT |
+| import 同幂等三元组及 Receipt、不同完整包 | 一个新提交；另一输入最终 IDEMPOTENCY_CONFLICT |
+| import 同 Receipt ID、不同 key 及完整包 | 一个新提交；另一输入最终 IDENTITY_CONFLICT |
+| create 与 append 争用同一个跨类型 owned ID | 一个新提交；另一输入最终 IDENTITY_CONFLICT |
+
+每项使用三个新目标库，每库先保存待保留的 Artifact、版本、Manifest、Provenance 和非空/空 Blob。两个实际子进程各自打开连接并报告就绪，父进程才释放管道屏障；不修改产品锁、事务、时钟或 SQL。两进程退出后重新 open，用独立计算的请求指纹及“原状态 + 胜出请求”比较完整导出、全部记录、幂等结果、完整 history、实际 bytes 与 verify，再核对败方原请求和胜方重放均不新增记录。import 输入还包含自己的历史 Receipt 及三类操作，拒绝方的包不能留下部分记录或内容。
+
+**A/B 安装态各 7 项通过、零失败、零跳过，各完成 21 次双进程竞争（42 个写入子进程）。** B 的 21 个败方首次均为 `BUSY/not_committed`；待两进程退出、原状态与胜出结果核对后，原请求各重试一次，9 个得到 IDEMPOTENCY_CONFLICT、12 个得到 IDENTITY_CONFLICT，均为 not_committed。A 首次已分别返回上述 9/12 个冲突；相同原请求再次拒绝，状态未变。两种实现均实际出现过左右两方胜出，但不以有限轮次声称穷尽操作系统调度。新增测试文件通过优化级别 0/1/2 编译。
+
+环境为 GX10 / Linux aarch64 / Python 3.12.3 / SQLite 3.45.1。A 的 931 个、B 的 523 个非缓存安装文件前后逐一一致，B 七个运行模块与当前源码一致。输入、子进程返回、原/预期记录、完整合成数据库及核对结果留在忽略的私有 A4 目录。已有同请求竞争、COMMIT 锁、失败原子性和四进程互通证据继续复用；本批没有重跑这些检查、A2/A3 原业务或 NAS 作业，没有切换服务或部署。
+
+本批完成 A4-09 上述冲突竞争子项，不把进程退出核对等同于掉电耐久性或全量并发证明。其余容量阈值、未覆盖 I/O/故障组合及 Python 3.11 仍待验证；A3 保持所列范围内完成，A4 整体仍为 PARTIAL，完整生产资格未取得。
+
 ## A4 最新修复的安装态验收（2026-10-29）
 
 按 Owner 的继续推进指令，将固定提交 `cebf69441666a01a1c752627df06d511b50f38b6` 的 B 离线构建并更新到本机已有的 B 专用验收环境；没有另建虚拟环境，也没有把 B 安装到 A 的环境。原 B 安装完整备份并逐文件核对后才更新，旧 wheel、来源绑定和历史证据保留。本轮不是业务部署切换。

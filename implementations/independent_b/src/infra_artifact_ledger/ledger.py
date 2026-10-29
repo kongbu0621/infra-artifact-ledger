@@ -60,11 +60,12 @@ class Ledger:
     def __exit__(self, kind, value, traceback):
         try:
             self.close()
-        except Exception:
+        except BaseException:
             # Preserve the operation's error, especially committed/unknown
             # outcomes. A standalone close failure must still reach the caller.
             if kind is None:
                 raise
+            BaseException.add_note(value, 'Ledger connection cleanup also failed.')
 
     @contextmanager
     def _view(self):
@@ -75,14 +76,12 @@ class Ledger:
             self._db.execute('BEGIN')
             started = True
             yield
-        except BaseException:
+        except BaseException as error:
             try:
                 if started:
                     self._db.execute('ROLLBACK')
-            except Exception:
-                # A read's primary error must survive failed cleanup, including
-                # when the storage layer has already ended the transaction.
-                pass
+            except BaseException:
+                BaseException.add_note(error, 'Read cleanup also failed; close the handle before continuing.')
             raise
         else:
             self._db.execute('ROLLBACK')
@@ -381,6 +380,15 @@ class Ledger:
             started = False
             return response
         except BaseException as exc:
+            if not isinstance(exc, Exception):
+                # Preserve the original interruption, including lost COMMIT
+                # acknowledgement. Cleanup does not determine durable outcome.
+                try:
+                    if started and self._db.in_transaction:
+                        self._db.execute('ROLLBACK')
+                except BaseException:
+                    BaseException.add_note(exc, 'Transaction cleanup also failed; close and query the original identity before retrying.')
+                raise
             state = 'not_committed'
             details = None
             if committed or replaying:
@@ -388,10 +396,9 @@ class Ledger:
                 try:
                     if started and self._db.in_transaction:
                         self._db.execute('ROLLBACK')
-                except Exception:
-                    # Cleanup cannot make an already confirmed commit unknown
-                    # or replace the original replay error/interruption.
-                    pass
+                except BaseException:
+                    # Cleanup cannot make an already confirmed commit unknown.
+                    BaseException.add_note(exc, 'Committed transaction cleanup also failed; close the handle before continuing.')
             elif started:
                 try:
                     active = self._db.in_transaction
@@ -404,12 +411,10 @@ class Ledger:
                         self._db.execute('ROLLBACK')
                     if self._db.in_transaction:
                         raise RuntimeError('rollback incomplete')
-                except Exception as rollback_error:
+                except BaseException as rollback_error:
                     raise c.LedgerError('DURABILITY_UNKNOWN', 'cannot confirm transaction rollback', 'unknown') from rollback_error
             elif attempted_commit:
                 raise c.LedgerError('DURABILITY_UNKNOWN', 'commit outcome unavailable', 'unknown') from exc
-            if not isinstance(exc, Exception):
-                raise
             if isinstance(exc, c.LedgerError):
                 exc.commit_state = state
                 if details is not None:

@@ -87,7 +87,7 @@ class Ledger:
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.close()
-        except Exception:
+        except BaseException:
             if exc_value is None:
                 raise
             # Cleanup must not replace the operation's known commit state or
@@ -416,8 +416,8 @@ class Ledger:
                 try:
                     if self._store.connection.in_transaction:
                         self._store.rollback()
-                except Exception:
-                    pass
+                except BaseException:
+                    BaseException.add_note(error, "Committed transaction cleanup also failed; close the handle before continuing.")
                 public = _error(error, "committed")
                 # A known commit never becomes BUSY/not_committed/unknown.
                 if public.code not in ("INTEGRITY_FAILURE", "IO_ERROR", "INTERNAL_ERROR"):
@@ -433,7 +433,7 @@ class Ledger:
                         self._store.rollback()
                     if self._store.connection.in_transaction:
                         raise RuntimeError("Rollback did not end the transaction")
-                except Exception as rollback_error:
+                except BaseException as rollback_error:
                     raise LedgerError("DURABILITY_UNKNOWN", "Commit or rollback could not be confirmed; query or retry the original identity.",
                                       "unknown") from rollback_error
             raise _error(error, "not_committed") from error

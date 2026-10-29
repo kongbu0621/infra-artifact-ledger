@@ -108,6 +108,7 @@ class ImportConflictTests(unittest.TestCase):
     def assert_bundle_preserved(self, ledger, bundle):
         """Compare every public record and actual byte, not just row counts."""
         expected = metadata(bundle)
+        expected.setdefault('import_receipts', [])
         records = {}
         for kind, collection, identity in COLLECTIONS:
             for record in expected[collection]:
@@ -134,6 +135,17 @@ class ImportConflictTests(unittest.TestCase):
         return ledger.get_operation(request['idempotency_scope_ref'],
             request['operation_kind'], request['idempotency_key'])
 
+    def assert_write_response(self, response, original, *, replayed):
+        self.assertEqual(response, dict(status='COMMITTED', commit_state='committed',
+            operation_kind=original['operation_kind'], result_ref=original['result_ref'],
+            recorded_at=original['recorded_at'], replayed=replayed))
+        self.assertIs(response['replayed'], replayed)
+
+    def assert_replay(self, ledger, request, kwargs):
+        original = self.operation(ledger, request)['idempotency_record']
+        response = ledger.execute(wire(request), **kwargs)
+        self.assert_write_response(response, original, replayed=True)
+
     def assert_import_committed(self, ledger, retained, request, bundle, response=None):
         """Check the exact import delta against the request and pre-import data."""
         incoming, expected = metadata(bundle), metadata(retained)
@@ -152,10 +164,10 @@ class ImportConflictTests(unittest.TestCase):
         self.assertEqual(observed, dict(idempotency_record=current, result=receipt))
         self.assertEqual(ledger.get_record('import_receipt', receipt['import_receipt_id']), receipt)
         if response is not None:
-            self.assertEqual(response, dict(status='COMMITTED', commit_state='committed',
-                operation_kind='import_bundle', result_ref=receipt['import_receipt_id'],
-                recorded_at=when, replayed=False))
-            self.assertIs(response['replayed'], False)
+            self.assert_write_response(response, current, replayed=False)
+        # Absence means an empty set for merging, but stays absent in the fingerprint.
+        incoming.setdefault('import_receipts', [])
+        expected.setdefault('import_receipts', [])
         for _, collection, identity in COLLECTIONS:
             records = {item[identity]: item for item in expected[collection]}
             for item in incoming[collection]:
@@ -220,10 +232,7 @@ class ImportConflictTests(unittest.TestCase):
                     self.assert_rejected('IDEMPOTENCY_CONFLICT',
                                          import_request('receipt:new', 'new'), changed)
                     self.assertEqual(self.operation(self.target, request), original)
-                    replay = self.target.execute(wire(request), **kwargs)
-                    self.assertTrue(replay['replayed'])
-                    self.assertEqual(replay['result_ref'], original['idempotency_record']['result_ref'])
-                    self.assertEqual(replay['recorded_at'], original['idempotency_record']['recorded_at'])
+                    self.assert_replay(self.target, request, kwargs)
 
     def test_duplicate_historical_triples_and_current_triple_collision(self):
         for request, _ in self.originals:
@@ -252,7 +261,7 @@ class ImportConflictTests(unittest.TestCase):
         self.assert_rejected('IDENTITY_CONFLICT', import_request(key='another-key'),
                              arguments(self.bundle))
         before = self.snapshot(self.target)
-        self.assertTrue(self.import_source()['replayed'])
+        self.assert_replay(self.target, import_request(), arguments(self.bundle))
         self.assertEqual(self.snapshot(self.target), before)
 
     def test_same_key_with_different_kind_or_scope_is_not_a_collision(self):
@@ -265,8 +274,7 @@ class ImportConflictTests(unittest.TestCase):
                 result = self.target.execute(wire(request), **arguments(self.bundle))
                 self.assert_import_committed(self.target, retained, request, self.bundle, result)
                 before = self.snapshot(self.target)
-                self.assertEqual(self.target.execute(wire(request), **arguments(self.bundle)),
-                                 {**result, 'replayed': True})
+                self.assert_replay(self.target, request, arguments(self.bundle))
                 self.assertEqual(self.snapshot(self.target), before)
 
     def test_historical_receipt_record_conflicts_preserve_original(self):
@@ -282,7 +290,7 @@ class ImportConflictTests(unittest.TestCase):
                     import_request('receipt:new', 'new'), repackage(self.bundle, change))
 
     def test_identical_history_converges_and_replays_without_duplicate_rows(self):
-        first = self.import_source()
+        self.import_source()
         retained = self.target.export_bundle()
         def reverse_collections(meta):
             for value in meta.values():
@@ -296,16 +304,36 @@ class ImportConflictTests(unittest.TestCase):
         reordered_bundle = dict(package_utf8=reordered['package'], descriptor_utf8=reordered['descriptor'])
         self.assert_import_committed(self.target, retained, request, reordered_bundle, result)
         before_replay = self.snapshot(self.target)
-        self.assertEqual(self.import_source(), {**first, 'replayed': True})
-        self.assertEqual(self.target.execute(wire(request), **reordered), {**result, 'replayed': True})
+        self.assert_replay(self.target, import_request(), arguments(self.bundle))
+        self.assert_replay(self.target, request, reordered)
         # Transport whitespace is outside the semantic request fingerprint.
         package = json.dumps(json.loads(reordered['package']), indent=2).encode()
         descriptor = json.loads(reordered['descriptor'])
         descriptor.update(package_byte_length=len(package), package_digest=sha(package))
-        self.assertEqual(self.target.execute(wire(request), package=package,
-                         descriptor=wire(descriptor)), {**result, 'replayed': True})
+        self.assert_replay(self.target, request, dict(package=package, descriptor=wire(descriptor)))
         self.assertEqual(self.snapshot(self.target), before_replay)
         self.assert_rejected('IDEMPOTENCY_CONFLICT', request, arguments(self.bundle))
+        self.assertEqual(self.source.export_bundle(), self.bundle)
+
+    def test_optional_empty_receipts_converge_but_keep_distinct_fingerprints(self):
+        def remove_receipts(meta):
+            meta.pop('import_receipts')
+            meta['idempotency_records'] = [item for item in meta['idempotency_records']
+                                           if item['operation_kind'] != 'import_bundle']
+        absent = repackage(self.bundle, remove_receipts)
+        absent_bundle = dict(package_utf8=absent['package'], descriptor_utf8=absent['descriptor'])
+        explicit = repackage(absent_bundle, lambda meta: meta.update(import_receipts=[]))
+        for label, kwargs, other in (('absent', absent, explicit), ('empty', explicit, absent)):
+            with self.subTest(form=label):
+                request = import_request('receipt:' + label, 'import:' + label)
+                bundle = dict(package_utf8=kwargs['package'], descriptor_utf8=kwargs['descriptor'])
+                before = self.target.export_bundle()
+                response = self.target.execute(wire(request), **kwargs)
+                self.assert_import_committed(self.target, before, request, bundle, response)
+                committed = self.snapshot(self.target)
+                self.assert_replay(self.target, request, kwargs)
+                self.assertEqual(self.snapshot(self.target), committed)
+                self.assert_rejected('IDEMPOTENCY_CONFLICT', request, other)
         self.assertEqual(self.source.export_bundle(), self.bundle)
 
     def test_late_invalid_record_reference_or_payload_preserves_target(self):
@@ -355,8 +383,7 @@ class ImportConflictTests(unittest.TestCase):
                         result = reopened.execute(wire(import_request()), **arguments(self.bundle))
                         self.assert_import_committed(reopened, before[0], import_request(), self.bundle, result)
                         committed = self.snapshot(reopened)
-                        self.assertEqual(reopened.execute(wire(import_request()), **arguments(self.bundle)),
-                                         {**result, 'replayed': True})
+                        self.assert_replay(reopened, import_request(), arguments(self.bundle))
                         self.assertEqual(self.snapshot(reopened), committed)
 
     def test_import_unknown_outcomes_require_readback_before_retry(self):
@@ -377,13 +404,9 @@ class ImportConflictTests(unittest.TestCase):
             self.assertEqual((caught.exception.code, caught.exception.commit_state),
                              ('DURABILITY_UNKNOWN', 'unknown'))
         with open_ledger(self.path) as target:
-            original = self.operation(target, import_request())['idempotency_record']
             self.assert_import_committed(target, before[0], import_request(), self.bundle)
             committed = self.snapshot(target)
-            replay = target.execute(wire(import_request()), **arguments(self.bundle))
-            self.assertTrue(replay['replayed'])
-            self.assertEqual(replay['result_ref'], original['result_ref'])
-            self.assertEqual(replay['recorded_at'], original['recorded_at'])
+            self.assert_replay(target, import_request(), arguments(self.bundle))
             self.assertEqual(self.snapshot(target), committed)
 
 

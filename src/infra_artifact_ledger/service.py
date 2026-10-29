@@ -104,16 +104,21 @@ class Ledger:
 
     @contextmanager
     def _read(self):
+        began = False
         try:
+            began = not self._store.connection.in_transaction
             self._store.begin()
             yield
             self._store.rollback()
-        except Exception as error:
-            try:
-                if self._store.connection.in_transaction:
-                    self._store.rollback()
-            except Exception:
-                pass
+        except BaseException as error:
+            if began:
+                try:
+                    if self._store.connection.in_transaction:
+                        self._store.rollback()
+                except BaseException:
+                    BaseException.add_note(error, "Read transaction cleanup also failed; close the handle before continuing.")
+            if not isinstance(error, Exception):
+                raise
             raise _error(error, "not_applicable") from error
 
     def _metadata(self):
@@ -347,8 +352,8 @@ class Ledger:
                 raise LedgerError("INVALID_INPUT", "Supplied request_fingerprint does not match the request.")
             if self._store.closed:
                 raise LedgerError("IO_ERROR", "Ledger handle is closed.")
-            # Include a failure immediately after BEGIN in rollback handling.
-            began = True
+            # Include an interrupted BEGIN, without owning a preexisting transaction.
+            began = not self._store.connection.in_transaction
             self._store.begin(write=True)
             previous = self._store.operation(*_tuple(request))
             if previous is not None:
@@ -395,7 +400,16 @@ class Ledger:
             self._store.commit()
             committed = True
             return self._success(operation_record)
-        except Exception as error:
+        except BaseException as error:
+            if not isinstance(error, Exception):
+                if began:
+                    try:
+                        if self._store.connection.in_transaction:
+                            self._store.rollback()
+                    except BaseException:
+                        BaseException.add_note(error, "Transaction cleanup also failed; close and query the original identity before retrying.")
+                # An interruption is not a success or proof that COMMIT failed.
+                raise
             if isinstance(error, _RejectedReplayInput):
                 committed = False
             if committed:

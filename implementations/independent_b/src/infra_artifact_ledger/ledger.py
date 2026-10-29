@@ -68,12 +68,17 @@ class Ledger:
 
     @contextmanager
     def _view(self):
-        self._db.execute('BEGIN')
+        # BEGIN can take effect before an exception reaches the caller. Include
+        # that attempt in cleanup, but never roll back a preexisting transaction.
+        started = not self._db.in_transaction
         try:
+            self._db.execute('BEGIN')
+            started = True
             yield
         except BaseException:
             try:
-                self._db.execute('ROLLBACK')
+                if started:
+                    self._db.execute('ROLLBACK')
             except Exception:
                 # A read's primary error must survive failed cleanup, including
                 # when the storage layer has already ended the transaction.

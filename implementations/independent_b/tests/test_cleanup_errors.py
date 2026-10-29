@@ -286,6 +286,8 @@ def open_fault(path):
     ledger = real_open(path)
     real = ledger._db
     class Fault:
+        def __getattr__(self, name):
+            return getattr(real, name)
         def execute(self, sql, *args):
             if sql.startswith('SELECT') and sys.argv[2] != '0':
                 error = sqlite3.OperationalError('primary read failure')

@@ -61,6 +61,9 @@ class ReadErrorTests(unittest.TestCase):
                 for index, read in enumerate(reads):
                     with self.subTest(code=code, statement=statement, read=index):
                         class Fault:
+                            def __getattr__(self, name):
+                                return getattr(real, name)
+
                             def execute(self, sql, *args):
                                 if sql.startswith(statement):
                                     raise database_error(code)

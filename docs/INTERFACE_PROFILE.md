@@ -205,7 +205,7 @@ CLI/library 传输请求的 body 恰含 `import_receipt_id`，另提供 §7 的 
 
 ## 6. 指纹、重试、提交与错误
 
-语义指纹仅覆盖固定 envelope：`contract_version`、`idempotency_scope_ref`、`operation_kind`、`body`。create/append 的 body 如 §5；import 使用包中全部 parsed metadata 构造 bundle，保留历史 recorded_at 和历史幂等记录。当前 key、当前成功时间、响应、文件位置和字节封装不加入 envelope。若调用者提供 request_fingerprint，服务端仍重算并比对。
+语义指纹仅覆盖固定 envelope：`contract_version`、`idempotency_scope_ref`、`operation_kind`、`body`。create/append 的 body 如 §5；import 使用包中全部 parsed metadata 构造 bundle，保留历史 recorded_at 和历史幂等记录。当前 key、当前成功时间、响应、文件位置和字节封装不加入 envelope。若调用者提供 request_fingerprint，服务端仍重算并比对；与本次请求的重算值不符时，返回 `INVALID_INPUT/not_committed`（CLI 退出码 2），在查询原成功记录或启动写事务前拒绝。这与请求自身有效、但同一幂等三元组已绑定另一指纹时的 `IDEMPOTENCY_CONFLICT` 分开；不将错误的调用者指纹断言解释为持久内容损坏。
 
 确定编码：已声明的 ASCII 对象键按 ASCII 升序；数组保持输入序；可选字段缺省保持缺省；字符串不做 Unicode normalization。双引号、反斜杠转义；控制字符使用 JSON 的 `\b`、`\t`、`\n`、`\f`、`\r`，其余 U+0000–U+001F 使用小写 `\u00xx`；其余合法字符直接 UTF-8 输出，不转义 `/`。整数使用无前导零十进制；不加空白、BOM 或换行。对结果 bytes 算 SHA-256。
 

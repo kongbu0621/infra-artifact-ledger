@@ -257,7 +257,7 @@ class Ledger:
                 idempotency_scope_ref=request['idempotency_scope_ref'], operation_kind=kind, body=body)))
             if 'request_fingerprint' in request:
                 c.digest_shape(request['request_fingerprint'])
-                c.require(request['request_fingerprint'] == fingerprint, 'request fingerprint', 'INTEGRITY_FAILURE')
+                c.require(request['request_fingerprint'] == fingerprint, 'request fingerprint', 'INVALID_INPUT')
             self._db.execute('BEGIN IMMEDIATE')
             started = True
             objects, operations = self._objects(), self._operations()

@@ -139,18 +139,23 @@ class Ledger:
         objects = self._objects()
         return c.success_data(_history(objects, artifact_id, artifact))
 
-    @_read
-    def get_operation(self, scope, kind, key):
-        query = dict(idempotency_scope_ref=scope, operation_kind=kind, idempotency_key=key)
-        triple = c.operation_identity(query)
+    def _operation(self, triple):
         row = self._db.execute('SELECT document FROM b_operations WHERE scope=? AND kind=? AND request_key=?', triple).fetchone()
-        c.require(row is not None, 'operation not found', 'NOT_FOUND')
+        if row is None:
+            return None
         try:
             op = c.parse(row[0])
             c.operation(op)
             c.require(c.operation_identity(op) == triple, 'stored operation identity', 'INTEGRITY_FAILURE')
+            return op
         except c.LedgerError as exc:
             raise c.LedgerError('INTEGRITY_FAILURE', 'invalid stored operation') from exc
+
+    @_read
+    def get_operation(self, scope, kind, key):
+        query = dict(idempotency_scope_ref=scope, operation_kind=kind, idempotency_key=key)
+        op = self._operation(c.operation_identity(query))
+        c.require(op is not None, 'operation not found', 'NOT_FOUND')
         return c.success_data(dict(idempotency_record=op, result=self._record(c.RESULT[kind], op['result_ref'])))
 
     @_read
@@ -260,12 +265,17 @@ class Ledger:
                 c.require(request['request_fingerprint'] == fingerprint, 'request fingerprint', 'INVALID_INPUT')
             self._db.execute('BEGIN IMMEDIATE')
             started = True
-            objects, operations = self._objects(), self._operations()
-            c.graph(objects, operations)
-            if triple in operations:
-                original = operations[triple]
+            original = self._operation(triple)
+            if original is not None:
                 c.require(original['request_fingerprint'] == fingerprint,
                           'key bound to another request', 'IDEMPOTENCY_CONFLICT')
+                # Establish the known commit before checking retained metadata.
+                # Damage to other records cannot turn it into an uncommitted write.
+                replaying = True
+            objects, operations = self._objects(), self._operations()
+            c.graph(objects, operations)
+            if replaying:
+                _check_replay_records(original, body, incoming, incoming_ops, objects, operations)
                 # A successful receipt replays before complete-history comparison:
                 # the destination may legitimately have appended since import.
                 if kind == 'append_version':
@@ -274,14 +284,16 @@ class Ledger:
                     blob_ids = set(frozen)
                 else:
                     blob_ids = set()
-                c.require(frozen.keys() <= blob_ids, 'extra payload')
-                for identity in blob_ids:
-                    if identity in frozen:
-                        c.check_bytes(objects[identity][1], frozen[identity])
-                # Validate every supplied byte before classifying this as a
-                # replay of the known commit. Bad retransmissions are rejected
-                # inputs; stored-content and cleanup failures cannot undo it.
-                replaying = True
+                try:
+                    c.require(frozen.keys() <= blob_ids, 'extra payload')
+                    for identity in blob_ids:
+                        if identity in frozen:
+                            c.check_bytes(objects[identity][1], frozen[identity])
+                except c.LedgerError:
+                    # Reject bad retransmissions without claiming a successful
+                    # replay. Retained-metadata/content failures keep the commit.
+                    replaying = False
+                    raise
                 for identity in blob_ids:
                     self._blob(identity)
                 self._db.execute('ROLLBACK')
@@ -399,6 +411,40 @@ class Ledger:
     def _converge(objects, identity, kind, value):
         c.require(identity not in objects or objects[identity] == (kind, value),
                   'owned ID has different immutable record', 'IDENTITY_CONFLICT')
+
+
+def _check_replay_records(op, body, incoming, incoming_ops, objects, operations):
+    def check(kind, identity, expected, generated_time=False):
+        stored = objects.get(identity)
+        c.require(stored is not None and stored[0] == kind,
+                  'replay record missing or wrong kind', 'INTEGRITY_FAILURE')
+        actual = stored[1]
+        if generated_time:
+            actual = {key: value for key, value in actual.items() if key != 'recorded_at'}
+        c.require(actual == expected, 'replay record differs from original input', 'INTEGRITY_FAILURE')
+
+    kind = op['operation_kind']
+    if kind == 'create_artifact':
+        result_id = body['artifact']['artifact_id']
+        check('artifact', result_id, body['artifact'], True)
+    elif kind == 'append_version':
+        result_id = body['version']['version_id']
+        check('version', result_id, body['version'], True)
+    else:
+        result_id = body['import_receipt_id']
+        receipt = objects.get(result_id)
+        c.require(receipt is not None and receipt[0] == 'import_receipt',
+                  'replay receipt missing', 'INTEGRITY_FAILURE')
+        c.require(receipt[1]['imported_artifact_refs'] == sorted(
+            identity for identity, (k, _) in incoming.items() if k == 'artifact'),
+            'replay receipt artifact coverage differs', 'INTEGRITY_FAILURE')
+    c.require(op['result_ref'] == result_id, 'replay result identity differs', 'INTEGRITY_FAILURE')
+    for identity, (object_kind, value) in incoming.items():
+        check(object_kind, identity, value,
+              kind == 'append_version' and object_kind == 'provenance_link')
+    for identity, value in incoming_ops.items():
+        c.require(operations.get(identity) == value,
+                  'replay historical operation differs', 'INTEGRITY_FAILURE')
 
 
 def _history(objects, artifact_id, artifact):

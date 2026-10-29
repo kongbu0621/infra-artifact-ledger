@@ -1,4 +1,5 @@
 """Independent B's physical format. This is deliberately not A's SQLite schema."""
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import sqlite3
@@ -40,7 +41,7 @@ def connect(path):
     # Inspect the fixed header before SQLite can recover a foreign hot journal.
     # A clean-file application_id check after connecting would be too late.
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-    with os.fdopen(fd, 'rb') as source:
+    with _closing(os.fdopen(fd, 'rb')) as source:
         header = source.read(100)
     c.require(len(header) == 100 and header[:16] == b'SQLite format 3\x00'
               and int.from_bytes(header[68:72], 'big') == APPLICATION_ID
@@ -62,18 +63,37 @@ def connect(path):
         raise
 
 
-def _close_after_failure(db, primary):
+def _close_after_failure(resource, primary):
     try:
-        db.close()
+        resource.close()
     except BaseException as cleanup:
-        primary.add_note('Database close also failed: ' + type(cleanup).__name__)
+        primary.add_note('Resource close also failed: ' + type(cleanup).__name__)
+
+
+@contextmanager
+def _closing(resource):
+    # A file's normal __exit__ may replace a read/write/verification failure
+    # with a second error from flushing or closing the same handle.
+    try:
+        yield resource
+    except BaseException as primary:
+        _close_after_failure(resource, primary)
+        raise
+    else:
+        resource.close()
 
 
 def sync_directory(path):
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
     try:
         os.fsync(fd)
-    finally:
+    except BaseException as primary:
+        try:
+            os.close(fd)
+        except BaseException as cleanup:
+            primary.add_note('Directory close also failed: ' + type(cleanup).__name__)
+        raise
+    else:
         os.close(fd)
 
 
@@ -98,7 +118,7 @@ def initialize_connection(path):
             raise
         else:
             db.close()
-        with open(stage, 'rb') as source:
+        with _closing(open(stage, 'rb')) as source:
             os.fsync(source.fileno())
         # Hard-link publication is exclusive, including dangling symlinks.
         os.link(stage, path)
@@ -162,7 +182,7 @@ def publish(path, raw):
     primary = None
     try:
         fd, stage = tempfile.mkstemp(prefix='.ledger-b-output-', dir=target.parent)
-        with os.fdopen(fd, 'w+b') as stream:
+        with _closing(os.fdopen(fd, 'w+b')) as stream:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())

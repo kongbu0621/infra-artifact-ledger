@@ -110,16 +110,16 @@ class ContractTests(unittest.TestCase):
         cases = [b'\xef\xbb\xbf' + value, value + b'x', b'{"body":{},"body":{}}',
                  b'NaN', b'Infinity', b'1.0', b'1e0', b'"\\ud800"', b'"\xff"',
                  b'[' * 17 + b'0' + b']' * 17]
-        for raw in cases:
+        for index, raw in enumerate(cases):
             with self.subTest(raw=raw[:25]):
-                with self.assertRaises(LedgerError):
-                    self.ledger.execute(raw)
-        for bad in ({**create(), 'unknown': 1}, {**create(), 'contract_version': '2'},
-                    {**create(), 'profile': 'other'}, {**create(), 'operation_kind': []}):
+                code = 'RESOURCE_LIMIT' if index == len(cases)-1 else 'INVALID_INPUT'
+                self.assert_error(code, lambda: self.ledger.execute(raw), 'not_committed')
+        for bad, code in (({**create(), 'unknown': 1}, 'INVALID_INPUT'),
+                          ({**create(), 'contract_version': '2'}, 'UNSUPPORTED_VERSION'),
+                          ({**create(), 'profile': 'other'}, 'UNSUPPORTED_PROFILE'),
+                          ({**create(), 'operation_kind': []}, 'INVALID_INPUT')):
             with self.subTest(bad=bad):
-                with self.assertRaises(LedgerError) as caught:
-                    self.ledger.execute(wire(bad))
-                self.assertNotEqual(caught.exception.code, 'INTERNAL_ERROR')
+                self.assert_error(code, lambda: self.ledger.execute(wire(bad)), 'not_committed')
         self.assertEqual(self.ledger.verify()['counts']['artifacts'], 0)
 
     def test_new_empty_blob_requires_explicit_bytes(self):
@@ -219,15 +219,17 @@ class ContractTests(unittest.TestCase):
     def test_import_validation_late_failure_no_partial_records(self):
         self.seed()
         bundle = self.ledger.export_bundle()
-        mutations = [lambda p: p['payloads'].clear(),
-                     lambda p: p['payloads'].append(copy.deepcopy(p['payloads'][0])),
-                     lambda p: p['payloads'][0].update(data='YQ=='),
-                     lambda p: p['metadata'].update(data=p['metadata']['data'] + '\n')]
+        mutations = [
+            ('INTEGRITY_FAILURE', lambda p: p['payloads'].clear()),
+            ('INVALID_INPUT', lambda p: p['payloads'].append(copy.deepcopy(p['payloads'][0]))),
+            ('INTEGRITY_FAILURE', lambda p: p['payloads'].append({**p['payloads'][0], 'blob_ref': 'blob:extra'})),
+            ('INTEGRITY_FAILURE', lambda p: p['payloads'][0].update(data='YQ==')),
+            ('INVALID_INPUT', lambda p: p['metadata'].update(data=p['metadata']['data'] + '\n')),
+        ]
         with initialize(self.root / 'target.sqlite') as target:
-            for mutate in mutations:
+            for code, mutate in mutations:
                 arguments = repackage(bundle, change_package=mutate)
-                with self.assertRaises(LedgerError):
-                    target.execute(wire(import_request()), **arguments)
+                self.assert_error(code, lambda: target.execute(wire(import_request()), **arguments), 'not_committed')
                 self.assertEqual(target.verify()['counts']['artifacts'], 0)
 
     def test_import_erased_receipt_collision_and_historical_key_conflict(self):

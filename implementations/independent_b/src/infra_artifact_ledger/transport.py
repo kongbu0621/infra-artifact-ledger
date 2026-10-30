@@ -29,7 +29,8 @@ def unpack(package, descriptor):
         c.fields(entry, ('blob_ref', 'encoding', 'data', 'byte_length', 'digest'))
         c.stable(entry['blob_ref'])
         identity = entry['blob_ref']
-        c.require(identity in expected and identity not in payloads, 'payload coverage')
+        c.require(identity not in payloads, 'duplicate payload')
+        c.require(identity in expected, 'extra payload', 'INTEGRITY_FAILURE')
         raw = decode_entry({key: item for key, item in entry.items() if key != 'blob_ref'},
                            min(c.BLOB, c.PAYLOAD - total))
         total += len(raw)

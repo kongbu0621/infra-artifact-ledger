@@ -291,7 +291,7 @@ package 为不压缩的 UTF-8 JSON，顶层恰含：`transport_version`、`profi
 
 data 使用 RFC 4648 标准 Base64 字母表、正确 padding、无空白且无非字母表字符；解码后重编码必须得到原字符串。metadata.data 解码后是 §2 的完整原始 UTF-8 JSON，metadata digest 和长度覆盖这份精确 bytes，不先重新序列化。payload digest 和长度覆盖解码后的原始 bytes。
 
-payloads 恰好覆盖 metadata 中全部 available BlobRef，每个一次，无缺失、重复或额外项。每项长度/digest 必须同时与 metadata 中对应 Blob 及实际 bytes 一致。即使目标已有相同 Blob，完整输入包也必须带齐全部 bytes。
+payloads 恰好覆盖 metadata 中全部 available BlobRef，每个一次，无缺失、重复或额外项。每项长度/digest 必须同时与 metadata 中对应 Blob 及实际 bytes 一致。即使目标已有相同 Blob，完整输入包也必须带齐全部 bytes。 缺失或额外 BlobRef 属于内容覆盖不符，返回 `INTEGRITY_FAILURE`；重复 BlobRef 属于封装输入重复，返回 `INVALID_INPUT`。这些拒绝均为 `not_committed`。
 
 外部 descriptor 是独立严格 UTF-8 JSON，恰含 `transport_version: "0.1.0"`、`package_byte_length`、`package_digest: Digest`。它对整个 package 文件的实际 bytes 计算长度与 SHA-256，解决把全包摘要放回包内的自引用问题。descriptor 文件不得超过 4 KiB；package_byte_length 使用相同整数规则并受 384 MiB 上限约束。import 要求 package 与 descriptor 同时提供。
 

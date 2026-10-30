@@ -1,4 +1,5 @@
 """The two public CLIs agree on invalid paths and genuine I/O failures."""
+from contextlib import chdir
 import errno
 import json
 import os
@@ -29,10 +30,39 @@ class CLIInputPathTests(unittest.TestCase):
         return cli._read_file(path, 3, 'input')
 
     def invoke(self, args):
-        # Source runs inherit the selected PYTHONPATH; installed runs stay isolated.
+        # Bind source runs to the loaded package, not ambient import settings.
+        # Installed runs keep -I and ignore ambient source search paths.
         isolation = ['-I'] if sys.flags.isolated else []
+        environment = os.environ.copy()
+        if not sys.flags.isolated:
+            environment['PYTHONPATH'] = str(Path(cli.__file__).resolve().parents[1])
         return subprocess.run([sys.executable, *isolation, '-B', '-m', 'infra_artifact_ledger', *args],
-                              capture_output=True, timeout=20)
+                              cwd=self.root, env=environment, capture_output=True, timeout=20)
+
+    def test_cli_uses_loaded_implementation_despite_ambient_import_paths(self):
+        db = self.root / 'origin.sqlite'
+        with initialize(db) as ledger:
+            ledger.execute(wire(create()))
+            expected = ledger.verify()
+        before = db.read_bytes()
+        poison = self.root / 'poison'
+        package = poison / 'infra_artifact_ledger'
+        package.mkdir(parents=True)
+        (package / '__init__.py').write_text('raise RuntimeError("unselected implementation loaded")\n')
+        for location, search in ((poison, 'inherited'), (self.root, 'absent'),
+                                 (self.root, 'poison'), (poison, 'poison')):
+            with self.subTest(poison_cwd=location == poison, pythonpath=search):
+                with patch.dict(os.environ), chdir(location):
+                    if search == 'absent':
+                        os.environ.pop('PYTHONPATH', None)
+                    elif search == 'poison':
+                        os.environ['PYTHONPATH'] = str(poison)
+                    response = self.invoke(['verify', '--db', str(db)])
+                self.assertEqual(response.returncode, 0, response.stdout + response.stderr)
+                self.assertEqual(response.stderr, b'')
+                self.assertEqual(json.loads(response.stdout),
+                    dict(status='OK', commit_state='not_applicable', data=expected))
+                self.assertEqual(db.read_bytes(), before)
 
     def test_invalid_input_names_are_not_io_failures(self):
         path_limit = os.pathconf(self.root, 'PC_PATH_MAX')

@@ -5,6 +5,7 @@ Use the selected installation's python -I -B, with --implementation and a new
 All fixtures are synthetic; no implementation constants or private APIs change.
 """
 import argparse
+import copy
 import importlib.metadata
 import importlib.util
 import json
@@ -38,6 +39,19 @@ def cli_error(root, state, *args, code='RESOURCE_LIMIT'):
     assert (response['code'], response['commit_state']) == (code, state), response
 
 
+def assert_created(ledger, before, request, response):
+    # Derive identity and state from the input, never from result_ref returned by
+    # the implementation under test. Only the generated timestamp is observed.
+    expected = copy.deepcopy(before)
+    artifact = dict(request['body']['artifact'], recorded_at=response['recorded_at'])
+    operation = cross.operation_for(request, artifact['artifact_id'], artifact['recorded_at'])
+    cross.assert_response(response, operation, False)
+    expected['artifacts'].append(artifact)
+    expected['idempotency_records'].append(operation)
+    cross.assert_metadata(ledger, expected)
+    return expected
+
+
 def documents(root):
     results = []
     for kind in ('write', 'operation', 'payload_map'):
@@ -48,7 +62,9 @@ def documents(root):
             with public.initialize(db) as ledger:
                 create = f.create()
                 created = ledger.execute(f.wire(create))
-                prior_operation = ledger.get_operation('demo:scope', 'create_artifact', 'create')
+                expected = assert_created(ledger, h.empty_metadata(), create, created)
+                prior_operation = dict(idempotency_record=expected['idempotency_records'][0],
+                                       result=expected['artifacts'][0])
             request = f.create('artifact:second', 'second') if kind == 'write' else f.append(raw=b'')
             if kind == 'operation':
                 value = {k: create[k] for k in ('idempotency_scope_ref', 'operation_kind', 'idempotency_key')}
@@ -82,15 +98,16 @@ def documents(root):
                 if kind == 'operation':
                     assert f.wire(response) == f.wire(dict(status='OK',commit_state='not_applicable',data=prior_operation))
                     assert h.file_digest(db) == before
+                    cross.assert_metadata(ledger, expected)
                 else:
-                    operation = cross.operation_for(request, response['result_ref'], response['recorded_at'])
-                    cross.assert_response(response, operation, False)
-                    assert f.wire(ledger.get_operation('demo:scope',request['operation_kind'],request['idempotency_key'])['idempotency_record']) == f.wire(operation)
+                    if kind == 'write':
+                        expected = assert_created(ledger, expected, request, response)
+                    else:
+                        expected = cross.assert_append_committed(ledger, expected, request, response)
                     kwargs = {'payloads': {'blob:one': b''}} if kind == 'payload_map' else {}
-                    cross.assert_response(ledger.execute(f.wire(request), **kwargs), operation, True)
-                    if kind == 'payload_map':
-                        assert ledger.read_blob('blob:one') == b''
-                    ledger.verify()
+                    committed_digest = h.file_digest(db)
+                    cross.assert_replay(ledger, request, kwargs, expected)
+                    assert h.file_digest(db) == committed_digest
             results.append(dict(axis=kind, bytes=size, status='PASS'))
     return results
 
@@ -99,7 +116,8 @@ def structural(root):
     db = root/'structural.sqlite'
     results = []
     with public.initialize(db) as ledger:
-        ledger.execute(f.wire(f.create()))
+        seed = f.create()
+        expected = assert_created(ledger, h.empty_metadata(), seed, ledger.execute(f.wire(seed)))
         before = h.file_digest(db)
         for kind, limits in (('depth',(15,16,17)),('nodes',(499999,500000,500001))):
             for limit in limits:
@@ -113,7 +131,7 @@ def structural(root):
                 results.append(dict(axis=kind, measured=limit, expected_code=code, status='PASS'))
         # Limits below/equal accept JSON allocation, not the invalid array request shape.
         value = f.create('artifact:after-structural','after')
-        assert ledger.execute(f.wire(value))['replayed'] is False
+        assert_created(ledger, expected, value, ledger.execute(f.wire(value)))
     return results
 
 
@@ -166,7 +184,8 @@ def responses(root):
             assert h.file_digest(db) == before
             operation = cross.operation_for(second,'version:two',committed['recorded_at'])
             cross.assert_response(ledger.execute(f.wire(second),payloads={}),operation,True)
-            assert ledger.read_blob('blob:one') == b''
+            raw_blob = ledger.read_blob('blob:one')
+            assert type(raw_blob) is bytes and raw_blob == b'', 'read_blob must return exact bytes'
             assert ledger.verify()['counts']['versions'] == 2
             assert h.file_digest(db) == before
             (case/'expected-response.json').write_bytes(f.wire(envelope)+b'\n')

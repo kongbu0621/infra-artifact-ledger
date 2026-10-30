@@ -29,7 +29,9 @@ class CLIInputPathTests(unittest.TestCase):
         return cli._read_file(path, 3, 'input')
 
     def invoke(self, args):
-        return subprocess.run([sys.executable, '-I', '-B', '-m', 'infra_artifact_ledger', *args],
+        # Source runs inherit the selected PYTHONPATH; installed runs stay isolated.
+        isolation = ['-I'] if sys.flags.isolated else []
+        return subprocess.run([sys.executable, *isolation, '-B', '-m', 'infra_artifact_ledger', *args],
                               capture_output=True, timeout=20)
 
     def test_invalid_input_names_are_not_io_failures(self):

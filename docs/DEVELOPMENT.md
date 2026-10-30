@@ -4,6 +4,39 @@
 
 本文的接续说明从 README 迁入；详细验证、失败现场和审批记录仍保留在各自原文档中。文档整理不新增执行结果，也不改变已有授权、产品接口或验收状态。
 
+## A4 Python 3.11 实际安装验收与阶段对账（2026-10-30）
+
+按 Owner 指令在 PRO6000 补齐当前 A/B 的最低 Python 3.11 实际安装运行。Ledger 主干从 `ef669ba97f859a03ae0d6d05d0dccd7bbb76f4ef` 安全快进到 **`4ba2211560aeb13d3741e7c852524a167603fd11`**；本轮 wheel、验收入口及依赖文件均绑定该准确提交，没有新增产品修复。A 的 17 个运行模块与 GX10 已验收的 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1` 字节相同，B 的七个模块与 `4cc1308c19239c5f75bbcde7a90c3d87efa558ed` 字节相同。源码 HEAD、发行版本和实际安装来源分别记录。
+
+环境为 **Linux x86_64 / kernel 6.8.0-124-generic / glibc 2.35 / ext4 / Python 3.11.15 / SQLite 3.37.2**。复用本机原 Ledger 独立安装验收的 Python 3.11 runtime 作为 A 环境，另将同项目安装验收留下的纯构建环境用于本轮 B 验收；该环境原仅有构建工具，未安装 A。两者不含业务数据库或服务部署。本轮没有创建虚拟环境、安装系统软件或将 Python 3.12 环境原地改为 3.11。
+
+A/B 更新前分别完整保留 1952 / 1693 个环境文件及符号链接；A 原 wheel、源码身份和安装验收记录另行保留，B 原构建用途也有历史记录。构建使用另一套已有 Ledger 专用 Python 3.11 环境，工具为 pip 24.0、setuptools 84.0.0、wheel 0.48.0、packaging 26.3；离线、无依赖安装，不调用新环境创建或系统包安装。准确 Git 对象导出的 376 个源码文件全部核对，构建前后原文件保持。
+
+| 实现 | 发行包 / 版本 | 本轮 wheel SHA-256 | 运行模块 |
+| --- | --- | --- | ---: |
+| A | `infra-artifact-ledger 0.2.0a1` | `4dbfcd5ef2f1f2d742ce0628c3002160319274f5d24861cfb9daba7e25e526d8` | 17 |
+| B | `infra-artifact-ledger-b 0.1.0a1` | `b44e1d4b5e0afa5cd31515ec0822bc6a089502c859cf02375b3b7481b0e24e4f` | 7 |
+
+每套实际导入均位于自身 Python 3.11 `site-packages`，发行元数据、wheel 摘要、RECORD、完整模块集合及各模块字节与准确源码一致。B 环境没有 A 发行包、模块或源码搜索路径；B 的七个运行模块只依赖标准库及自身相对导入，不委托 A。验收后再次核对模块、RECORD、旧环境备份及源码，除所选 Ledger 安装和其缓存外没有环境文件变化。
+
+从源码目录之外，以隔离解释器执行仓库已有入口；父入口均使用 `-I -B`，所有进程均未启用 `-O/-OO`。新合成 workdir 在调用前不存在。入口及相关教程、独立预期辅助文件共八份，与所选提交逐字节相同。实际结果如下，耗时为各父入口完整执行时间：
+
+| 入口 | Python 3.11 实际结果 | 入口退出码 | 秒 |
+| --- | --- | ---: | ---: |
+| `tests/installed_walkthrough.py`，A 安装，`--repo` 指向准确源码 | 25 次 CLI 调用及实际库示例通过；包含一次预期幂等冲突退出 4 | 0 | 0.818 |
+| `implementations/independent_b/tests/cross_implementation.py` | A→B、原 create/append/import 重放、B 新增版本、B 新进程完整读回、B→全新 A；四步通过 | 0 | 0.615 |
+| `error_classification_probe.py --implementation a` | 151/151 通过；73 API、78 CLI，准确拒绝、原状态保持、修正后接续及重放 | 0 | 13.387 |
+| `error_classification_probe.py --implementation b` | 同一 151/151 通过，无失败或跳过 | 0 | 12.732 |
+| Python 3.11 编译 | 两套实际安装共 24 个运行模块通过，优化级别 0，输出另存私有目录 | 0 | 不作为性能指标 |
+
+互通核对七类记录、历史幂等身份/指纹/时间、全部 Blob bytes 与新增 Receipt/操作差异，保留空 Artifact、分支/多父、Unicode、零字节及同内容不同身份的语义；A/B 各自拒绝对方物理数据库格式。本轮未发现 Python 3.11 版本相关缺陷，未修改或弱化验收脚本，也未将预期拒绝当作失败后重跑。
+
+原始命令、真实退出码、stdout/stderr、151 项逐项断言结果、合成库、安装来源、wheel、源码及旧环境备份保存在本机新的私有 A4 记录中。证据清单包含 **7817 个普通文件和 8 个符号链接**，清单 SHA-256 为 `bed72a96d37f5e87ddf12ea71742e7c054ad30847431a78849409ee8e151a1f0`；已复制到本机私有持久目录并逐项核对。公开仓库仅记录允许披露的版本、范围和结论，旧业务接续指针未改。
+
+**最低 Python 3.11 实际安装运行缺口已关闭。A4 在声明的 A1 candidate / bounded-local-v0.1 / transport 0.1.0 范围及所列环境内验收完成。** [当前矩阵](IMPLEMENTATION_PLAN.md#当前覆盖与接续2026-10-30)的容量、字符串、身份/历史冲突、并发及故障等已完成证据按准确运行源码继续复用；本次补充新平台的安装闭环、跨实现使用、精确分类和编译，没有把全部矩阵称作在 Python 3.11 重新执行。完成判断基于两实现独立性、声明范围的既有安装态矩阵与本次最低版本补证，没有未解释的身份、内容或提交语义差异。
+
+A3 所列范围内完成保持；完整生产资格仍未取得。B 仍为实验实现，不提供 A2 snapshot/NAS/recovery；不同数据库引擎、其他平台及真实设备断电不由本结果推出。业务环境、Local Hand 服务、原 P 私有实例/回执/数据、消费者指针及 NAS 均未访问或修改。下方 PARTIAL、旧安装与“Python 3.11 待验”保留各轮结束时状态。
+
 ## A4 精确错误分类验收（2026-10-30）
 
 按 Owner 的继续推进指令接续 A4-07。源码起点为 `489e6fe8a114820fec5c0a0b1ea3dedde1f25872`；原 A/B 安装均为 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1`。本轮从单一违规的公共返回复现了 B 的实际兼容性缺陷：包中额外 BlobRef 被误报为 `INVALID_INPUT/not_committed`、CLI 退出 2；按公共合同的内容覆盖规则应为 `INTEGRITY_FAILURE/not_committed`、退出 5。重复 BlobRef 仍是输入重复，保持 `INVALID_INPUT`。A 的既有 `test_payload_missing_extra_and_duplicate` 与实际返回均符合该区别；此次同时将公共接口 §7 的文字明确为同一语义。
@@ -598,9 +631,9 @@ PR14 后续检查修复测试子进程的来源绑定，并更正上轮“70 项
 | A1 本地 Ledger | Python 库、JSON CLI、本地 SQLite 及有界完整搬运已有 alpha 实现与验证 | [授权与范围](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) · [验证记录](A1_VALIDATION.md) |
 | A2 快照与恢复 | S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；累计证据与未测边界见最终对账 | [授权与范围](a2/GATE.md) · [验证记录](A2_VALIDATION.md) |
 | A3 真实消费者 | Code Driver/P 与独立 Generic Agent 的实际采用及留证已在所列任务与实现范围内验收完成；K/P 同一工作流不重复计类 | [两类消费者验收](A3_CODE_DRIVER_CONSUMPTION.md) · [独立 Agent 消费](A3_GENERIC_AGENT_CONSUMPTION.md) · [历史准备](A3_CONSUMER_PREPARATION.md) |
-| A4 独立第二实现 | A `fcb2230` / B `4cc1308`：A4-07 各 151 项精确分类与四进程互通通过；最低 Python 3.11 尚待实测，整体 PARTIAL | [精确分类及安装](#a4-精确错误分类验收2026-10-30) · [当前矩阵](IMPLEMENTATION_PLAN.md#当前覆盖与接续2026-10-30) |
+| A4 独立第二实现 | 声明的 A1 candidate 范围及所列环境内验收完成；GX10 既有矩阵与 PRO6000 Python 3.11 实际安装运行分别留证 | [最低版本与阶段验收](#a4-python-311-实际安装验收与阶段对账2026-10-30) · [当前矩阵](IMPLEMENTATION_PLAN.md#当前覆盖与接续2026-10-30) |
 
-A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2 已在所列配置内验收完成；A3 两类真实消费者已按上述范围验收，A4 尚未完成，各阶段分别取得证据。
+A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2 已在所列配置内验收完成；A3 两类真实消费者与 A4 独立第二实现已分别按上述范围验收；各阶段证据分别保留，完整生产资格不由这些结论自动取得。
 
 A2 设计已通过 PR #5 合并，并获独立开工授权；后续实现以独立 CLOSED 记录为祖先。五份已批准设计文档保留基线原文，其中 Candidate / OPEN / NOT_RUN 描述的是设计形成时的状态；当前权限见 A2 Gate，实现及实际验收见 A2 验证记录。GX10、本地文件系统与真实 NAS 的证据分别记录，不把计划、模拟测试或历史 A1 通过自动转成 A2 实机通过。
 

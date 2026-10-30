@@ -2,7 +2,7 @@
 
 这是 A4 的独立第二实现，提供 A1 candidate 的 Python 公共入口与 `artifact-ledger` CLI。采用独立的请求验证、指纹、引用关系、导入/重放与事务实现；只使用 Python 标准库及 SQLite，不导入或委托仓库根实现 A。
 
-**当前为实验实现，A4 整体仍为 PARTIAL。** 已验证的互通闭环、边界修复和未覆盖项见仓库[开发记录](../../docs/DEVELOPMENT.md#a4-独立-b-边界复核2026-10-29)。它不提供 A2 snapshot/NAS/recovery，不能替换现有业务安装。Python 最低语法目标为 3.11，本轮现场验证为 Linux aarch64 / Python 3.12；3.11 的运行资格尚未取得。
+**当前仍为实验实现；A4 在声明的 A1 candidate 范围及所列环境内验收完成。** GX10 / Linux aarch64 / Python 3.12.3 的既有矩阵与 PRO6000 / Linux x86_64 / Python 3.11.15 的实际独立安装运行分别留证，见[验收与边界](../../docs/DEVELOPMENT.md#a4-python-311-实际安装验收与阶段对账2026-10-30)。它不提供 A2 snapshot/NAS/recovery，不能据此替换使用 A2 的业务安装；完整生产资格仍未取得。
 
 ## 独立安装
 

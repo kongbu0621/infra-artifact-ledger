@@ -4,6 +4,40 @@
 
 本文的接续说明从 README 迁入；详细验证、失败现场和审批记录仍保留在各自原文档中。文档整理不新增执行结果，也不改变已有授权、产品接口或验收状态。
 
+## A4 精确错误分类验收（2026-10-30）
+
+按 Owner 的继续推进指令接续 A4-07。源码起点为 `489e6fe8a114820fec5c0a0b1ea3dedde1f25872`；原 A/B 安装均为 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1`。本轮从单一违规的公共返回复现了 B 的实际兼容性缺陷：包中额外 BlobRef 被误报为 `INVALID_INPUT/not_committed`、CLI 退出 2；按公共合同的内容覆盖规则应为 `INTEGRITY_FAILURE/not_committed`、退出 5。重复 BlobRef 仍是输入重复，保持 `INVALID_INPUT`。A 的既有 `test_payload_missing_extra_and_duplicate` 与实际返回均符合该区别；此次同时将公共接口 §7 的文字明确为同一语义。
+
+修复提交 **`4cc1308c19239c5f75bbcde7a90c3d87efa558ed`** 已安装到原 B 验收环境；A 保持 `fcb2230`。发行版本仍为 A `0.2.0a1` / B `0.1.0a1`。平台为 GX10 / Linux aarch64 / Python 3.12.3 / SQLite 3.45.1 / 本地 ext4。B 只将 payload 重复与额外引用分开判断；没有修改导入提交、幂等或存储格式。
+
+新增 [`error_classification_probe.py`](../implementations/independent_b/tests/error_classification_probe.py)，通过既有安装的公共 API 和实际 `-I -B` CLI 验证 **73 组 API/CLI 双路径和五组 CLI 缺失输入文件**，每个实现共 151 项：
+
+- request、descriptor、package、metadata 四层的 BOM、尾随非 JSON、重复键、非法 UTF-8、孤立代理项、NaN/Infinity 和未知字段；未知版本、profile 及 metadata 标记。
+- append/import 的 Manifest 摘要、erased、整数的浮点/指数/bool/负数形式；descriptor、metadata 和 payload 的长度及摘要不符。
+- metadata/payload 的非法 Base64 字母、空白、缺少 padding 和非零 pad bits；缺失、重复、额外 payload 及传输内容与 Blob 元数据不符。
+- 缺失 package、descriptor、payloads 参数；CLI request、package、descriptor、payload-map、Blob 输入文件缺失。
+
+每项在带既有 Artifact、Version 和实际二进制 Blob 的新合成库中执行。只有目标违规及其必要关联发生变化；测试内层时同步正确的外层长度与摘要，使调用实际到达目标校验。拒绝后逐项比较精确 code、commit_state、envelope 和 CLI 退出码，同时核对原数据库字节、完整公共记录、history、operation、verify、导出与 Blob 内容保持。随后只恢复所选输入，使用原身份/key 成功提交，再重放核对原结果、时间、完整记录差异及数据库字节不变。包、请求和期望独立构造，不用产品私有校验函数作为判据。
+
+| 实际运行 | 结果 | 耗时（秒） |
+| --- | --- | ---: |
+| 原 A 安装 | 151 / 151 通过 | 16.542 |
+| 原 B 安装 | 149 / 151 通过；仅额外 payload 的 API/CLI 错误分类失败 | 16.014 |
+| 修复后的原 B 环境 | 151 / 151 通过 | 15.202 |
+
+另通过八项 B 针对性源码回归、24 项 B 安装态公共合同检查（零错误、失败、跳过）、A→B→B 另进程读回→全新 A 四进程互通，以及三处修改 Python 文件的 0/1/2 级编译。新入口显式拒绝 `-O/-OO`、缺少 `-I` 或 `-B`；A/B 各四项真实启动检查均在创建结果目录前退出 2。既有大容量、字符串、并发、输出发布故障和 A2/A3 证据按其固定来源复用，未重复执行。
+
+B 原环境的 1038 个文件/符号链接与旧 wheel 已完整保留并核对。新 wheel SHA-256 为 `fc1ac6e4d6cdfc296618c30f5203d666f2f7c9ebd105eaa8041389d7028faaf6`；七个 B 模块、wheel RECORD 与固定修复源码一致。A 的 1713 个环境文件/链接前后完全相同，17 个运行模块仍绑定 `fcb2230`。B 非缓存变更仅 `transport.py`、RECORD、direct_url.json，实际运行另重建七个包内字节码缓存；其他文件保持。原失败、各项返回、全部合成库、独立预期、备份及安装核验记录在本机忽略的私有 A4 目录保留。
+
+按需复现时，`LEDGER_PYTHON` 为已核对的对应安装解释器，`LEDGER_IMPLEMENTATION` 为 `a` 或 `b`，`TEST_DIR` 为该 tests 目录的绝对路径，`ERROR_RESULTS` 必须是尚不存在的新合成输出目录。从仓库外运行：
+
+```sh
+"$LEDGER_PYTHON" -I -B "$TEST_DIR/error_classification_probe.py" \
+  --implementation "$LEDGER_IMPLEMENTATION" --workdir "$ERROR_RESULTS"
+```
+
+**A4-07 精确分类在上述范围内完成；A4 整体仍为 PARTIAL。** 下一项是最低 Python 3.11 的实际安装运行。只读核对 GX10 已登记及归档的六个 Ledger 环境，其声明版本均为 3.12.3；PATH 和本轮检查的常规解释器位置未发现 3.11。这只是所检查范围的可用性结论，不代表其他机器没有环境，也不能以编译代替 3.11 实测。继续复用适用环境；本轮未创建虚拟环境、改动 Local Hand 或业务部署、重跑 P/Generic Agent/A2、开启 NAS 作业。A3 所列范围内完成及完整生产资格未取得的边界保持。以下为各轮历史记录。
+
 ## A4 字符串长度边界验收（2026-10-30）
 
 按 Owner 的继续推进指令，补齐上轮 A4-08 中列出的六类字符串长度边界。源码起点为 `5f98112a8b7ebf9651a9ad07def65d5afade9c54`；A/B 继续复用各自已有 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1` 安装，发行版本分别为 `0.2.0a1` / `0.1.0a1`。平台为 GX10 / Linux aarch64 / Python 3.12.3 / SQLite 3.45.1 / 本地 ext4。
@@ -564,7 +598,7 @@ PR14 后续检查修复测试子进程的来源绑定，并更正上轮“70 项
 | A1 本地 Ledger | Python 库、JSON CLI、本地 SQLite 及有界完整搬运已有 alpha 实现与验证 | [授权与范围](PROGRAM_REPOSITORY_DOCUMENTATION_GATE.md) · [验证记录](A1_VALIDATION.md) |
 | A2 快照与恢复 | S1–S5 在所列 GX10/ext4 + CIFS/SMB 3.1.1 配置内验收完成；累计证据与未测边界见最终对账 | [授权与范围](a2/GATE.md) · [验证记录](A2_VALIDATION.md) |
 | A3 真实消费者 | Code Driver/P 与独立 Generic Agent 的实际采用及留证已在所列任务与实现范围内验收完成；K/P 同一工作流不重复计类 | [两类消费者验收](A3_CODE_DRIVER_CONSUMPTION.md) · [独立 Agent 消费](A3_GENERIC_AGENT_CONSUMPTION.md) · [历史准备](A3_CONSUMER_PREPARATION.md) |
-| A4 独立第二实现 | A/B `fcb2230` 输入路径分类修复安装态 28/12 项及原请求接续通过；复用前轮互通，完整矩阵仍为 PARTIAL | [两套实现安装验收](#a4-两套实现清理修复的安装态验收2026-10-30) · [边界复核](#a4-独立-b-边界复核2026-10-29) |
+| A4 独立第二实现 | A `fcb2230` / B `4cc1308`：A4-07 各 151 项精确分类与四进程互通通过；最低 Python 3.11 尚待实测，整体 PARTIAL | [精确分类及安装](#a4-精确错误分类验收2026-10-30) · [当前矩阵](IMPLEMENTATION_PLAN.md#当前覆盖与接续2026-10-30) |
 
 A1 可以先支持受限消费者试点；两份示例脚本不能代替 A3，单实现导出再导入也不能代替 A4。A2 已在所列配置内验收完成；A3 两类真实消费者已按上述范围验收，A4 尚未完成，各阶段分别取得证据。
 

@@ -4,6 +4,41 @@
 
 本文的接续说明从 README 迁入；详细验证、失败现场和审批记录仍保留在各自原文档中。文档整理不新增执行结果，也不改变已有授权、产品接口或验收状态。
 
+## A4 字符串长度边界验收（2026-10-30）
+
+按 Owner 的继续推进指令，补齐上轮 A4-08 中列出的六类字符串长度边界。源码起点为 `5f98112a8b7ebf9651a9ad07def65d5afade9c54`；A/B 继续复用各自已有 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1` 安装，发行版本分别为 `0.2.0a1` / `0.1.0a1`。平台为 GX10 / Linux aarch64 / Python 3.12.3 / SQLite 3.45.1 / 本地 ext4。
+
+新增显式验收入口 [`string_resource_probe.py`](../implementations/independent_b/tests/string_resource_probe.py)，仅通过公共 API 和实际隔离 CLI 操作新合成库。输入与期望取自[公共合同 §2、§5](INTERFACE_PROFILE.md)，不修改运行限额，也不调用私有实现代替公共入口。覆盖以下 **26 个字段轴**：
+
+| 类型 | 实际字段轴 | 字符长度范围 |
+| --- | --- | --- |
+| StableId | 七类记录身份；与所选身份相关的引用同步调整 | 3–256 |
+| OpaqueRef | namespace、外部来源、capture、policy、principal、Provenance object，以及三类写操作的 scope，共九轴 | 1–512 |
+| TypeRef | namespace、type_id、type_version，各自独立 | 1–128、1–128、1–64 |
+| RelationRef | namespace、relation_id、relation_version，各自独立 | 1–128、1–128、1–64 |
+| entry_key | Manifest 的逻辑键，重算正确摘要 | 1–512 |
+| idempotency_key | create、append、import 各自独立 | 1–256 |
+
+每轴检查最小值减一、最小值、最小值加一、最大值减一、最大值、最大值加一。StableId 使用合同允许的 ASCII；其他轴另用含多字节、非 BMP 与组合字符的字符串检查 Unicode 字符计数和原样保存。StableId 的关联引用在同一用例联动调整，不将其计为每个引用槽位的独立非法输入测试；本轮不声称穷举所有非法字符和形状组合。
+
+**A、B 各 540 个边界用例全部通过**，各含 API 270 / CLI 270，合法长度 360 / 非法长度 180，其中 Unicode 用例各 228。非法长度准确返回 `INVALID_INPUT/not_committed`，CLI 退出 2；原库字节及全部公共记录保持。原非法输入保留，只修正所选字段及必要的关联引用/摘要后提交成功；除所选字段本身是 scope/key 的情形外，原操作身份不变。每个合法或修正后提交均按原请求独立计算完整预期记录、指纹与结果，检查七类记录、history、operation、verify、完整导出和实际 Blob bytes；随后同请求重放返回原结果与时间，严格检查 replayed，并核对全库及数据库字节不变。
+
+| 实现 | 边界用例 | 实际 CLI 子进程（含修正与重放） | 总耗时（秒） |
+| --- | ---: | ---: | ---: |
+| A | 540 | 630 | 43.034 |
+| B | 540 | 630 | 41.754 |
+
+两个实现的 630 次 CLI 调用各有 540 次退出 0、90 次预期退出 2；不是 630 个独立边界用例。全部输入、原始返回、新合成数据库、独立预期和源码/运行摘要另存忽略的私有目录。新增文件通过优化级别 0/1/2 编译；24 个运行模块仍与固定 `fcb2230` 一致，A 1713 / B 1038 个环境文件及符号链接前后相同。本轮未发现运行实现缺陷，只新增验收代码并更新接续记录。
+
+按需复现时，`LEDGER_PYTHON` 选择已核对来源的对应安装解释器，`LEDGER_IMPLEMENTATION` 为 `a` 或 `b`；`TEST_DIR` 为上述入口所在 tests 目录的绝对路径，`STRING_RESULTS` 是尚不存在的新合成输出目录。从仓库外运行，不新建或混装环境：
+
+```sh
+"$LEDGER_PYTHON" -I -B "$TEST_DIR/string_resource_probe.py" \
+  --implementation "$LEDGER_IMPLEMENTATION" --workdir "$STRING_RESULTS"
+```
+
+**A3 仍在所列范围内完成；A4 仍为 PARTIAL。** 当前按[矩阵对账](IMPLEMENTATION_PLAN.md#当前覆盖与接续2026-10-30)接续 A4-07 各单一违规的准确错误分类，以及已有适用环境中的 Python 3.11 实际运行；已有字符串和大容量证据复用。完整生产资格未取得。本轮未安装或升级软件、改动虚拟环境、切换服务或部署，也未重跑 A2、P、Generic Agent 或 NAS 作业。下方记录保留各轮结束时状态。
+
 ## A4 验收对账与实际容量（2026-10-30）
 
 本轮按现有 A4-01–10 矩阵整理证据，并补验实际容量；没有新增运行实现或重新安装。A/B 均复用各自已有环境，实际运行模块绑定 `fcb2230f71952b21c6fe2dd68a163aea4ccbb9a1`，发行版本分别为 `0.2.0a1` / `0.1.0a1`。验证平台为 GX10 / Linux aarch64 / Python 3.12.3 / SQLite 3.45.1 / 本地 ext4。源码起点为 `ac9fe7270d9e117757da3c49960daa99391343a8`；本轮修改验收代码与说明，不用新的源码 HEAD 代替运行绑定。

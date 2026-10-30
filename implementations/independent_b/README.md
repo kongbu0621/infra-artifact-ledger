@@ -6,7 +6,7 @@
 
 ## 独立安装
 
-A 与 B 提供同名 Python 模块和 CLI，**必须使用不同虚拟环境**。从仓库根目录执行下面命令，在调用者选定的新目录中构建、安装，不复用原业务环境：
+A 与 B 提供同名 Python 模块和 CLI，**必须使用不同虚拟环境**。已有对应项目/验收环境时优先复用，先核对其实际安装来源。下面命令仅用于首次建立独立 B 安装，不是每轮验收的前置步骤；不把 B 装入原 A 业务环境：
 
 ```sh
 python3 -m venv /tmp/ledger-b-build
@@ -36,3 +36,19 @@ python3 "$TEST_DIR/cross_implementation.py" \
 A_RUNTIME 必须是另一个只安装 A wheel 的验收环境。互通检查自行创建新合成库，依次验证 A→B、原 create/append/import 请求重放、B 继续写入、B 新进程读回、B→全新 A；包含空 Artifact、分支/多父历史与历史 Receipt，不读取已有业务数据。两个测试 workdir 必须不存在。容量检查会留下约 320 MiB 的合成数据库并报告实测进程峰值，不连接 NAS，也不降低正式资源上限。
 
 单元检查使用公共调用及独立期望值；少量 SQLite/连接代理访问仅用于明确的故障注入。锁冲突、回滚失败、提交确认丢失、CLI 关闭失败及输出管道断开各有独立断言；这些不等于真实设备断电验收。查询成功仅确认历史提交，实际内容须由 `read_blob` / `verify` 另行核验。
+
+## 实际容量验收
+
+以下为按需补验的显式入口，不纳入普通单元测试自动发现。使用已经核对来源的 A 或 B 环境；`LEDGER_PYTHON` 指向该环境解释器，`LEDGER_IMPLEMENTATION` 为对应的 `a` 或 `b`，`TEST_DIR` 为本目录的绝对 tests 路径，`CAPACITY_RESULTS` 是专用合成输出目录的绝对路径，各个 workdir 必须不存在：
+
+```sh
+for axis in descriptor metadata package payload; do
+  "$LEDGER_PYTHON" -I -B "$TEST_DIR/transport_resource_probe.py" \
+    --implementation "$LEDGER_IMPLEMENTATION" --axis "$axis" \
+    --workdir "$CAPACITY_RESULTS/$axis"
+done
+"$LEDGER_PYTHON" -I -B "$TEST_DIR/json_resource_probe.py" \
+  --implementation "$LEDGER_IMPLEMENTATION" --workdir "$CAPACITY_RESULTS/json"
+```
+
+每个 transport 轴在独立进程中使用真实上限减一/相等/加一的输入，分别通过公共 API、真实 CLI 校验导入、拒绝后原请求接续、幂等重放和新进程持久核验。JSON 入口覆盖实际文件、完整读取响应及结构限额。脚本不修改限额、不安装软件、不使用业务数据；会保留大体积合成文件、数据库和原始返回，耗时及资源测量见[本轮记录](../../docs/DEVELOPMENT.md#a4-验收对账与实际容量2026-10-30)。已有适用结果继续复用，不要求每次维护重跑。

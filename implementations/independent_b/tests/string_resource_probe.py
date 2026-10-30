@@ -190,7 +190,9 @@ def main():
     parser.add_argument('--implementation', choices=('a', 'b'), required=True)
     parser.add_argument('--workdir', type=Path, required=True)
     args = parser.parse_args()
-    assert sys.flags.isolated and not sys.flags.optimize and sys.dont_write_bytecode
+    # Assertions are the acceptance oracle; -O would remove this check too.
+    if not sys.flags.isolated or sys.flags.optimize or not sys.dont_write_bytecode:
+        parser.error('use an installed interpreter with -I -B and without -O/-OO')
     module = Path(public.__file__).resolve().parent
     assert Path(sys.prefix).resolve() in module.parents and 'site-packages' in module.parts
     dist = 'infra-artifact-ledger' + ('-b' if args.implementation == 'b' else '')

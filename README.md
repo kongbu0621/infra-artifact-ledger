@@ -51,6 +51,50 @@ Ledger 在本地 SQLite 的同一事务中保存记录、有界内容和成功�
 
 应用负责内容生成、业务判断、权限和任务执行；Ledger 保存工作流或脚本时只存储其内容。各项目需要交换记录时，可以使用包含元数据和实际内容的有界完整导出包；导入保留原有身份与历史，并增加本次导入回执。它不提供增量同步。
 
+## 完整能力设计与落地状态
+
+上图保留单个 Ledger 的应用主线；下图补全公共合同、两套实现、搬运、快照及配套扩展之间的关系。**已实现**不等于全部平台或生产资格已通过；黄色虚线框是**待实现**的可选接入，灰色是调用方或部署侧职责。
+
+```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 240}}}%%
+flowchart TD
+    A["应用 / Agent<br/>明确成果身份、版本与原请求"]
+    I["已实现 · A1 公共库 / JSON CLI<br/>写入、查询、内容校验<br/>原请求幂等核对"]
+    S["已实现 · 本地 Ledger 核心<br/>不可变记录、实际内容与成功回执<br/>在同一事务内提交"]
+    P["已实现 · 完整可移植包<br/>导出 / 整体校验 / 冲突拒绝<br/>导入保留身份并新增导入回执"]
+    B["已实现 · 独立 B 实现<br/>独立环境与存储格式<br/>仅声明的 A1 范围，不提供 A2"]
+    R["已实现 · A 的 A2 恢复入口<br/>一致快照、发布、核验<br/>新目录恢复与恢复后检查"]
+    N["部署侧 · 本地或 NAS<br/>封存快照与独立预期摘要<br/>挂载、凭据与备份安排"]
+    X["待实现 · 可选配套接入<br/>NAS 归档接收 / 查询 / 读回适配层<br/>多节点成果方案；非在线共享 SQLite"]
+    C["调用方核对身份与实际内容<br/>采用明确版本继续业务<br/>恢复后的消费者启用单独决定"]
+    A --> I
+    A -.->|"未来可选远程成果接入"| X
+    I --> S
+    S -->|"准确版本与内容"| C
+    S -->|"完整导出"| P
+    P -->|"按合同导入"| B
+    B -->|"完整导出"| P
+    B -->|"A1 公共接口准确读回"| C
+    P -->|"向相容目标导入"| S
+    S -->|"一致快照"| R
+    R -->|"发布并回读核对"| N
+    N -->|"按预期摘要核验后恢复"| R
+    R -->|"新本地库核对通过"| C
+    X -.->|"未来仅调用公共接口"| I
+    class I,S,P,B,R built
+    class X pending
+    class A,N external
+    class C outcome
+    classDef built fill:#e8f1fc,stroke:#35689c,color:#102a43
+    classDef pending fill:#fff3d6,stroke:#9a6700,color:#493500,stroke-dasharray:5 3
+    classDef external fill:#f1f3f5,stroke:#6b7280,color:#202938
+    classDef outcome fill:#e6f4ea,stroke:#33734a,color:#173d26
+```
+
+A / B 通过可移植包互通，不能直接互开数据库文件；完整导入不等于增量同步。快照恢复保留原记录，不增加导入回执；恢复成功也不自动切换应用的当前写入实例。
+
+待实现的 NAS 接收适配来自 [Local Hand 多节点成果方案](https://github.com/kongbu0621/infra-local-hand/blob/main/docs/MULTI_NODE_IMPLEMENTATION_PLAN.md#4-nas-成果归档最小新增实现)，尚不属于已实现的 Ledger 网络服务。云后端、流式搬运等仍是按需扩展方向，不由此图新增承诺；现有 A1 / A2 / A4 的实现与已测范围分别见[架构](docs/ARCHITECTURE.md)、[恢复合同](docs/a2/INTERFACE_PROFILE.md)和[兼容表](docs/COMPATIBILITY.md)。
+
 ## 快照与恢复
 
 快照能力用于给受支持的单个 Ledger 生成一致备份，并恢复到全新本地目录。下面是包含 NAS 的恢复流程；**快照与恢复验收已在所列本地环境及 GX10 + CIFS（SMB 3.1.1）配置内完成。** 包含真实 NAS 保存与丢失恢复、受测故障处理、拒覆盖及恢复后继续使用；具体组合与未测边界见[兼容表](docs/COMPATIBILITY.md)。
